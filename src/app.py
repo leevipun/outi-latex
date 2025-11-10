@@ -8,7 +8,7 @@ def index():
     if request.method == "GET":
         reference_types = references.get_all_references()
         return render_template("index.html", reference_types=reference_types)
-    reference = request.args.get('form')
+    reference = request.form.get('form')
     if reference:
         return redirect(f'/add?form={reference}')
 
