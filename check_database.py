@@ -86,7 +86,7 @@ try:
         try:
             result = session.execute(text("""
                 SELECT r.id, rt.name, r.bib_key, r.created_at
-                FROM "references" r
+                FROM single_reference r
                 JOIN reference_types rt ON r.reference_type_id = rt.id
                 ORDER BY r.created_at DESC
             """))
