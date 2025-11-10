@@ -12,7 +12,23 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v5
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+    - name: Install Poetry
+      run: pip install poetry
+    - name: Install dependencies
+      run: poetry install
+    - name: Run pylint
+      run: poetry run pylint src/ --exit-zero
+
+  test:
     runs-on: ubuntu-latest
 
     services:
@@ -36,7 +52,9 @@ jobs:
     - name: Install dependencies
       run: poetry install
     - name: Run unit tests
-      run: poetry run pytest src/tests
+      run: poetry run pytest src/tests -v
+    - name: Run story tests
+      run: poetry run pytest src/story_tests -v
     - name: Setup chromedriver
       uses: nanasess/setup-chromedriver@master
     - run: |

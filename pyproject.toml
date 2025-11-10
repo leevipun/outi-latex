@@ -16,6 +16,7 @@ psycopg2-binary = "^2.9.0"
 pytest = "^9.0.0"
 
 [tool.poetry.group.dev.dependencies]
+pylint = "^3.0.0"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
