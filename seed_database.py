@@ -96,7 +96,7 @@ try:
                         "key": key,
                         "type": field_data['type'],
                         "input_type": field_data['input-type'],
-                        "additional": field_data.get('additional')
+                        "additional": field_data.get('additional', False)
                     }
                 )
                 field_map[key] = result.scalar()
