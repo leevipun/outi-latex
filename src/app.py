@@ -10,7 +10,7 @@ def index():
         return render_template("index.html", reference_types=reference_types)
     reference = request.args.get('form')
     if reference:
-        redirect(f'/add?form={reference}')
+        return redirect(f'/add?form={reference}')
 
 # testausta varten oleva reitti
 if test_env:
