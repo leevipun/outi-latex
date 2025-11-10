@@ -1,0 +1,97 @@
+{
+  "article": [
+    {"key": "author", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "journal", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": true, "additional": false},
+
+    {"key": "volume", "input-type": "number", "type": "int", "required": false, "additional": false},
+    {"key": "number", "input-type": "number", "type": "int", "required": false, "additional": false},
+    {"key": "pages", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "doi", "input-type": "text", "type": "str", "required": false, "additional": true},
+    {"key": "publisher", "input-type": "text", "type": "str", "required": false, "additional": false}
+  ],
+
+  "book": [
+    {"key": "author/editor", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "publisher", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": true, "additional": false},
+
+    {"key": "volume", "input-type": "number", "type": "int", "required": false, "additional": false},
+    {"key": "number", "input-type": "number", "type": "int", "required": false, "additional": false},
+    {"key": "series", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "address", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "edition", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "isbn", "input-type": "text", "type": "str", "required": false, "additional": true}
+  ],
+
+  "inproceedings": [
+    {"key": "author", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "booktitle", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": true, "additional": false},
+
+    {"key": "editor", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "pages", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "organization", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "publisher", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "address", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "doi", "input-type": "text", "type": "str", "required": false, "additional": true}
+  ],
+
+  "inbook": [
+    {"key": "author/editor", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "chapter/pages", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "publisher", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": true, "additional": false}
+  ],
+
+  "incollection": [
+    {"key": "author", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "booktitle", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "publisher", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": true, "additional": false}
+  ],
+
+  "misc": [
+    {"key": "author", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "howpublished", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "note", "input-type": "text", "type": "str", "required": false, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": false, "additional": false},
+    {"key": "url", "input-type": "text", "type": "str", "required": false, "additional": true}
+  ],
+
+  "phdthesis": [
+    {"key": "author", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "school", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": true, "additional": false},
+    {"key": "address", "input-type": "text", "type": "str", "required": false, "additional": false}
+  ],
+
+  "mastersthesis": [
+    {"key": "author", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "school", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": true, "additional": false}
+  ],
+
+  "techreport": [
+    {"key": "author", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "institution", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": true, "additional": false},
+    {"key": "number", "input-type": "number", "type": "int", "required": false, "additional": false}
+  ],
+
+  "unpublished": [
+    {"key": "author", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "title", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "note", "input-type": "text", "type": "str", "required": true, "additional": false},
+    {"key": "year", "input-type": "number", "type": "int", "required": false, "additional": false}
+  ]
+}
