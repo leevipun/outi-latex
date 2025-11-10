@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello World</title>
+</head>
+<body>
+    <h1>Hello, World!</h1>
+    <div>
+        <select>
+            {% for reference_type in reference_types %}
+                <option value="{{reference_type['id']}}">{{reference_type['name']}}</option>
+            {% endfor %}
+        </select>
+        <form method="GET" action="/add">
+        <button>
+            Lisää
+        </button>
+        </form>
+    </div>
+</body>
+</html>
