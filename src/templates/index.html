@@ -93,7 +93,8 @@
     <div class="container">
         <h1>Hei! Lisää uusi Viite kirjastoosi!</h1>
         <form method="POST" action="/" class="form-group">
-            <select name="form">
+            <label for="form" style="align-self: center;">Select Reference Type</label>
+            <select name="form" id="form">
                 {% for reference_type in reference_types %}
                     <option value="{{reference_type['id']}}">{{reference_type['name']}}</option>
                 {% endfor %}
