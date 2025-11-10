@@ -1,12 +1,16 @@
-from flask import jsonify, render_template
+from flask import jsonify, render_template, request, redirect
 from db_helper import reset_db
 from config import app, test_env
 from utils import references
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
-    reference_types = references.get_all_references()
-    return render_template("index.html", reference_types=reference_types)
+    if request.method == "GET":
+        reference_types = references.get_all_references()
+        return render_template("index.html", reference_types=reference_types)
+    reference = request.args.get('form')
+    if reference:
+        redirect(f'/add?form={reference}')
 
 # testausta varten oleva reitti
 if test_env:
