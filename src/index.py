@@ -3,6 +3,7 @@
 This module serves as the entry point for the Flask application.
 It imports the Flask application instance and runs it on a specified host and port.
 """
+
 from app import app
 
 if __name__ == "__main__":

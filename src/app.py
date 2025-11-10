@@ -1,4 +1,5 @@
 """Flask application routes and initialization."""
+
 from flask import jsonify, redirect, render_template, request
 
 from config import app, test_env

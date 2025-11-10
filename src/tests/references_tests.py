@@ -1,4 +1,5 @@
 """Test suite for reference management utilities."""
+
 # pylint: disable=redefined-outer-name
 import sys
 from pathlib import Path
@@ -65,7 +66,9 @@ def setup_test_database(test_app):  # pylint: disable=redefined-outer-name
             db.session.rollback()
 
 
-def test_get_all_references_returns_correct_data(setup_test_database):  # pylint: disable=unused-argument
+def test_get_all_references_returns_correct_data(
+    setup_test_database,
+):  # pylint: disable=unused-argument
     """Test that get_all_references returns all reference types with correct data."""
     with app.app_context():
         result = get_all_references()
@@ -86,14 +89,18 @@ def test_get_all_references_returns_correct_data(setup_test_database):  # pylint
         assert result == expected
 
 
-def test_get_all_references_returns_list(setup_test_database):  # pylint: disable=unused-argument
+def test_get_all_references_returns_list(
+    setup_test_database,
+):  # pylint: disable=unused-argument
     """Test that get_all_references returns a list."""
     with app.app_context():
         result = get_all_references()
         assert isinstance(result, list)
 
 
-def test_get_all_references_ordered_by_id(setup_test_database):  # pylint: disable=unused-argument
+def test_get_all_references_ordered_by_id(
+    setup_test_database,
+):  # pylint: disable=unused-argument
     """Test that results are ordered by id."""
     with app.app_context():
         result = get_all_references()
@@ -101,14 +108,18 @@ def test_get_all_references_ordered_by_id(setup_test_database):  # pylint: disab
         assert ids == sorted(ids)
 
 
-def test_get_all_references_has_correct_length(setup_test_database):  # pylint: disable=unused-argument
+def test_get_all_references_has_correct_length(
+    setup_test_database,
+):  # pylint: disable=unused-argument
     """Test that all 10 reference types are returned."""
     with app.app_context():
         result = get_all_references()
         assert len(result) == 10
 
 
-def test_get_all_references_dict_structure(setup_test_database):  # pylint: disable=unused-argument
+def test_get_all_references_dict_structure(
+    setup_test_database,
+):  # pylint: disable=unused-argument
     """Test that each item has 'id' and 'name' keys."""
     with app.app_context():
         result = get_all_references()
@@ -121,7 +132,9 @@ def test_get_all_references_dict_structure(setup_test_database):  # pylint: disa
             assert isinstance(item["name"], str)
 
 
-def test_get_all_references_empty_table(test_app):  # pylint: disable=redefined-outer-name, unused-argument
+def test_get_all_references_empty_table(
+    test_app,
+):  # pylint: disable=redefined-outer-name, unused-argument
     """Test behavior when reference_types table is empty."""
     with test_app.app_context():
         # Clean the table

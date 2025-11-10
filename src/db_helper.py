@@ -1,4 +1,5 @@
 """Database helper functions for managing schema and data."""
+
 import os
 
 from sqlalchemy import text

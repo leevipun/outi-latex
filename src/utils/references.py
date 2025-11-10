@@ -1,4 +1,5 @@
 """Reference management utilities."""
+
 from sqlalchemy import text
 
 from config import db
