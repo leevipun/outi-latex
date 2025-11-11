@@ -21,7 +21,9 @@
     <hr>
     <h3>{{ selected_type }} -viitteen kentät</h3>
 
-    <form>
+    <form action="/create_reference" method="post">
+        <input type="hidden" name="reference_type" value="{{ selected_type }}">
+
         <div>
             <label>Viiteavain*:</label><br>
             <input type="text" name="cite_key" required>
