@@ -1,35 +1,33 @@
 from flask import redirect, render_template, request, jsonify, flash
 from db_helper import reset_db
-from repositories.todo_repository import get_todos, create_todo, set_done
 from config import app, test_env
-from util import validate_todo
+from util import load_form_fields
 
 @app.route("/")
 def index():
-    todos = get_todos()
-    unfinished = len([todo for todo in todos if not todo.done])
-    return render_template("index.html", todos=todos, unfinished=unfinished) 
+    """Etusivu - näytä tyyppi-valinta"""
+    form_fields = load_form_fields()
+    reference_types = list(form_fields.keys())
 
-@app.route("/new_todo")
-def new():
-    return render_template("new_todo.html")
+    return render_template("index.html", reference_types=reference_types)
 
-@app.route("/create_todo", methods=["POST"])
-def todo_creation():
-    content = request.form.get("content")
+@app.route("/show_fields")
+def show_fields():
+    """Näytä valitun tyypin kentät"""
+    selected_type = request.args.get('type')
+    form_fields = load_form_fields()
+    reference_types = list(form_fields.keys())
 
-    try:
-        validate_todo(content)
-        create_todo(content)
-        return redirect("/")
-    except Exception as error:
-        flash(str(error))
-        return  redirect("/new_todo")
+    fields = []
+    if selected_type and selected_type in form_fields:
+        fields = form_fields[selected_type]
 
-@app.route("/toggle_todo/<todo_id>", methods=["POST"])
-def toggle_todo(todo_id):
-    set_done(todo_id)
-    return redirect("/")
+    return render_template(
+        "index.html",
+        reference_types=reference_types,
+        selected_type=selected_type,
+        fields=fields
+    )
 
 # testausta varten oleva reitti
 if test_env:
