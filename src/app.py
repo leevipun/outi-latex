@@ -5,7 +5,8 @@ from flask import jsonify, redirect, render_template, request
 from config import app, test_env
 from db_helper import reset_db
 from utils import references
-from util import get_reference_type_by_id, get_fields_for_type, load_form_fields
+from util import get_reference_type_by_id, get_fields_for_type
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -22,9 +23,15 @@ def index():
     if reference:
         return redirect(f"/add?form={reference}")
 
-    return render_template("index.html",
-        reference_types=references.get_all_references(),
-        error="Please select a reference type"), 400
+    return (
+        render_template(
+            "index.html",
+            reference_types=references.get_all_references(),
+            error="Please select a reference type",
+        ),
+        400,
+    )
+
 
 @app.route("/add")
 def add():
@@ -32,13 +39,11 @@ def add():
 
     GET /add?form=3: Muunna ID→nimi ja näytä lomake dynaamisilla kentillä
     """
-    form_id = request.args.get('form')
+    form_id = request.args.get("form")
 
     if not form_id:
         print("Ei form parametria!")
-        return render_template("add_reference.html",
-                             selected_type=None,
-                             fields=[])
+        return render_template("add_reference.html", selected_type=None, fields=[])
 
     reference_types_db = references.get_all_references()
 
@@ -52,18 +57,15 @@ def add():
 
     # Jos tyyppiä ei löytynyt
     if not selected_type:
-        return render_template("add_reference.html",
-                             selected_type=None,
-                             fields=[])
+        return render_template("add_reference.html", selected_type=None, fields=[])
 
     # Hae valitun tyypin kentät form-fields.json:sta
     fields = get_fields_for_type(selected_type)
 
     return render_template(
-        "add_reference.html",
-        selected_type=selected_type,
-        fields=fields
+        "add_reference.html", selected_type=selected_type, fields=fields
     )
+
 
 # testausta varten oleva reitti
 if test_env:
