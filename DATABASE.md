@@ -15,6 +15,7 @@ The database follows a relational model with three main layers:
 3. **References** - Actual bibliography entries with their field values
 
 This design allows:
+
 - Different reference types to have different required/optional fields
 - Flexible field definitions shared across types
 - Clean separation between schema and data
@@ -35,10 +36,12 @@ CREATE TABLE reference_types (
 ```
 
 **Columns:**
+
 - `id` - Unique identifier (primary key)
 - `name` - BibTeX type name (e.g., "article", "book", "inproceedings")
 
 **Supported Types:**
+
 - `article` - Journal articles
 - `book` - Books
 - `inproceedings` - Conference papers
@@ -67,6 +70,7 @@ CREATE TABLE fields (
 ```
 
 **Columns:**
+
 - `id` - Unique identifier (primary key)
 - `key_name` - Field identifier (e.g., "author", "title", "year")
 - `data_type` - Data type stored (e.g., "str", "int", "number", "date")
@@ -74,6 +78,7 @@ CREATE TABLE fields (
 - `additional` - Boolean flag indicating if this is an optional/additional field
 
 **Common Fields:**
+
 - Required across multiple types: `author`, `title`, `year`
 - Optional: `volume`, `number`, `pages`, `doi`, `isbn`, `url`
 - Type-specific: `journal`, `booktitle`, `publisher`, `school`
@@ -94,12 +99,14 @@ CREATE TABLE reference_type_fields (
 ```
 
 **Columns:**
+
 - `reference_type_id` - Foreign key to `reference_types`
 - `field_id` - Foreign key to `fields`
 - `required` - Whether this field is required for this reference type
 
 **Purpose:**
 Defines the schema for each reference type. For example:
+
 - Article requires: author, title, journal, year
 - Article optionally includes: volume, number, pages, doi, publisher
 
@@ -110,7 +117,7 @@ Defines the schema for each reference type. For example:
 Stores individual bibliography entries.
 
 ```sql
-CREATE TABLE references (
+CREATE TABLE single_reference (
     id SERIAL PRIMARY KEY,
     reference_type_id INT NOT NULL REFERENCES reference_types(id),
     bib_key VARCHAR(100) UNIQUE NOT NULL,
@@ -119,6 +126,7 @@ CREATE TABLE references (
 ```
 
 **Columns:**
+
 - `id` - Unique identifier (primary key)
 - `reference_type_id` - Foreign key to `reference_types` (type of this reference)
 - `bib_key` - Unique citation key used in LaTeX documents (e.g., "Smith2023", "Johnson_etal2022")
@@ -133,13 +141,14 @@ Stores field values for each reference (actual metadata).
 ```sql
 CREATE TABLE reference_values (
     id SERIAL PRIMARY KEY,
-    reference_id INT NOT NULL REFERENCES references(id) ON DELETE CASCADE,
+    reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
     field_id INT NOT NULL REFERENCES fields(id),
     value TEXT
 );
 ```
 
 **Columns:**
+
 - `id` - Unique identifier (primary key)
 - `reference_id` - Foreign key to `references`
 - `field_id` - Foreign key to `fields`
@@ -147,6 +156,7 @@ CREATE TABLE reference_values (
 
 **Purpose:**
 Stores the actual metadata for references. For example:
+
 - Reference "Smith2023" + Field "author" = "John Smith, Jane Doe"
 - Reference "Smith2023" + Field "year" = "2023"
 
@@ -157,13 +167,13 @@ Stores the actual metadata for references. For example:
 ```
 reference_types (1) ──┬──→ (Many) reference_type_fields
                       │
-                      └──→ (Many) references
+                      └──→ (Many) single_reference
 
 fields (1) ──┬──→ (Many) reference_type_fields
              │
              └──→ (Many) reference_values
 
-references (1) ──→ (Many) reference_values
+single_reference (1) ──→ (Many) reference_values
 ```
 
 ---
@@ -183,6 +193,7 @@ with app.app_context():
 ```
 
 This function:
+
 1. Checks for existing tables
 2. Drops all tables if they exist
 3. Creates new tables from `schema.sql`
@@ -194,6 +205,7 @@ python seed_database.py
 ```
 
 This script:
+
 1. Reads field definitions from `form-fields.json`
 2. Creates/ensures all schema tables exist
 3. Clears existing data
@@ -202,6 +214,7 @@ This script:
 6. Creates mappings between types and fields
 
 **Requirements:**
+
 - `DATABASE_URL` environment variable set
 - `form-fields.json` file present in project root
 
@@ -212,14 +225,15 @@ This script:
 ### 1. View All Reference Types
 
 ```sql
-SELECT id, name 
-FROM reference_types 
+SELECT id, name
+FROM reference_types
 ORDER BY id;
 ```
 
 **Returns:** All available BibTeX entry types in the database.
 
 **Example Output:**
+
 ```
  id |     name
 ----+---------------
@@ -233,14 +247,15 @@ ORDER BY id;
 ### 2. View All Fields
 
 ```sql
-SELECT id, key_name, data_type, input_type, additional 
-FROM fields 
+SELECT id, key_name, data_type, input_type, additional
+FROM fields
 ORDER BY id;
 ```
 
 **Returns:** All available metadata fields with their types.
 
 **Example Output:**
+
 ```
  id | key_name | data_type | input_type | additional
 ----+----------+-----------+------------+------------
@@ -265,6 +280,7 @@ ORDER BY f.key_name;
 **Returns:** All fields for a specific reference type with required flags.
 
 **Example Output:**
+
 ```
  key_name | required
 ----------+----------
@@ -298,7 +314,7 @@ ORDER BY rt.name, f.key_name;
 
 ```sql
 SELECT r.id, rt.name, r.bib_key, r.created_at
-FROM references r
+FROM single_reference r
 JOIN reference_types rt ON r.reference_type_id = rt.id
 WHERE r.bib_key = 'Smith2023'
 LIMIT 1;
@@ -312,7 +328,7 @@ LIMIT 1;
 
 ```sql
 SELECT r.id, r.bib_key, r.created_at
-FROM references r
+FROM single_reference r
 JOIN reference_types rt ON r.reference_type_id = rt.id
 WHERE rt.name = 'article'
 ORDER BY r.created_at DESC;
@@ -335,6 +351,7 @@ ORDER BY f.key_name;
 **Returns:** All metadata for a specific reference.
 
 **Example Output:**
+
 ```
   key_name   |                value
 --------------+--------------------------------------
@@ -352,7 +369,7 @@ ORDER BY f.key_name;
 
 ```sql
 SELECT r.id, r.bib_key, rt.name, f.key_name, rv.value
-FROM references r
+FROM single_reference r
 JOIN reference_types rt ON r.reference_type_id = rt.id
 LEFT JOIN reference_values rv ON rv.reference_id = r.id
 LEFT JOIN fields f ON rv.field_id = f.id
@@ -369,14 +386,14 @@ ORDER BY r.bib_key, f.key_name;
 
 ```sql
 SELECT DISTINCT r.id, r.bib_key, rt.name, f.key_name
-FROM references r
+FROM single_reference r
 JOIN reference_types rt ON r.reference_type_id = rt.id
 JOIN reference_type_fields rtf ON rt.id = rtf.reference_type_id
 JOIN fields f ON rtf.field_id = f.id
 WHERE rtf.required = TRUE
   AND NOT EXISTS (
     SELECT 1 FROM reference_values rv
-    WHERE rv.reference_id = r.id 
+    WHERE rv.reference_id = r.id
     AND rv.field_id = f.id
     AND rv.value IS NOT NULL
   )
@@ -393,7 +410,7 @@ ORDER BY r.bib_key, f.key_name;
 
 ```sql
 SELECT rt.name, COUNT(r.id) as count
-FROM references r
+FROM single_reference r
 JOIN reference_types rt ON r.reference_type_id = rt.id
 GROUP BY rt.name
 ORDER BY count DESC;
@@ -402,6 +419,7 @@ ORDER BY count DESC;
 **Returns:** Statistics on reference distribution.
 
 **Example Output:**
+
 ```
       name      | count
 -----------------+-------
@@ -417,11 +435,11 @@ ORDER BY count DESC;
 
 ```sql
 SELECT r.id, r.bib_key, rt.name, f.key_name, rv.value
-FROM references r
+FROM single_reference r
 JOIN reference_types rt ON r.reference_type_id = rt.id
 JOIN reference_values rv ON r.id = rv.reference_id
 JOIN fields f ON rv.field_id = f.id
-WHERE f.key_name = 'author' 
+WHERE f.key_name = 'author'
   AND rv.value ILIKE '%Smith%'
 ORDER BY r.bib_key;
 ```
@@ -435,9 +453,9 @@ ORDER BY r.bib_key;
 ### 12. Export References to BibTeX Format
 
 ```sql
-SELECT r.bib_key, rt.name, 
+SELECT r.bib_key, rt.name,
        json_object_agg(f.key_name, rv.value) as fields
-FROM references r
+FROM single_reference r
 JOIN reference_types rt ON r.reference_type_id = rt.id
 LEFT JOIN reference_values rv ON r.id = rv.reference_id
 LEFT JOIN fields f ON rv.field_id = f.id
@@ -456,11 +474,13 @@ ORDER BY r.bib_key;
 Inspection utility to view the current state of the database.
 
 **Usage:**
+
 ```bash
 python check_database.py
 ```
 
 **Output Sections:**
+
 1. **REFERENCE TYPES** - All BibTeX entry types defined
 2. **FIELDS** - All metadata fields available
 3. **REFERENCE TYPE ↔ FIELD MAPPINGS** - Schema structure
@@ -469,10 +489,11 @@ python check_database.py
 6. **SUMMARY** - Count statistics
 
 **Key Queries Used:**
+
 - `SELECT id, name FROM reference_types ORDER BY id`
 - `SELECT * FROM fields ORDER BY id`
 - Multi-join query showing type-field mappings with required flags
-- `SELECT r.id, rt.name, r.bib_key, r.created_at FROM references r...`
+- `SELECT r.id, rt.name, r.bib_key, r.created_at FROM single_reference r...`
 - Nested joins to display all field values per reference
 
 ---
@@ -482,11 +503,13 @@ python check_database.py
 Population script to initialize database with schema from `form-fields.json`.
 
 **Usage:**
+
 ```bash
 python seed_database.py
 ```
 
 **Process:**
+
 1. Connects to database via `DATABASE_URL`
 2. Creates tables if missing:
    - `reference_types`
@@ -499,10 +522,11 @@ python seed_database.py
 7. Creates type-field mappings with required flags
 
 **Key Operations:**
+
 ```python
 # Insert with conflict handling
-INSERT INTO reference_types (name) 
-VALUES (:name) 
+INSERT INTO reference_types (name)
+VALUES (:name)
 ON CONFLICT (name) DO NOTHING
 
 # Bulk insert fields
@@ -544,6 +568,7 @@ with Session(engine) as session:
 ### Querying
 
 1. **Always use parameterized queries** to prevent SQL injection:
+
    ```python
    session.execute(
        text("SELECT * FROM fields WHERE key_name = :name"),
@@ -552,11 +577,12 @@ with Session(engine) as session:
    ```
 
 2. **Use joins carefully** - The reference system requires multiple joins:
+
    ```python
    # Good: explicit joins with clear relationships
    result = session.execute(text("""
        SELECT r.bib_key, f.key_name, rv.value
-       FROM references r
+       FROM single_reference r
        JOIN reference_values rv ON r.id = rv.reference_id
        JOIN fields f ON rv.field_id = f.id
    """))
@@ -594,22 +620,22 @@ with Session(engine) as session:
         text("SELECT id FROM reference_types WHERE name = :name"),
         {"name": "article"}
     ).scalar()
-    
+
     # 2. Create reference
     session.execute(
         text("""
-            INSERT INTO references (reference_type_id, bib_key)
+            INSERT INTO single_reference (reference_type_id, bib_key)
             VALUES (:type_id, :key)
         """),
         {"type_id": ref_type, "key": "Smith2023"}
     )
-    
+
     # 3. Get reference ID
     ref_id = session.execute(
-        text("SELECT id FROM references WHERE bib_key = :key"),
+        text("SELECT id FROM single_reference WHERE bib_key = :key"),
         {"key": "Smith2023"}
     ).scalar()
-    
+
     # 4. Insert field values
     session.execute(
         text("""
@@ -618,7 +644,7 @@ with Session(engine) as session:
         """),
         {"ref_id": ref_id, "field_name": "author", "value": "John Smith"}
     )
-    
+
     session.commit()
 ```
 
@@ -641,11 +667,12 @@ session.commit()
 
 ```python
 session.execute(
-    text("DELETE FROM references WHERE id = :id"),
+    text("DELETE FROM single_reference WHERE id = :id"),
     {"id": 1}
 )
 session.commit()
 ```
+
 (Automatically cascades to `reference_values`)
 
 ---
@@ -653,18 +680,22 @@ session.commit()
 ## Troubleshooting
 
 ### ERROR: Relation Does Not Exist
+
 **Cause:** Tables haven't been created yet
 **Solution:** Run `python seed_database.py` or call `setup_db()`
 
 ### ERROR: Foreign Key Violation
+
 **Cause:** Trying to insert/update with non-existent reference IDs
 **Solution:** Verify the foreign key ID exists first
 
 ### Missing Required Fields
+
 **Cause:** Inserted reference without populating required fields
 **Solution:** Check `reference_type_fields WHERE required = TRUE` and populate all
 
 ### Duplicate bib_key
+
 **Cause:** Trying to insert a reference with an existing citation key
 **Solution:** Use unique keys or update instead of insert
 
@@ -673,14 +704,16 @@ session.commit()
 ## Summary
 
 The database design provides:
+
 - **Flexibility** - Different reference types have different field requirements
 - **Integrity** - Foreign keys and constraints prevent invalid data
 - **Scalability** - Easy to add new reference types and fields
 - **Maintainability** - Clear separation of concerns (types, fields, values)
 
 Key tables to remember:
+
 - `reference_types` - What types exist (article, book, etc.)
 - `fields` - What fields are available (author, title, etc.)
 - `reference_type_fields` - Which fields apply to which types
-- `references` - The actual bibliography entries
+- `single_reference` - The actual bibliography entries
 - `reference_values` - The field values for each entry

@@ -1,37 +1,33 @@
-from flask import redirect, render_template, request, jsonify, flash
-from db_helper import reset_db
+"""Flask application routes and initialization."""
+
+from flask import jsonify, redirect, render_template, request
+
 from config import app, test_env
-from util import load_form_fields
+from db_helper import reset_db
+from utils import references
 
-@app.route("/")
+
+@app.route("/", methods=["GET", "POST"])
 def index():
-    """Etusivu - näytä tyyppi-valinta"""
-    form_fields = load_form_fields()
-    reference_types = list(form_fields.keys())
+    """Handle the main page route.
 
-    return render_template("index.html", reference_types=reference_types)
+    GET: Display reference types selection form
+    POST: Redirect to /add with selected reference type
+    """
+    if request.method == "GET":
+        reference_types = references.get_all_references()
+        return render_template("index.html", reference_types=reference_types)
+    reference = request.form.get("form")
+    if reference:
+        return redirect(f"/add?form={reference}")
+    return None
 
-@app.route("/show_fields")
-def show_fields():
-    """Näytä valitun tyypin kentät"""
-    selected_type = request.args.get('type')
-    form_fields = load_form_fields()
-    reference_types = list(form_fields.keys())
-
-    fields = []
-    if selected_type and selected_type in form_fields:
-        fields = form_fields[selected_type]
-
-    return render_template(
-        "index.html",
-        reference_types=reference_types,
-        selected_type=selected_type,
-        fields=fields
-    )
 
 # testausta varten oleva reitti
 if test_env:
+
     @app.route("/reset_db")
     def reset_database():
+        """Reset the database (testing only)."""
         reset_db()
-        return jsonify({ 'message': "db reset" })
+        return jsonify({"message": "db reset"})

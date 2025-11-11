@@ -16,6 +16,25 @@ psycopg2-binary = "^2.9.0"
 pytest = "^9.0.0"
 
 [tool.poetry.group.dev.dependencies]
+pylint = "^3.0.0"
+black = "^24.0.0"
+isort = "^5.13.0"
+autoflake = "^2.0.0"
+pytest-cov = "^5.0.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.autoflake]
+check = false
+imports = ["django", "requests"]
+remove-all-unused-imports = true
+remove-unused-variables = true
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
