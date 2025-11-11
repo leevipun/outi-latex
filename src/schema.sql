@@ -22,7 +22,7 @@ CREATE TABLE reference_type_fields (
 );
 
 -- Yksittäinen viite
-CREATE TABLE references (
+CREATE TABLE single_reference (
     id SERIAL PRIMARY KEY,
     reference_type_id INT NOT NULL REFERENCES reference_types(id),
     bib_key VARCHAR(100) UNIQUE NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE references (
 -- Kenttäarvot
 CREATE TABLE reference_values (
     id SERIAL PRIMARY KEY,
-    reference_id INT NOT NULL REFERENCES references(id) ON DELETE CASCADE,
+    reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
     field_id INT NOT NULL REFERENCES fields(id),
     value TEXT
 );

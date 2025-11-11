@@ -1,39 +1,33 @@
-from flask import redirect, render_template, request, jsonify, flash
-from db_helper import reset_db
-from repositories.todo_repository import get_todos, create_todo, set_done
+"""Flask application routes and initialization."""
+
+from flask import jsonify, redirect, render_template, request
+
 from config import app, test_env
-from util import validate_todo
+from db_helper import reset_db
+from utils import references
 
-@app.route("/")
+
+@app.route("/", methods=["GET", "POST"])
 def index():
-    todos = get_todos()
-    unfinished = len([todo for todo in todos if not todo.done])
-    return render_template("index.html", todos=todos, unfinished=unfinished) 
+    """Handle the main page route.
 
-@app.route("/new_todo")
-def new():
-    return render_template("new_todo.html")
+    GET: Display reference types selection form
+    POST: Redirect to /add with selected reference type
+    """
+    if request.method == "GET":
+        reference_types = references.get_all_references()
+        return render_template("index.html", reference_types=reference_types)
+    reference = request.form.get("form")
+    if reference:
+        return redirect(f"/add?form={reference}")
+    return None
 
-@app.route("/create_todo", methods=["POST"])
-def todo_creation():
-    content = request.form.get("content")
-
-    try:
-        validate_todo(content)
-        create_todo(content)
-        return redirect("/")
-    except Exception as error:
-        flash(str(error))
-        return  redirect("/new_todo")
-
-@app.route("/toggle_todo/<todo_id>", methods=["POST"])
-def toggle_todo(todo_id):
-    set_done(todo_id)
-    return redirect("/")
 
 # testausta varten oleva reitti
 if test_env:
+
     @app.route("/reset_db")
     def reset_database():
+        """Reset the database (testing only)."""
         reset_db()
-        return jsonify({ 'message': "db reset" })
+        return jsonify({"message": "db reset"})
