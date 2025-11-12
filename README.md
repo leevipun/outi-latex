@@ -2,6 +2,8 @@
 
 A Flask-based web application for managing reference collections with LaTeX support.
 
+https://docs.google.com/spreadsheets/d/1c9JaIyMWyLqpMv7I3L1M4DubtTQdr-XJTI_NyptITVM/edit?gid=0#gid=0
+
 ## 📋 Table of Contents
 
 - [Features](#features)
