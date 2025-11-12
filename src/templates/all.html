@@ -87,6 +87,22 @@
         button:active {
             transform: translateY(0);
         }
+
+        a {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+        }
+
+        a:hover {
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -100,6 +116,8 @@
             </ul>
             <br/>
         {% endfor %}
+        <br/>
+        <a href="/">Etusivu</a>
     </div>
 </body>
 </html>
