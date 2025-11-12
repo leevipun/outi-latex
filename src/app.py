@@ -67,6 +67,11 @@ def add():
     )
 
 
+@app.route("/all")
+def all_references():
+    return render_template("all.html")
+
+
 # testausta varten oleva reitti
 if test_env:
 
