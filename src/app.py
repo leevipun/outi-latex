@@ -72,6 +72,9 @@ def all_references():
     """See all added references listed on one page.
     """
     data = references.get_all_added_references()
+    for reference in data:
+        timestamp = reference["created_at"]
+        reference["created_at"] = timestamp.strftime("%H:%M, %m.%d.%y") 
     return render_template("all.html", data=data)
 
 

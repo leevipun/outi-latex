@@ -93,7 +93,12 @@
     <div class="container">
         <h1>Tässä kaikki lisäämäsi viitteet</h1>
         {% for reference in data %}
-            {{ reference }}
+            <h3>{{ reference["bib_key"] }}</h3>
+            <ul>
+                <li style="list-style-type: none;">{{ reference["reference_type"] }}</li>
+                <li style="list-style-type: none;">{{ reference["created_at"] }}</li>
+            </ul>
+            <br/>
         {% endfor %}
     </div>
 </body>
