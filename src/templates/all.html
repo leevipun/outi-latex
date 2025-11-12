@@ -92,6 +92,9 @@
 <body>
     <div class="container">
         <h1>Tässä kaikki lisäämäsi viitteet</h1>
+        {% for reference in data %}
+            {{ reference }}
+        {% endfor %}
     </div>
 </body>
 </html>

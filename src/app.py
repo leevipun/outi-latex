@@ -69,7 +69,10 @@ def add():
 
 @app.route("/all")
 def all_references():
-    return render_template("all.html")
+    """See all added references listed on one page.
+    """
+    data = references.get_all_added_references()
+    return render_template("all.html", data=data)
 
 
 # testausta varten oleva reitti
