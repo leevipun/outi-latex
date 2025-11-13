@@ -2,7 +2,7 @@
 
 from sqlalchemy import text
 
-from src.config import db
+from config import db
 
 
 def get_all_references() -> list:

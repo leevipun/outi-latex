@@ -4,7 +4,7 @@ import os
 
 from sqlalchemy import text
 
-from src.config import app, db
+from config import app, db
 
 
 def reset_db():
