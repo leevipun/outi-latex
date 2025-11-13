@@ -5,7 +5,13 @@ from flask import jsonify, redirect, render_template, request, flash
 from config import app, test_env
 from db_helper import reset_db
 from utils import references
-from util import get_reference_type_by_id, get_fields_for_type
+from utils.references import DatabaseError
+from util import (
+    get_reference_type_by_id,
+    get_fields_for_type,
+    ReferenceTypeError,
+    FormFieldsError,
+)
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -16,7 +22,11 @@ def index():
     POST: Redirect to /add with selected reference type
     """
     if request.method == "GET":
-        reference_types = references.get_all_references()
+        try:
+            reference_types = references.get_all_references()
+        except DatabaseError as e:
+            flash(f"Database error: {str(e)}", "error")
+            reference_types = []
         return render_template("index.html", reference_types=reference_types)
 
     reference = request.form.get("form")
@@ -24,10 +34,15 @@ def index():
         return redirect(f"/add?form={reference}")
 
     flash("Please select a reference type", "error")
+    try:
+        reference_types = references.get_all_references()
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        reference_types = []
     return (
         render_template(
             "index.html",
-            reference_types=references.get_all_references(),
+            reference_types=reference_types,
         ),
         400,
     )
@@ -42,10 +57,14 @@ def add():
     form_id = request.args.get("form")
 
     if not form_id:
-        print("Ei form parametria!")
+        flash("No reference type selected", "error")
         return render_template("add_reference.html", selected_type=None, fields=[])
 
-    reference_types_db = references.get_all_references()
+    try:
+        reference_types_db = references.get_all_references()
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        return render_template("add_reference.html", selected_type=None, fields=[])
 
     selected_type = None
     try:
@@ -54,13 +73,21 @@ def add():
     except ValueError:
         # Jos form=article (nimi), käytä sitä suoraan
         selected_type = form_id
+    except ReferenceTypeError as e:
+        flash(f"Error loading reference type: {str(e)}", "error")
+        return render_template("add_reference.html", selected_type=None, fields=[])
 
     # Jos tyyppiä ei löytynyt
     if not selected_type:
+        flash(f"Reference type not found", "error")
         return render_template("add_reference.html", selected_type=None, fields=[])
 
     # Hae valitun tyypin kentät form-fields.json:sta
-    fields = get_fields_for_type(selected_type)
+    try:
+        fields = get_fields_for_type(selected_type)
+    except FormFieldsError as e:
+        flash(f"Error loading form fields: {str(e)}", "error")
+        fields = []
 
     return render_template(
         "add_reference.html", selected_type=selected_type, fields=fields
@@ -70,7 +97,13 @@ def add():
 @app.route("/all")
 def all_references():
     """See all added references listed on one page."""
-    data = references.get_all_added_references()
+    try:
+        data = references.get_all_added_references()
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        data = []
+        return render_template("all.html", data=data)
+    
     for reference in data:
         timestamp = reference["created_at"]
         reference["created_at"] = timestamp.strftime("%H:%M, %m.%d.%y")
