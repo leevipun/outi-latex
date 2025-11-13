@@ -41,34 +41,25 @@ def sample_form_fields():
 class TestGetReferenceTypeById:
     """Tests for get_reference_type_by_id function."""
 
+    REFERENCE_TYPES = [
+        {"id": 1, "name": "article"},
+        {"id": 2, "name": "book"},
+        {"id": 3, "name": "inproceedings"},
+    ]
+
     def test_with_dict_reference_types(self):
         """Test finding reference type by ID with dictionary objects."""
-        reference_types = [
-            {"id": 1, "name": "article"},
-            {"id": 2, "name": "book"},
-            {"id": 3, "name": "inproceedings"},
-        ]
-        result = get_reference_type_by_id(1, reference_types)
+        result = get_reference_type_by_id(1, self.REFERENCE_TYPES)
         assert result == "article"
 
     def test_with_dict_reference_types_middle_value(self):
         """Test finding reference type by ID with middle value."""
-        reference_types = [
-            {"id": 1, "name": "article"},
-            {"id": 2, "name": "book"},
-            {"id": 3, "name": "inproceedings"},
-        ]
-        result = get_reference_type_by_id(2, reference_types)
+        result = get_reference_type_by_id(2, self.REFERENCE_TYPES)
         assert result == "book"
 
     def test_with_dict_reference_types_last_value(self):
         """Test finding reference type by ID with last value."""
-        reference_types = [
-            {"id": 1, "name": "article"},
-            {"id": 2, "name": "book"},
-            {"id": 3, "name": "inproceedings"},
-        ]
-        result = get_reference_type_by_id(3, reference_types)
+        result = get_reference_type_by_id(3, self.REFERENCE_TYPES)
         assert result == "inproceedings"
 
     def test_with_object_reference_types(self):
