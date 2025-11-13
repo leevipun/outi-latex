@@ -43,21 +43,21 @@ def get_all_added_references() -> list:
             ORDER BY sr.created_at DESC, sr.id, f.key_name;"""
     )
     results = db.session.execute(sql)
-    
+
     # Group results by reference
     references = {}
     for row in results.mappings():
-        ref_id = row['id']
+        ref_id = row["id"]
         if ref_id not in references:
             references[ref_id] = {
-                'bib_key': row['bib_key'],
-                'reference_type': row['reference_type'],
-                'created_at': row['created_at'],
-                'fields': {}
+                "bib_key": row["bib_key"],
+                "reference_type": row["reference_type"],
+                "created_at": row["created_at"],
+                "fields": {},
             }
-        
+
         # Add field value if it exists
-        if row['key_name'] is not None:
-            references[ref_id]['fields'][row['key_name']] = row['value']
-    
+        if row["key_name"] is not None:
+            references[ref_id]["fields"][row["key_name"]] = row["value"]
+
     return list(references.values())
