@@ -13,7 +13,8 @@ if src_path not in sys.path:
 @pytest.fixture
 def app():
     """Create and configure a Flask app for testing."""
-    # Import here to avoid circular imports
+    # Import app to register all routes
+    import app as app_module  # noqa: F401
     from config import app as flask_app
 
     # Set testing mode
