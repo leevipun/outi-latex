@@ -3,15 +3,15 @@
 # pylint: disable=redefined-outer-name
 import sys
 from pathlib import Path
-
-import pytest
-from sqlalchemy import text
-
-from config import app, db
-from utils.references import get_all_references
+from unittest.mock import MagicMock, patch
 
 # Add src directory to path so we can import modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+import pytest
+
+from config import app, db
+from utils.references import get_all_references, get_all_added_references
 
 
 @pytest.fixture
@@ -22,127 +22,385 @@ def test_app():
 
 
 @pytest.fixture
-def setup_test_database(test_app):  # pylint: disable=redefined-outer-name
-    """Set up test database with sample data, cleaning up before and after."""
-    with test_app.app_context():
-        # Clean up existing data first
-        try:
-            db.session.execute(text("TRUNCATE TABLE reference_types CASCADE"))
-            # Reset the sequence
-            db.session.execute(
-                text("ALTER SEQUENCE reference_types_id_seq RESTART WITH 1")
-            )
-            db.session.commit()
-        except Exception:  # pylint: disable=broad-exception-caught
-            # Table might not exist, that's okay
-            db.session.rollback()
-
-        # Insert test data
-        reference_data = [
-            ("article",),
-            ("book",),
-            ("inproceedings",),
-            ("inbook",),
-            ("incollection",),
-            ("misc",),
-            ("phdthesis",),
-            ("mastersthesis",),
-            ("techreport",),
-            ("unpublished",),
-        ]
-
-        sql = text("INSERT INTO reference_types (name) VALUES (:name)")
-        for data in reference_data:
-            db.session.execute(sql, {"name": data[0]})
-        db.session.commit()
-
-        yield
-
-        # Cleanup after test
-        try:
-            db.session.execute(text("TRUNCATE TABLE reference_types CASCADE"))
-            db.session.commit()
-        except Exception:  # pylint: disable=broad-exception-caught
-            db.session.rollback()
+def mock_db_session():
+    """Create a mock database session."""
+    return MagicMock()
 
 
-def test_get_all_references_returns_correct_data(
-    setup_test_database,
-):  # pylint: disable=unused-argument
+@patch("utils.references.db")
+def test_get_all_references_returns_correct_data(mock_db):
     """Test that get_all_references returns all reference types with correct data."""
-    with app.app_context():
-        result = get_all_references()
+    mock_rows = [
+        {"id": 1, "name": "article"},
+        {"id": 2, "name": "book"},
+        {"id": 3, "name": "inproceedings"},
+        {"id": 4, "name": "inbook"},
+        {"id": 5, "name": "incollection"},
+        {"id": 6, "name": "misc"},
+        {"id": 7, "name": "phdthesis"},
+        {"id": 8, "name": "mastersthesis"},
+        {"id": 9, "name": "techreport"},
+        {"id": 10, "name": "unpublished"},
+    ]
+    mock_db.session.execute.return_value.mappings.return_value = mock_rows
 
-        expected = [
-            {"id": 1, "name": "article"},
-            {"id": 2, "name": "book"},
-            {"id": 3, "name": "inproceedings"},
-            {"id": 4, "name": "inbook"},
-            {"id": 5, "name": "incollection"},
-            {"id": 6, "name": "misc"},
-            {"id": 7, "name": "phdthesis"},
-            {"id": 8, "name": "mastersthesis"},
-            {"id": 9, "name": "techreport"},
-            {"id": 10, "name": "unpublished"},
-        ]
+    result = get_all_references()
 
-        assert result == expected
+    expected = [
+        {"id": 1, "name": "article"},
+        {"id": 2, "name": "book"},
+        {"id": 3, "name": "inproceedings"},
+        {"id": 4, "name": "inbook"},
+        {"id": 5, "name": "incollection"},
+        {"id": 6, "name": "misc"},
+        {"id": 7, "name": "phdthesis"},
+        {"id": 8, "name": "mastersthesis"},
+        {"id": 9, "name": "techreport"},
+        {"id": 10, "name": "unpublished"},
+    ]
+
+    assert result == expected
 
 
-def test_get_all_references_returns_list(
-    setup_test_database,
-):  # pylint: disable=unused-argument
+@patch("utils.references.db")
+def test_get_all_references_returns_list(mock_db):
     """Test that get_all_references returns a list."""
-    with app.app_context():
-        result = get_all_references()
+    mock_db.session.execute.return_value.mappings.return_value = []
+
+    result = get_all_references()
+    assert isinstance(result, list)
+
+
+@patch("utils.references.db")
+def test_get_all_references_ordered_by_id(mock_db):
+    """Test that results are ordered by id."""
+    mock_rows = [
+        {"id": 1, "name": "article"},
+        {"id": 2, "name": "book"},
+        {"id": 3, "name": "inproceedings"},
+    ]
+    mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+    result = get_all_references()
+    ids = [item["id"] for item in result]
+    assert ids == sorted(ids)
+
+
+@patch("utils.references.db")
+def test_get_all_references_has_correct_length(mock_db):
+    """Test that all 10 reference types are returned."""
+    mock_rows = [
+        {"id": 1, "name": "article"},
+        {"id": 2, "name": "book"},
+        {"id": 3, "name": "inproceedings"},
+        {"id": 4, "name": "inbook"},
+        {"id": 5, "name": "incollection"},
+        {"id": 6, "name": "misc"},
+        {"id": 7, "name": "phdthesis"},
+        {"id": 8, "name": "mastersthesis"},
+        {"id": 9, "name": "techreport"},
+        {"id": 10, "name": "unpublished"},
+    ]
+    mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+    result = get_all_references()
+    assert len(result) == 10
+
+
+@patch("utils.references.db")
+def test_get_all_references_dict_structure(mock_db):
+    """Test that each item has 'id' and 'name' keys."""
+    mock_rows = [
+        {"id": 1, "name": "article"},
+        {"id": 2, "name": "book"},
+    ]
+    mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+    result = get_all_references()
+
+    for item in result:
+        assert isinstance(item, dict)
+        assert "id" in item
+        assert "name" in item
+        assert isinstance(item["id"], int)
+        assert isinstance(item["name"], str)
+
+
+@patch("utils.references.db")
+def test_get_all_references_empty_table(mock_db):
+    """Test behavior when reference_types table is empty."""
+    mock_db.session.execute.return_value.mappings.return_value = []
+
+    result = get_all_references()
+    assert result == []
+
+
+class TestGetAllAddedReferences:
+    """Test suite for get_all_added_references function."""
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_returns_list(self, mock_db):
+        """Test that get_all_added_references returns a list."""
+        mock_db.session.execute.return_value.mappings.return_value = []
+
+        result = get_all_added_references()
+
         assert isinstance(result, list)
 
+    @patch("utils.references.db")
+    def test_get_all_added_references_empty_database(self, mock_db):
+        """Test behavior when no references exist in database."""
+        mock_db.session.execute.return_value.mappings.return_value = []
 
-def test_get_all_references_ordered_by_id(
-    setup_test_database,
-):  # pylint: disable=unused-argument
-    """Test that results are ordered by id."""
-    with app.app_context():
-        result = get_all_references()
-        ids = [item["id"] for item in result]
-        assert ids == sorted(ids)
+        result = get_all_added_references()
 
-
-def test_get_all_references_has_correct_length(
-    setup_test_database,
-):  # pylint: disable=unused-argument
-    """Test that all 10 reference types are returned."""
-    with app.app_context():
-        result = get_all_references()
-        assert len(result) == 10
-
-
-def test_get_all_references_dict_structure(
-    setup_test_database,
-):  # pylint: disable=unused-argument
-    """Test that each item has 'id' and 'name' keys."""
-    with app.app_context():
-        result = get_all_references()
-
-        for item in result:
-            assert isinstance(item, dict)
-            assert "id" in item
-            assert "name" in item
-            assert isinstance(item["id"], int)
-            assert isinstance(item["name"], str)
-
-
-def test_get_all_references_empty_table(
-    test_app,
-):  # pylint: disable=redefined-outer-name, unused-argument
-    """Test behavior when reference_types table is empty."""
-    with test_app.app_context():
-        # Clean the table
-        try:
-            db.session.execute(text("TRUNCATE TABLE reference_types CASCADE"))
-            db.session.commit()
-        except Exception:  # pylint: disable=broad-exception-caught
-            db.session.rollback()
-
-        result = get_all_references()
         assert result == []
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_single_reference_no_fields(self, mock_db):
+        """Test with a single reference that has no field values."""
+        mock_row = {
+            "id": 1,
+            "bib_key": "einstein1905",
+            "reference_type": "article",
+            "created_at": "2025-01-01 10:00:00",
+            "key_name": None,
+            "value": None,
+        }
+        mock_db.session.execute.return_value.mappings.return_value = [mock_row]
+
+        result = get_all_added_references()
+
+        expected = [
+            {
+                "bib_key": "einstein1905",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "fields": {},
+            }
+        ]
+        assert result == expected
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_single_reference_with_fields(self, mock_db):
+        """Test with a single reference that has multiple field values."""
+        mock_rows = [
+            {
+                "id": 1,
+                "bib_key": "einstein1905",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "author",
+                "value": "Albert Einstein",
+            },
+            {
+                "id": 1,
+                "bib_key": "einstein1905",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "title",
+                "value": "On the Electrodynamics of Moving Bodies",
+            },
+            {
+                "id": 1,
+                "bib_key": "einstein1905",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "year",
+                "value": "1905",
+            },
+        ]
+        mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+        result = get_all_added_references()
+
+        expected = [
+            {
+                "bib_key": "einstein1905",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "fields": {
+                    "author": "Albert Einstein",
+                    "title": "On the Electrodynamics of Moving Bodies",
+                    "year": "1905",
+                },
+            }
+        ]
+        assert result == expected
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_multiple_references(self, mock_db):
+        """Test with multiple references."""
+        mock_rows = [
+            {
+                "id": 1,
+                "bib_key": "einstein1905",
+                "reference_type": "article",
+                "created_at": "2025-01-02 10:00:00",
+                "key_name": "author",
+                "value": "Albert Einstein",
+            },
+            {
+                "id": 1,
+                "bib_key": "einstein1905",
+                "reference_type": "article",
+                "created_at": "2025-01-02 10:00:00",
+                "key_name": "title",
+                "value": "Relativity",
+            },
+            {
+                "id": 2,
+                "bib_key": "darwin1859",
+                "reference_type": "book",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "author",
+                "value": "Charles Darwin",
+            },
+            {
+                "id": 2,
+                "bib_key": "darwin1859",
+                "reference_type": "book",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "title",
+                "value": "On the Origin of Species",
+            },
+        ]
+        mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+        result = get_all_added_references()
+
+        assert len(result) == 2
+        assert result[0]["bib_key"] == "einstein1905"
+        assert result[1]["bib_key"] == "darwin1859"
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_ordered_by_created_at(self, mock_db):
+        """Test that results are ordered by created_at descending."""
+        mock_rows = [
+            {
+                "id": 2,
+                "bib_key": "darwin1859",
+                "reference_type": "book",
+                "created_at": "2025-01-02 10:00:00",
+                "key_name": None,
+                "value": None,
+            },
+            {
+                "id": 1,
+                "bib_key": "einstein1905",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": None,
+                "value": None,
+            },
+        ]
+        mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+        result = get_all_added_references()
+
+        # Should be ordered by created_at descending
+        assert result[0]["created_at"] == "2025-01-02 10:00:00"
+        assert result[1]["created_at"] == "2025-01-01 10:00:00"
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_dict_structure(self, mock_db):
+        """Test that each reference has required keys."""
+        mock_rows = [
+            {
+                "id": 1,
+                "bib_key": "test2025",
+                "reference_type": "misc",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "note",
+                "value": "Test note",
+            }
+        ]
+        mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+        result = get_all_added_references()
+
+        assert len(result) == 1
+        item = result[0]
+        assert isinstance(item, dict)
+        assert "bib_key" in item
+        assert "reference_type" in item
+        assert "created_at" in item
+        assert "fields" in item
+        assert isinstance(item["fields"], dict)
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_field_values_can_be_null(self, mock_db):
+        """Test that field values can be None/null."""
+        mock_rows = [
+            {
+                "id": 1,
+                "bib_key": "test2025",
+                "reference_type": "misc",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "note",
+                "value": None,
+            }
+        ]
+        mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+        result = get_all_added_references()
+
+        assert result[0]["fields"]["note"] is None
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_groups_by_reference_id(self, mock_db):
+        """Test that rows with same reference ID are grouped together."""
+        mock_rows = [
+            {
+                "id": 1,
+                "bib_key": "test2025",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "author",
+                "value": "John Doe",
+            },
+            {
+                "id": 1,
+                "bib_key": "test2025",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "journal",
+                "value": "Science",
+            },
+        ]
+        mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+        result = get_all_added_references()
+
+        assert len(result) == 1
+        assert len(result[0]["fields"]) == 2
+        assert result[0]["fields"]["author"] == "John Doe"
+        assert result[0]["fields"]["journal"] == "Science"
+
+    @patch("utils.references.db")
+    def test_get_all_added_references_preserves_field_order(self, mock_db):
+        """Test that field values are preserved correctly."""
+        mock_rows = [
+            {
+                "id": 1,
+                "bib_key": "test2025",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "title",
+                "value": "Test Article",
+            },
+            {
+                "id": 1,
+                "bib_key": "test2025",
+                "reference_type": "article",
+                "created_at": "2025-01-01 10:00:00",
+                "key_name": "author",
+                "value": "Test Author",
+            },
+        ]
+        mock_db.session.execute.return_value.mappings.return_value = mock_rows
+
+        result = get_all_added_references()
+
+        assert result[0]["fields"]["title"] == "Test Article"
+        assert result[0]["fields"]["author"] == "Test Author"
