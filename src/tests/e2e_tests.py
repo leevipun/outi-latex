@@ -20,7 +20,7 @@ class TestIndexRoute:
         self, client
     ):  # pylint: disable=redefined-outer-name
         """Test GET / returns the index page with form."""
-        with patch("utils.references.get_all_references") as mock_refs:
+        with patch("src.utils.references.get_all_references") as mock_refs:
             mock_refs.return_value = [
                 {"id": 1, "name": "article"},
                 {"id": 2, "name": "book"},
@@ -45,7 +45,7 @@ class TestIndexRoute:
         self, client  # pylint: disable=redefined-outer-name
     ):
         """Test POST / without form shows error."""
-        with patch("utils.references.get_all_references") as mock_refs:
+        with patch("src.utils.references.get_all_references") as mock_refs:
             mock_refs.return_value = [{"id": 1, "name": "article"}]
             response = client.post("/", data={})
             assert response.status_code == 400
@@ -54,7 +54,7 @@ class TestIndexRoute:
         self, client  # pylint: disable=redefined-outer-name
     ):
         """Test POST / with empty form shows error."""
-        with patch("utils.references.get_all_references") as mock_refs:
+        with patch("src.utils.references.get_all_references") as mock_refs:
             mock_refs.return_value = [{"id": 1, "name": "article"}]
             response = client.post("/", data={"form": ""})
             assert response.status_code == 400
@@ -74,7 +74,7 @@ class TestAddRoute:
         self, client  # pylint: disable=redefined-outer-name
     ):
         """Test GET /add?form=999 with non-existent ID."""
-        with patch("utils.references.get_all_references") as mock_refs:
+        with patch("src.utils.references.get_all_references") as mock_refs:
             mock_refs.return_value = [{"id": 1, "name": "article"}]
             response = client.get("/add?form=999")
             assert response.status_code == 200
@@ -87,7 +87,7 @@ class TestAllReferencesRoute:
         self, client  # pylint: disable=redefined-outer-name
     ):
         """Test GET /all returns references page."""
-        with patch("utils.references.get_all_added_references") as mock_refs:
+        with patch("src.utils.references.get_all_added_references") as mock_refs:
             mock_refs.return_value = []
             response = client.get("/all")
             assert response.status_code == 200
@@ -103,7 +103,7 @@ class TestAllReferencesRoute:
             "created_at": datetime(2025, 11, 13, 10, 30, 0),
             "fields": {"title": "Test Article", "author": "John Doe"},
         }
-        with patch("utils.references.get_all_added_references") as mock_refs:
+        with patch("src.utils.references.get_all_added_references") as mock_refs:
             mock_refs.return_value = [mock_reference]
             response = client.get("/all")
             assert response.status_code == 200
@@ -134,7 +134,7 @@ class TestUserJourneys:
         self, client  # pylint: disable=redefined-outer-name
     ):
         """Test user journey: select reference type and view form."""
-        with patch("utils.references.get_all_references") as mock_refs:
+        with patch("src.utils.references.get_all_references") as mock_refs:
             mock_refs.return_value = [{"id": 1, "name": "article"}]
             response = client.get("/")
             assert response.status_code == 200
@@ -163,7 +163,7 @@ class TestUserJourneys:
             },
         ]
 
-        with patch("utils.references.get_all_added_references") as mock_refs:
+        with patch("src.utils.references.get_all_added_references") as mock_refs:
             mock_refs.return_value = mock_references
             response = client.get("/all")
             assert response.status_code == 200
@@ -176,7 +176,7 @@ class TestResponseTypes:
         self, client  # pylint: disable=redefined-outer-name
     ):
         """Test that index returns HTML content."""
-        with patch("utils.references.get_all_references") as mock_refs:
+        with patch("src.utils.references.get_all_references") as mock_refs:
             mock_refs.return_value = []
             response = client.get("/")
             html_check = (
@@ -200,7 +200,7 @@ class TestResponseTypes:
         self, client  # pylint: disable=redefined-outer-name
     ):
         """Test that all page returns HTML content."""
-        with patch("utils.references.get_all_added_references") as mock_refs:
+        with patch("src.utils.references.get_all_added_references") as mock_refs:
             mock_refs.return_value = []
             response = client.get("/all")
             html_check = (
