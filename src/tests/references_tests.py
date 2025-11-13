@@ -10,7 +10,7 @@ import pytest
 # Add src directory to path so we can import modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from config import app
+from src.config import app
 from utils.references import get_all_references, get_all_added_references
 
 
