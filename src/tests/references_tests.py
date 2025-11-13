@@ -1,16 +1,16 @@
 """Test suite for reference management utilities."""
 
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name,wrong-import-position
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 # Add src directory to path so we can import modules
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-import pytest
-
-from config import app, db
+from config import app
 from utils.references import get_all_references, get_all_added_references
 
 
@@ -132,7 +132,7 @@ def test_get_all_references_empty_table(mock_db):
     mock_db.session.execute.return_value.mappings.return_value = []
 
     result = get_all_references()
-    assert result == []
+    assert not result
 
 
 class TestGetAllAddedReferences:
@@ -154,7 +154,7 @@ class TestGetAllAddedReferences:
 
         result = get_all_added_references()
 
-        assert result == []
+        assert not result
 
     @patch("utils.references.db")
     def test_get_all_added_references_single_reference_no_fields(self, mock_db):
@@ -182,8 +182,8 @@ class TestGetAllAddedReferences:
         assert result == expected
 
     @patch("utils.references.db")
-    def test_get_all_added_references_single_reference_with_fields(self, mock_db):
-        """Test with a single reference that has multiple field values."""
+    def test_get_all_added_references_single_ref_with_fields(self, mock_db):
+        """Test with single reference that has multiple field values."""
         mock_rows = [
             {
                 "id": 1,
@@ -348,7 +348,7 @@ class TestGetAllAddedReferences:
         assert result[0]["fields"]["note"] is None
 
     @patch("utils.references.db")
-    def test_get_all_added_references_groups_by_reference_id(self, mock_db):
+    def test_get_all_added_references_groups_by_ref_id(self, mock_db):
         """Test that rows with same reference ID are grouped together."""
         mock_rows = [
             {

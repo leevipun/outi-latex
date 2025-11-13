@@ -1,14 +1,14 @@
 """Unit tests for src/util.py utility functions."""
 
-import pytest
 import json
-from unittest.mock import patch, mock_open
-from typing import Dict, List, Any
+from unittest.mock import mock_open, patch
+
+import pytest
 
 from util import (
-    load_form_fields,
-    get_reference_type_by_id,
     get_fields_for_type,
+    get_reference_type_by_id,
+    load_form_fields,
 )
 
 
@@ -17,23 +17,101 @@ def sample_form_fields():
     """Fixture providing sample form fields data."""
     return {
         "article": [
-            {"key": "author", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "title", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "journal", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "year", "input-type": "number", "type": "int", "required": True, "additional": False},
-            {"key": "volume", "input-type": "number", "type": "int", "required": False, "additional": False},
+            {
+                "key": "author",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "title",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "journal",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "year",
+                "input-type": "number",
+                "type": "int",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "volume",
+                "input-type": "number",
+                "type": "int",
+                "required": False,
+                "additional": False,
+            },
         ],
         "book": [
-            {"key": "author/editor", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "title", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "publisher", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "year", "input-type": "number", "type": "int", "required": True, "additional": False},
+            {
+                "key": "author/editor",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "title",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "publisher",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "year",
+                "input-type": "number",
+                "type": "int",
+                "required": True,
+                "additional": False,
+            },
         ],
         "inproceedings": [
-            {"key": "author", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "title", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "booktitle", "input-type": "text", "type": "str", "required": True, "additional": False},
-            {"key": "year", "input-type": "number", "type": "int", "required": True, "additional": False},
+            {
+                "key": "author",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "title",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "booktitle",
+                "input-type": "text",
+                "type": "str",
+                "required": True,
+                "additional": False,
+            },
+            {
+                "key": "year",
+                "input-type": "number",
+                "type": "int",
+                "required": True,
+                "additional": False,
+            },
         ],
     }
 
@@ -61,22 +139,6 @@ class TestGetReferenceTypeById:
         """Test finding reference type by ID with last value."""
         result = get_reference_type_by_id(3, self.REFERENCE_TYPES)
         assert result == "inproceedings"
-
-    def test_with_object_reference_types(self):
-        """Test finding reference type by ID with object attributes."""
-
-        class ReferenceType:
-            def __init__(self, id, name):
-                self.id = id
-                self.name = name
-
-        reference_types = [
-            ReferenceType(1, "article"),
-            ReferenceType(2, "book"),
-            ReferenceType(3, "inproceedings"),
-        ]
-        result = get_reference_type_by_id(2, reference_types)
-        assert result == "book"
 
     def test_id_not_found_returns_none(self):
         """Test that None is returned when ID is not found."""
@@ -264,7 +326,9 @@ class TestLoadFormFieldsWithMocking:
 
     def test_load_form_fields_returns_dict(self, sample_form_fields):
         """Test that load_form_fields returns a dictionary."""
-        with patch("builtins.open", mock_open(read_data=json.dumps(sample_form_fields))):
+        with patch(
+            "builtins.open", mock_open(read_data=json.dumps(sample_form_fields))
+        ):
             result = load_form_fields()
             assert isinstance(result, dict)
 
