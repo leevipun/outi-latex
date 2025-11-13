@@ -1,6 +1,6 @@
 """Flask application routes and initialization."""
 
-from flask import jsonify, redirect, render_template, request
+from flask import jsonify, redirect, render_template, request, flash
 
 from config import app, test_env
 from db_helper import reset_db
@@ -23,11 +23,11 @@ def index():
     if reference:
         return redirect(f"/add?form={reference}")
 
+    flash("Please select a reference type", "error")
     return (
         render_template(
             "index.html",
             reference_types=references.get_all_references(),
-            error="Please select a reference type",
         ),
         400,
     )
