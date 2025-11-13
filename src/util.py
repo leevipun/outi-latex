@@ -24,18 +24,19 @@ def load_form_fields() -> Dict[str, List[Dict[str, Any]]]:
     """Lataa form-fields.json
     
     Raises:
-        FormFieldsError: If form-fields.json cannot be loaded.
+        FileNotFoundError: If form-fields.json file is not found.
+        json.JSONDecodeError: If form-fields.json contains invalid JSON.
+        FormFieldsError: For other errors during loading.
     """
+    json_path = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "form-fields.json"
+    )
     try:
-        json_path = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), "form-fields.json"
-        )
         with open(json_path, "r", encoding="utf-8") as f:
             return json.load(f)
-    except FileNotFoundError as e:
-        raise FormFieldsError(f"form-fields.json not found: {e}")
-    except json.JSONDecodeError as e:
-        raise FormFieldsError(f"Invalid JSON in form-fields.json: {e}")
+    except (FileNotFoundError, json.JSONDecodeError):
+        # Let these exceptions propagate without conversion
+        raise
     except Exception as e:
         raise FormFieldsError(f"Failed to load form-fields.json: {e}")
 

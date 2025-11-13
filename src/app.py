@@ -5,7 +5,8 @@ from src.config import app, test_env
 from src.db_helper import reset_db
 from src.utils import references
 from src.util import get_reference_type_by_id, get_fields_for_type
-from src.util.errors import DatabaseError, ReferenceTypeError, FormFieldsError
+from src.util import FormFieldsError, ReferenceTypeError
+from src.utils.references import DatabaseError
 
 @app.route("/", methods=["GET", "POST"])
 def index():
