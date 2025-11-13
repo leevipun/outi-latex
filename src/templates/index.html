@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Hello World</title>
+    <title>Outi LaTeX - Viiteenhallinta</title>
     <style>
         * {
             margin: 0;
@@ -14,6 +14,7 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
@@ -21,116 +22,145 @@
 
         .container {
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            padding: 50px 40px;
             max-width: 500px;
             width: 100%;
-            text-align: center;
         }
 
         h1 {
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
-            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            margin-bottom: 40px;
+            font-size: 15px;
+            font-weight: 400;
         }
 
         .form-group {
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         select {
-            flex: 1;
-            padding: 12px 16px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
             font-size: 16px;
             background-color: white;
             cursor: pointer;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
+            color: #2c3e50;
+            font-weight: 500;
         }
 
         select:hover {
             border-color: #667eea;
+            background-color: #f8f9ff;
         }
 
         select:focus {
             outline: none;
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
         }
 
-        form {
-            flex-shrink: 0;
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
         }
 
         button {
-            padding: 12px 24px;
+            padding: 14px 28px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
         }
 
         button:active {
             transform: translateY(0);
         }
 
-        a {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            border-radius: 8px;
+        a.btn {
+            display: inline-block;
+            padding: 14px 28px;
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+            border-radius: 10px;
             font-size: 16px;
             font-weight: 600;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: all 0.3s ease;
             text-decoration: none;
+            text-align: center;
         }
 
-        a:hover {
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        a.btn:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
         }
 
         .flash-messages {
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
         .alert {
-            padding: 15px 20px;
-            border-radius: 8px;
+            padding: 16px 20px;
+            border-radius: 10px;
             margin-bottom: 10px;
-            animation: slideIn 0.3s ease;
+            overflow: hidden;
+            animation: slideIn 0.3s ease forwards, slideOut 0.3s ease 4.7s forwards, shrinkHeight 0.3s ease 4.7s forwards;
+            border-left: 4px solid;
         }
 
         .alert-success {
             background-color: #d4edda;
             color: #155724;
-            border: 1px solid #c3e6cb;
+            border-left-color: #28a745;
         }
 
         .alert-error {
             background-color: #f8d7da;
             color: #721c24;
-            border: 1px solid #f5c6cb;
+            border-left-color: #dc3545;
         }
 
         .alert-info {
             background-color: #d1ecf1;
             color: #0c5460;
-            border: 1px solid #bee5eb;
+            border-left-color: #17a2b8;
         }
 
         @keyframes slideIn {
@@ -143,34 +173,57 @@
                 transform: translateY(0);
             }
         }
+
+        @keyframes slideOut {
+            from {
+                opacity: 1;
+                transform: translateY(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+        }
+
+        @keyframes shrinkHeight {
+            from {
+                max-height: 500px;
+                margin-bottom: 10px;
+            }
+            to {
+                max-height: 0;
+                margin-bottom: 0;
+            }
+        }
     </style>
 </head>
 <body>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
     <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="flash-messages">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <h1>Hei! Lisää uusi Viite kirjastoosi!</h1>
+        <h1>Outi LaTeX</h1>
+        <p class="subtitle">Hallitse viitteesi helposti</p>
+        
         <form method="POST" action="/" class="form-group">
-            <label for="form" style="align-self: center;">Select Reference Type</label>
+            <label for="form">Valitse viitetyyppi</label>
             <select name="form" id="form">
                 {% for reference_type in reference_types %}
-                    <option value="{{reference_type['id']}}">{{reference_type['name']}}</option>
+                    <option value="{{reference_type['name']}}">{{reference_type['name']}}</option>
                 {% endfor %}
             </select>
-            <button type="submit">Lisää</button>
+            <button type="submit">+ Lisää uusi viite</button>
         </form>
-        <br/>
-        <a href="/all">Kaikki viitteesi</a>
+
+        <a href="/all" class="btn">Tarkastele kaikkia viitteitä</a>
     </div>
 </body>
 </html>

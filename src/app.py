@@ -46,45 +46,23 @@ def index():
 def add():
     """Näytä viitteen lisäyslomake
 
-    GET /add?form=3: Muunna ID→nimi ja näytä lomake dynaamisilla kentillä
+    GET /add?form=article: Näytä lomake dynaamisilla kentillä
     """
-    form_id = request.args.get("form")
+    form_name = request.args.get("form")
 
-    if not form_id:
+    if not form_name:
         flash("No reference type selected", "error")
-        return render_template("add_reference.html", selected_type=None, fields=[])
-
-    try:
-        reference_types_db = references.get_all_references()
-    except DatabaseError as e:
-        flash(f"Database error: {str(e)}", "error")
-        return render_template("add_reference.html", selected_type=None, fields=[])
-
-    selected_type = None
-    try:
-        reference_id = int(form_id)
-        selected_type = get_reference_type_by_id(reference_id, reference_types_db)
-    except ValueError:
-        # Jos form=article (nimi), käytä sitä suoraan
-        selected_type = form_id
-    except ReferenceTypeError as e:
-        flash(f"Error loading reference type: {str(e)}", "error")
-        return render_template("add_reference.html", selected_type=None, fields=[])
-
-    # Jos tyyppiä ei löytynyt
-    if not selected_type:
-        flash(f"Reference type not found", "error")
         return render_template("add_reference.html", selected_type=None, fields=[])
 
     # Hae valitun tyypin kentät form-fields.json:sta
     try:
-        fields = get_fields_for_type(selected_type)
+        fields = get_fields_for_type(form_name)
     except FormFieldsError as e:
         flash(f"Error loading form fields: {str(e)}", "error")
         fields = []
 
     return render_template(
-        "add_reference.html", selected_type=selected_type, fields=fields
+        "add_reference.html", selected_type=form_name, fields=fields
     )
 
 
