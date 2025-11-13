@@ -17,11 +17,18 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v4
     - name: Set up Python 3.12
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+    - name: Cache Poetry cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
     - name: Install Poetry
       run: pip install poetry
     - name: Install dependencies
@@ -30,22 +37,31 @@ jobs:
       run: poetry run pylint src/ --fail-under=8.0 --rcfile=.pylintrc
 
   format:
-    name: Check Formatting
+    name: Check Formatting & Imports
     needs: [lint]
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v4
     - name: Set up Python 3.12
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+    - name: Cache Poetry cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
     - name: Install Poetry
       run: pip install poetry
     - name: Install dependencies
       run: poetry install
-    - name: Check code formatting
+    - name: Check code formatting with Black
       run: poetry run black --check src/
+    - name: Check import sorting with isort
+      run: poetry run isort --check-only src/
 
   test:
     name: Run Tests
@@ -66,15 +82,32 @@ jobs:
           --health-timeout=5s
           --health-retries=5
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v4
     - name: Set up Python 3.12
-      uses: actions/setup-python@v6
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
+    - name: Cache Poetry cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pypoetry
+        key: ${{ runner.os }}-poetry-${{ hashFiles('**/poetry.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
     - name: Install Poetry
       run: pip install poetry
     - name: Install dependencies
       run: poetry install
-    - name: Run tests
-      run: poetry run pytest src/tests/
-    
+    - name: Run tests with coverage
+      run: poetry run pytest src/tests/ --cov=src --cov-report=xml --cov-report=html
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: false
+    - name: Upload coverage HTML report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: htmlcov/

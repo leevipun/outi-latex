@@ -41,6 +41,7 @@ testpaths = ["src/tests"]
 python_files = ["*_tests.py", "test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+pythonpath = ["src"]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
