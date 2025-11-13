@@ -1,0 +1,84 @@
+[MASTER]
+# Specify a configuration file
+jobs=4
+persistent=yes
+unsafe-load-any-extension=no
+
+# Add files or directories to the blacklist (regex patterns)
+ignore=
+    tests,
+    __pycache__,
+    .venv,
+    htmlcov
+
+# Python code to execute, usually for sys.path manipulation such as
+# using the current directory as the source of relative imports
+init-hook=
+    import sys; sys.path.insert(0, 'src')
+
+[MESSAGES CONTROL]
+# Only show warnings with the listed confidence levels
+confidence=
+
+# Disable the message, report, category or checker with the given id(s)
+disable=
+    # Test-related suppressions
+    redefined-outer-name,  # Common in pytest fixtures
+    unused-import,  # Common in test files (fixtures, mocks)
+    too-few-public-methods,  # Test classes often have few methods
+    import-outside-toplevel,  # Allow in test fixtures for app context
+    too-many-function-args,  # SQLAlchemy models can have many args
+    
+    # Code style preferences
+    line-too-long,  # We use black with 88 char limit
+    missing-docstring,  # Optional for private functions
+    invalid-name,  # Allow snake_case for test functions
+    
+    # Common false positives
+    no-member,  # SQLAlchemy dynamic attributes
+    
+    # Logging
+    logging-fstring-interpolation,  # f-strings are fine
+
+[FORMAT]
+max-line-length=88
+indent-string='    '
+indent-after-paren=4
+
+[DESIGN]
+max-locals=15
+max-branches=12
+max-statements=50
+max-attributes=7
+min-public-methods=1
+max-public-methods=20
+max-bool-expr=5
+
+[VARIABLES]
+# A regular expression matching the name of dummy variables (i.e. expected to
+# not be used).
+dummy-variables-rgx=_+$|^dummy_|^unused_
+
+[TYPECHECK]
+# List of decorators that produce context managers, such as
+# contextlib.contextmanager. Add to this list to register other decorators that
+# produce valid context managers.
+contextmanager-decorators=contextlib.contextmanager
+
+[SIMILARITIES]
+min-similarity-lines=4
+ignore-comments=yes
+ignore-docstrings=yes
+ignore-imports=yes
+
+[LOGGING]
+logging-format-style=new
+
+[SPELLING]
+# Tells whether to store unknown words to indicated private dictionary in
+# --spelling-private-dict-file argument instead of raising a message.
+spelling-store-unknown-words=no
+
+[MISCELLANEOUS]
+# List of note tags to take in consideration, separated by a comma.
+notes=FIXME,XXX,TODO

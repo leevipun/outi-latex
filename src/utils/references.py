@@ -2,7 +2,7 @@
 
 from sqlalchemy import text
 
-from config import db
+from src.config import db
 
 
 class ReferenceError(Exception):
