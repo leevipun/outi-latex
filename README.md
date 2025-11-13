@@ -130,7 +130,7 @@ outi-latex/
 │   ├── templates/              # HTML templates
 │   │   └── index.html          # Main page template
 │   │   └── all.html            # Template for all added
-│   │   └── add_reference.html  # Adding form template
+│   │   └── add_reference.html  # Add reference form template
 │   ├── utils/                  # Utility modules
 │   │   └── references.py       # Reference management functions
 │   └── tests/                  # Test suite
