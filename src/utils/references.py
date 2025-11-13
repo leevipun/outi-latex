@@ -7,11 +7,13 @@ from src.config import db
 
 class ReferenceError(Exception):
     """Base exception for reference operations."""
+
     pass
 
 
 class DatabaseError(ReferenceError):
     """Raised when database query fails."""
+
     pass
 
 
@@ -21,7 +23,7 @@ def get_all_references() -> list:
     Returns:
         list: List of dictionaries containing reference type id and name,
               sorted by id.
-    
+
     Raises:
         DatabaseError: If database query fails.
     """
@@ -43,7 +45,7 @@ def get_all_added_references() -> list:
     Returns:
         list: List of dictionaries containing bib-key, reference type,
               timestamp, and all field values, sorted by timestamp.
-    
+
     Raises:
         DatabaseError: If database query fails.
     """
@@ -61,7 +63,7 @@ def get_all_added_references() -> list:
             LEFT JOIN fields f ON rv.field_id = f.id
             ORDER BY sr.created_at DESC, sr.id, f.key_name;"""
     )
-    try: 
+    try:
         results = db.session.execute(sql)
 
         # Group results by reference

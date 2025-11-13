@@ -7,22 +7,25 @@ from typing import Dict, List, Any, Optional
 
 class UtilError(Exception):
     """Base exception for utility operations."""
+
     pass
 
 
 class FormFieldsError(UtilError):
     """Raised when form fields cannot be loaded."""
+
     pass
 
 
 class ReferenceTypeError(UtilError):
     """Raised when reference type conversion fails."""
+
     pass
 
 
 def load_form_fields() -> Dict[str, List[Dict[str, Any]]]:
     """Lataa form-fields.json
-    
+
     Raises:
         FileNotFoundError: If form-fields.json file is not found.
         json.JSONDecodeError: If form-fields.json contains invalid JSON.
@@ -50,7 +53,7 @@ def get_reference_type_by_id(reference_id: int, reference_types) -> Optional[str
 
     Returns:
         Viitetyypin nimi (esim. "article") tai None
-        
+
     Raises:
         ReferenceTypeError: If reference type lookup fails.
     """
@@ -62,7 +65,9 @@ def get_reference_type_by_id(reference_id: int, reference_types) -> Optional[str
             elif hasattr(ref_type, "id") and ref_type.id == reference_id:
                 return ref_type.name
     except (KeyError, AttributeError, TypeError) as e:
-        raise ReferenceTypeError(f"Failed to find reference type with id {reference_id}: {e}")
+        raise ReferenceTypeError(
+            f"Failed to find reference type with id {reference_id}: {e}"
+        )
     return None
 
 
@@ -74,7 +79,7 @@ def get_fields_for_type(type_name: str) -> List[Dict[str, Any]]:
 
     Returns:
         Lista kenttämäärittelyjä tai tyhjä lista
-        
+
     Raises:
         FormFieldsError: If form fields cannot be loaded.
     """

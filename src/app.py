@@ -8,6 +8,7 @@ from src.util import get_reference_type_by_id, get_fields_for_type
 from src.util import FormFieldsError, ReferenceTypeError
 from src.utils.references import DatabaseError
 
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     """Handle the main page route.
@@ -61,9 +62,7 @@ def add():
         flash(f"Error loading form fields: {str(e)}", "error")
         fields = []
 
-    return render_template(
-        "add_reference.html", selected_type=form_name, fields=fields
-    )
+    return render_template("add_reference.html", selected_type=form_name, fields=fields)
 
 
 @app.route("/all")
@@ -75,7 +74,7 @@ def all_references():
         flash(f"Database error: {str(e)}", "error")
         data = []
         return render_template("all.html", data=data)
-    
+
     for reference in data:
         timestamp = reference["created_at"]
         reference["created_at"] = timestamp.strftime("%H:%M, %m.%d.%y")
