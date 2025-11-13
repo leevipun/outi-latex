@@ -203,27 +203,27 @@ class TestGetFieldsForType:
 
     def test_get_fields_for_article(self, sample_form_fields):
         """Test getting fields for article type."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("article")
             assert isinstance(result, list)
             assert len(result) > 0
 
     def test_get_fields_for_book(self, sample_form_fields):
         """Test getting fields for book type."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("book")
             assert isinstance(result, list)
             assert len(result) > 0
 
     def test_get_fields_for_nonexistent_type(self, sample_form_fields):
         """Test getting fields for non-existent type returns empty list."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("nonexistent_type")
             assert result == []
 
     def test_article_fields_contain_required_keys(self, sample_form_fields):
         """Test that article fields have required structure."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("article")
             for field in result:
                 assert "key" in field
@@ -234,7 +234,7 @@ class TestGetFieldsForType:
 
     def test_article_required_fields(self, sample_form_fields):
         """Test that article has correct required fields."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("article")
             required_keys = [f["key"] for f in result if f["required"]]
             expected_required = {"author", "title", "journal", "year"}
@@ -242,14 +242,14 @@ class TestGetFieldsForType:
 
     def test_article_optional_fields(self, sample_form_fields):
         """Test that article has optional fields."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("article")
             optional_keys = [f["key"] for f in result if not f["required"]]
             assert len(optional_keys) > 0
 
     def test_case_sensitive_type_name(self, sample_form_fields):
         """Test that type name is case-sensitive."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result_lower = get_fields_for_type("article")
             result_upper = get_fields_for_type("ARTICLE")
             assert len(result_lower) > 0
@@ -257,7 +257,7 @@ class TestGetFieldsForType:
 
     def test_book_type_fields(self, sample_form_fields):
         """Test specific structure of book type fields."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("book")
             keys = [f["key"] for f in result]
             assert "author/editor" in keys
@@ -267,7 +267,7 @@ class TestGetFieldsForType:
 
     def test_inproceedings_type_fields(self, sample_form_fields):
         """Test specific structure of inproceedings type fields."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("inproceedings")
             keys = [f["key"] for f in result]
             assert "author" in keys
@@ -277,7 +277,7 @@ class TestGetFieldsForType:
 
     def test_fields_have_correct_input_types(self, sample_form_fields):
         """Test that fields have valid input types."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("article")
             valid_input_types = {"text", "number"}
             for field in result:
@@ -285,7 +285,7 @@ class TestGetFieldsForType:
 
     def test_fields_have_correct_python_types(self, sample_form_fields):
         """Test that fields have valid Python type specifications."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             result = get_fields_for_type("article")
             valid_types = {"str", "int"}
             for field in result:
@@ -307,14 +307,14 @@ class TestIntegration:
         assert type_name is not None
 
         # Get fields for that type
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             fields = get_fields_for_type(type_name)
             assert len(fields) > 0
             assert all("key" in f for f in fields)
 
     def test_all_form_field_types_are_accessible(self, sample_form_fields):
         """Test that all types in sample form fields are accessible."""
-        with patch("util.load_form_fields", return_value=sample_form_fields):
+        with patch("src.util.load_form_fields", return_value=sample_form_fields):
             for type_name in sample_form_fields.keys():
                 fields = get_fields_for_type(type_name)
                 assert len(fields) > 0

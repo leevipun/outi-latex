@@ -2,7 +2,7 @@
 
 from flask import jsonify, redirect, render_template, request
 
-from config import app, test_env
+from src.config import app, test_env
 from db_helper import reset_db
 from utils import references
 from util import get_reference_type_by_id, get_fields_for_type
