@@ -121,24 +121,29 @@ poetry run python -m flask --app src.app run
 ```
 outi-latex/
 ├── src/
-│   ├── app.py              # Flask application and routes
-│   ├── config.py           # Configuration settings
-│   ├── db_helper.py        # Database helper functions
-│   ├── index.py            # Application entry point
-│   ├── schema.sql          # Database schema
-│   ├── util.py             # Utility functions
-│   ├── templates/          # HTML templates
-│   │   └── index.html      # Main page template
-│   ├── utils/              # Utility modules
-│   │   └── references.py   # Reference management functions
-│   └── tests/              # Test suite
+│   ├── app.py                  # Flask application and routes
+│   ├── config.py               # Configuration settings
+│   ├── db_helper.py            # Database helper functions
+│   ├── index.py                # Application entry point
+│   ├── schema.sql              # Database schema
+│   ├── util.py                 # Utility functions
+│   ├── templates/              # HTML templates
+│   │   └── index.html          # Main page template
+│   │   └── all.html            # Template for all added
+│   │   └── add_reference.html  # Adding form template
+│   ├── utils/                  # Utility modules
+│   │   └── references.py       # Reference management functions
+│   └── tests/                  # Test suite
+│       └── conftest.py
+│       └── e2e_tests.py
 │       └── references_tests.py
-├── pyproject.toml          # Project dependencies and configuration
-├── poetry.lock             # Locked dependency versions
-├── form-fields.json        # Form field definitions
-├── seed_database.py        # Database seeding script
-├── check_database.py       # Database inspection utility
-└── README.md               # This file
+│       └── util_tests.py
+├── pyproject.toml              # Project dependencies and configuration
+├── poetry.lock                 # Locked dependency versions
+├── form-fields.json            # Form field definitions
+├── seed_database.py            # Database seeding script
+├── check_database.py           # Database inspection utility
+└── README.md                   # This file
 ```
 
 ## 🛠️ Development
@@ -169,6 +174,7 @@ poetry run pylint src/
 ### VS Code Integration
 
 The project includes `.vscode/settings.json` for VS Code integration:
+
 - ✅ Auto-format on save with Black
 - ✅ Auto-organize imports on save with isort
 - ✅ Real-time linting with pylint
@@ -230,6 +236,7 @@ Main page - displays reference types selection form
 Add new reference page
 
 **Parameters:**
+
 - `form` (required): Reference type ID
 
 **Response:** Add form page for the selected reference type
