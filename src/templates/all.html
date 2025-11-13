@@ -24,7 +24,7 @@
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
             padding: 40px;
-            max-width: 500px;
+            max-width: 800px;
             width: 100%;
             text-align: center;
         }
@@ -103,24 +103,57 @@
         a:hover {
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
         }
+
+        .reference-item {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background-color: #fafafa;
+        }
+
+        .reference-item h3 {
+            margin-bottom: 10px;
+        }
+
+        .reference-item ul {
+            margin-bottom: 10px;
+        }
+
+        .fields-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .fields-list li {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            margin-bottom: 5px;
+            text-align: left;
+        }
+
+        .fields-list li strong {
+            text-align: right;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Tässä kaikki lisäämäsi viitteet</h1>
         {% for reference in data %}
-            <h3>{{ reference["bib_key"] }}</h3>
-            <ul>
-                <li style="list-style-type: none;">{{ reference["reference_type"] }}</li>
-                <li style="list-style-type: none;">{{ reference["created_at"] }}</li>
-            </ul>
-            <br/>
-            <ul style="text-align: left;">
-                {% for key, value in reference["fields"].items() %}
-                    <li><strong>{{ key }}:</strong> {{ value }}</li>
-                {% endfor %}
-            </ul>
-            <br/>
+            <div class="reference-item">
+                <h3>{{ reference["bib_key"] }}</h3>
+                <ul>
+                    <li style="list-style-type: none;">{{ reference["reference_type"] }}</li>
+                    <li style="list-style-type: none;">{{ reference["created_at"] }}</li>
+                </ul>
+                <ul class="fields-list">
+                    {% for key, value in reference["fields"].items() %}
+                        <li><strong>{{ key }}:</strong> <span>{{ value }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
         {% endfor %}
         <br/>
         <a href="/">Etusivu</a>
