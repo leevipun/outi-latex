@@ -115,6 +115,12 @@
                 <li style="list-style-type: none;">{{ reference["created_at"] }}</li>
             </ul>
             <br/>
+            <ul style="text-align: left;">
+                {% for key, value in reference["fields"].items() %}
+                    <li><strong>{{ key }}:</strong> {{ value }}</li>
+                {% endfor %}
+            </ul>
+            <br/>
         {% endfor %}
         <br/>
         <a href="/">Etusivu</a>
