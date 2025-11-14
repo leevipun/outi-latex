@@ -5,11 +5,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from src.util import (
-    get_fields_for_type,
-    get_reference_type_by_id,
-    load_form_fields,
-)
+from src.util import get_fields_for_type, get_reference_type_by_id, load_form_fields
 
 
 @pytest.fixture

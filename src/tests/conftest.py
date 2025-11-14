@@ -1,7 +1,7 @@
 """Pytest configuration for tests."""
 
-import sys
 import os
+import sys
 
 # Add the src directory to the path BEFORE any test imports
 # This must run at module import time, not in fixtures
@@ -23,3 +23,9 @@ def app():
     flask_app.config["TESTING"] = True
 
     return flask_app
+
+
+@pytest.fixture
+def client(app):
+    """Flask test client."""
+    return app.test_client()

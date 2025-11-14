@@ -1,8 +1,8 @@
 """Utility functions for handling form-fields.json and reference type conversions."""
 
-import os
 import json
-from typing import Dict, List, Any, Optional
+import os
+from typing import Any, Dict, List, Optional
 
 
 class UtilError(Exception):
