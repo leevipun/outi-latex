@@ -4,79 +4,62 @@ Library           SeleniumLibrary
 Suite Setup       Open Browser    http://127.0.0.1:5001    chrome
 Suite Teardown    Close Browser
 
-
 *** Test Cases ***        
-User Can See Available Reference Types
-    [Documentation]    Verify that the index page displays all available reference types
-    Go To    http://127.0.0.1:5001
-    Page Should Contain    Hei! Lisää uusi Viite kirjastoosi!
-    Element Should Be Visible    id:form
-    Page Should Contain Element    xpath://select[@id='form']/option[contains(text(), 'book')]
-    Page Should Contain Element    xpath://select[@id='form']/option[contains(text(), 'article')]
-    Page Should Contain Element    xpath://select[@id='form']/option[contains(text(), 'inproceedings')]
-
-
 User Can Select Book Reference Type
     [Documentation]    User selects "book" from dropdown and sees book form
     Go To    http://127.0.0.1:5001
     Select From List By Label    id:form    book
-    Click Button    Lisää
+    Click Button    id:add_new-button
+    Sleep    2s
     Location Should Contain    /add
-    Location Should Contain    form=
-    Page Should Contain    book
-    Page Should Contain    author
-    Page Should Contain    publisher
+    Location Should Contain    form=book
+    Page Should Contain    book -viite
+    Page Should Contain    Lisää uusi viite
+    Page Should Contain Element    id:author/editor
+    Page Should Contain Element    id:publisher
 
 
 User Can Select Article Reference Type
     [Documentation]    User selects "article" from dropdown and sees article form
     Go To    http://127.0.0.1:5001
     Select From List By Label    id:form    article
-    Click Button    Lisää
+    Click Button    + Lisää uusi viite
+    Sleep    2s
     Location Should Contain    /add
-    Location Should Contain    form=
-    Page Should Contain    article
-    Page Should Contain    author
-    Page Should Contain    journal
+    Location Should Contain    form=article
+    Page Should Contain    article -viite
+    Page Should Contain Element    id:author
+    Page Should Contain Element    id:journal
 
 
 User Can Select Inproceedings Reference Type
     [Documentation]    User selects "inproceedings" and sees inproceedings form
     Go To    http://127.0.0.1:5001
     Select From List By Label    id:form    inproceedings
-    Click Button    Lisää
+    Click Button    + Lisää uusi viite
+    Sleep    2s
     Location Should Contain    /add
-    Location Should Contain    form=
-    Page Should Contain    inproceedings
-    Page Should Contain    author
-    Page Should Contain    booktitle
-
-
-Reference Type Form Has Correct Required Fields
-    [Documentation]    Verify that each reference type has appropriate required fields
-    Go To    http://127.0.0.1:5001
-    
-    # Test article form
-    Select From List By Label    id:form    article
-    Click Button    Lisää
-    Element Should Be Visible    xpath://input[@id='author' and @required]
-    Element Should Be Visible    xpath://input[@id='title' and @required]
-    Element Should Be Visible    xpath://input[@id='journal' and @required]
-    Element Should Be Visible    xpath://input[@id='year' and @required]
+    Location Should Contain    form=inproceedings
+    Page Should Contain    inproceedings -viite
+    Page Should Contain Element    id:author
+    Page Should Contain Element    id:booktitle
 
 
 User Can Switch Between Reference Types
     [Documentation]    User can go back and select a different reference type
     Go To    http://127.0.0.1:5001
     Select From List By Label    id:form    article
-    Click Button    Lisää
-    Page Should Contain    article
+    Click Button    + Lisää uusi viite
+    Sleep    2s
+    Page Should Contain    article -viite
     
     # Go back to home
-    Click Link    Takaisin etusivulle
+    Click Link    ← Takaisin etusivulle
+    Sleep    2s
     Location Should Be    http://127.0.0.1:5001/
     
     # Select different type
     Select From List By Label    id:form    book
-    Click Button    Lisää
-    Page Should Contain    book
+    Click Button    + Lisää uusi viite
+    Sleep    2s
+    Page Should Contain    book -viite

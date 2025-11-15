@@ -9,18 +9,20 @@ User Sees Form After Selecting Reference Type
     [Documentation]    Verify that selecting a reference type displays the correct form
     Go To    http://127.0.0.1:5001
     Select From List By Label    id:form    article
-    Click Button    Lisää
+    Click Button    + Lisää uusi viite
+    Sleep    2s
     Location Should Contain    http://127.0.0.1:5001/add
-    Location Should Contain    form=1
+    Location Should Contain    form=article
     Page Should Contain    Lisää uusi viite
-    Page Should Contain    article
-    Page Should Contain    author
-    Page Should Contain    publisher
+    Page Should Contain    article -viite
+    Page Should Contain Element    id:author
+    Page Should Contain Element    id:cite_key
     Go Back
 
 User Sees Right Input Fields For Article
     [Documentation]    Verify that the article form has the correct input fields
-    Go To    http://127.0.0.1:5001/add?form=1
+    Go To    http://127.0.0.1:5001/add?form=article
+    Page Should Contain Element    id:cite_key
     Page Should Contain Element    id:author
     Page Should Contain Element    id:title
     Page Should Contain Element    id:journal
