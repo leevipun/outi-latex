@@ -424,6 +424,7 @@ body.all-page {
 /* Add reference page specific styles */
 body.add-page {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }
@@ -438,4 +439,21 @@ body.add-page {
     color: #999;
     font-size: 12px;
     margin-top: 4px;
+}
+
+a {
+    display: inline-block;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+}
+
+a:hover {
+    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }

@@ -814,6 +814,18 @@ files = [
 cli = ["click (>=5.0)"]
 
 [[package]]
+name = "robotframework"
+version = "7.3.2"
+description = "Generic automation framework for acceptance testing and robotic process automation (RPA)"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "robotframework-7.3.2-py3-none-any.whl", hash = "sha256:14ef2afa905285cc073df6ce06d0cd3af4a113df6f815532718079e00c98cca4"},
+    {file = "robotframework-7.3.2.tar.gz", hash = "sha256:3bb3e299831ecb1664f3d5082f6ff9f08ba82d61a745bef2227328ef3049e93a"},
+]
+
+[[package]]
 name = "sqlalchemy"
 version = "2.0.44"
 description = "Database Abstraction Library"
@@ -1008,4 +1020,4 @@ watchdog = ["watchdog (>=2.3)"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.10"
-content-hash = "53425e119b1c1af4470e11e81eaeb4b0380ce7aac14ef3bc060260815f721aa7"
+content-hash = "54a979bb0d7d332aa44c7457b72fb392e01e9a4ed53659baa9f676e25d4f1d17"

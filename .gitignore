@@ -189,6 +189,10 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+log.*
+output.*
+report.*
+
 # Flask specific
 *.db
 config.py
