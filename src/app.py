@@ -146,6 +146,7 @@ def save_reference():
 
 # testausta varten oleva reitti
 if test_env:
+
     @app.route("/reset_db")
     def reset_database():
         """Reset the database (testing only)."""

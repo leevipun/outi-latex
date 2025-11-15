@@ -424,6 +424,7 @@ body.all-page {
 /* Add reference page specific styles */
 body.add-page {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
 }

@@ -13,22 +13,22 @@ def reset_db():
     sql = text("DROP TABLE IF EXISTS reference_values CASCADE")
     db.session.execute(sql)
     db.session.commit()
-    
+
     print("Dropping single_reference table")
     sql = text("DROP TABLE IF EXISTS single_reference CASCADE")
     db.session.execute(sql)
     db.session.commit()
-    
+
     print("Dropping reference_type_fields table")
     sql = text("DROP TABLE IF EXISTS reference_type_fields CASCADE")
     db.session.execute(sql)
     db.session.commit()
-    
+
     print("Dropping fields table")
     sql = text("DROP TABLE IF EXISTS fields CASCADE")
     db.session.execute(sql)
     db.session.commit()
-    
+
     print("Clearing contents from table reference_types")
     sql = text("DELETE FROM reference_types")
     db.session.execute(sql)

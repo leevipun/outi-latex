@@ -11,8 +11,7 @@ User Can Save Reference
     Select From List By Label    id:form    article
     Click Button    + Lisää uusi viite
     Sleep    2s
-    Location Should Contain    http://127.0.0.1:5001/add
-    Location Should Contain    form=article
+    Location Should Contain    http://127.0.0.1:5001/add?form=article
     Input Text    id:cite_key    TestArticle2024
     Input Text    id:author    John Doe
     Input Text    id:title    Sample Article Title
