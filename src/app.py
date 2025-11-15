@@ -1,11 +1,16 @@
 """Flask application routes and initialization."""
 
-from flask import jsonify, redirect, render_template, request, flash
+from flask import flash, jsonify, redirect, render_template, request
+
 from src.config import app, test_env
 from src.db_helper import reset_db
+from src.util import (
+    FormFieldsError,
+    ReferenceTypeError,
+    get_fields_for_type,
+    get_reference_type_by_id,
+)
 from src.utils import references
-from src.util import get_reference_type_by_id, get_fields_for_type
-from src.util import FormFieldsError, ReferenceTypeError
 from src.utils.references import DatabaseError
 
 
@@ -79,6 +84,64 @@ def all_references():
         timestamp = reference["created_at"]
         reference["created_at"] = timestamp.strftime("%H:%M, %m.%d.%y")
     return render_template("all.html", data=data)
+
+
+@app.route("/save_reference", methods=["POST"])
+def save_reference():
+    """Tallenna uusi viite lomakkeelta tietokantaan."""
+    # reference_type tulee piilokentästä <input type="hidden" name="reference_type">
+    reference_type = request.form.get("reference_type")
+
+    if not reference_type:
+        flash("Viitetyyppi puuttuu.", "error")
+        return redirect("/")
+
+    # Viiteavain / cite_key (pakollinen)
+    cite_key = request.form.get("cite_key", "").strip()
+    if not cite_key:
+        flash("Viiteavain (bib_key) on pakollinen.", "error")
+        return redirect(f"/add?form={reference_type}")
+
+    # Oletus: tietokantataulussa sarake on nimeltä 'bib_key'
+    form_data = {"bib_key": cite_key}
+
+    # Haetaan dynaamiset kentät, samoin kuin /add GET:ssä
+    try:
+        fields = get_fields_for_type(reference_type)
+    except FormFieldsError as e:
+        flash(f"Error loading form fields: {str(e)}", "error")
+        return redirect(f"/add?form={reference_type}")
+
+    errors = []
+
+    for field in fields:
+        # add_reference.html käyttää field.key, joten tässäkin key
+        name = field["key"]  # esim. "author", "title", "year"
+        label = field.get("label", name)
+        required = field.get("required", False)
+
+        value = request.form.get(name, "").strip()
+
+        if required and not value:
+            errors.append(f"Field '{label}' is required")
+
+        form_data[name] = value or None
+
+    if errors:
+        for msg in errors:
+            flash(msg, "error")
+        # back to the form, same type
+        return redirect(f"/add?form={reference_type}")
+
+    # Tallennus tietokantaan
+    try:
+        references.add_reference(reference_type, form_data)
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        return redirect(f"/add?form={reference_type}")
+
+    flash("Viite tallennettu!", "success")
+    return redirect("/all")
 
 
 # testausta varten oleva reitti

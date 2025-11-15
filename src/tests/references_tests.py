@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.config import app
-from src.utils.references import get_all_references, get_all_added_references
+from src.utils.references import get_all_added_references, get_all_references
 
 
 @pytest.fixture
