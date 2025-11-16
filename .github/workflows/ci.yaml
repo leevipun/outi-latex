@@ -110,6 +110,9 @@ jobs:
       run: |
         export FLASK_APP=src.app
         export FLASK_ENV=testing
+        # Seed the database first
+        poetry run python seed_database.py
+        # Start Flask server
         nohup poetry run flask run --host 0.0.0.0 --port 5001 > flask.log 2>&1 &
       env:
         FLASK_ENV: testing

@@ -1,8 +1,16 @@
 *** Settings ***
 Documentation     User Story: As a user, I can save a reference
 Library           SeleniumLibrary
-Suite Setup       Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
+Library           RequestsLibrary
+Suite Setup       Initialize Test Environment
 Suite Teardown    Close Browser
+
+*** Keywords ***
+Initialize Test Environment
+    [Documentation]    Initialize the test environment by seeding database and opening browser
+    ${response}=    GET    http://localhost:5001/reset_db    expected_status=200
+    Sleep    1s
+    Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
 
 *** Test Cases ***
 User Can Save Reference
