@@ -7,25 +7,22 @@ Suite Teardown    Close Browser
 
 *** Keywords ***
 Initialize Test Environment
-    [Documentation]    Initialize the test environment by seeding database and opening browser
-    ${response}=    GET    http://localhost:5001/reset_db    expected_status=200
-    Sleep    1s
+    [Documentation]    Initialize the test environment
     Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
 
 *** Test Cases ***
 User Sees Form After Selecting Reference Type
     [Documentation]    Verify that selecting a reference type displays the correct form
     Go To    ${BASE_URL}
-    Select From List By Label    id:form    article
-    Click Button    + Lisää uusi viite
+    Select From List By Value    id:form    article
+    Click Button    id:add_new-button
     Sleep    2s
     Location Should Contain    ${BASE_URL}/add
-    Location Should Contain    form=article
-    Page Should Contain    Lisää uusi viite
-    Page Should Contain    article -viite
+    Page Should Contain Element    id:add-reference-form
+    Page Should Contain Element    id:reference-type-heading
     Page Should Contain Element    id:author
     Page Should Contain Element    id:cite_key
-    Go Back
+    Click Link    id:back-to-home
 
 User Sees Right Input Fields For Article
     [Documentation]    Verify that the article form has the correct input fields

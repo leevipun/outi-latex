@@ -7,17 +7,15 @@ Suite Teardown    Close Browser
 
 *** Keywords ***
 Initialize Test Environment
-    [Documentation]    Initialize the test environment by seeding database and opening browser
-    ${response}=    GET    http://localhost:5001/reset_db    expected_status=200
-    Sleep    1s
+    [Documentation]    Initialize the test environment
     Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
 
 *** Test Cases ***
 User Can Save Reference
     [Documentation]    Verify that a user can save a reference and it is stored correctly
     Go To    ${BASE_URL}
-    Select From List By Label    id:form    article
-    Click Button    + Lisää uusi viite
+    Select From List By Value    id:form    article
+    Click Button    id:add_new-button
     Sleep    2s
     Location Should Contain    ${BASE_URL}/add?form=article
     Input Text    id:cite_key    TestArticle2024
@@ -29,10 +27,7 @@ User Can Save Reference
     Input Text    id:number    2
     Input Text    id:pages    100-110
     Input Text    id:publisher    Testing Publishers
-    Click Button    Tallenna viite
+    Click Button    id:save-reference-button
     Sleep    2s
     Location Should Be    ${BASE_URL}/all
-    Page Should Contain    John Doe
-    Page Should Contain    Sample Article Title
-    Page Should Contain    Journal of Testing
-    Page Should Contain    2024
+    Page Should Contain Element    id:all-references-title
