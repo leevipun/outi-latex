@@ -1,7 +1,7 @@
 *** Settings ***
 Documentation     User Story: As a user, I see the right form
 Library           SeleniumLibrary
-Suite Setup       Open Browser    ${BASE_URL}    chrome
+Suite Setup       Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
 Suite Teardown    Close Browser
 
 *** Test Cases ***
