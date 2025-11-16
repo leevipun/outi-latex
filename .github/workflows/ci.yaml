@@ -97,15 +97,22 @@ jobs:
     - name: Install dependencies
       run: poetry install
     - name: Run tests with coverage
-      run: poetry run pytest src/tests/ --cov=src --cov-report=xml --cov-report=html
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        files: ./coverage.xml
-        fail_ci_if_error: false
-    - name: Upload coverage HTML report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: coverage-report
-        path: htmlcov/
+      run: |
+        poetry run pytest src/tests/ --cov=src --cov-report=xml --cov-report=html
+        coverage=$(poetry run coverage report | tail -n 1 | awk '{print $4}' | sed 's/%//')
+        if (( $(echo "$coverage < 80" | bc -l) )); then
+          echo "Code coverage is below 80% ($coverage%)"
+          exit 1
+        fi
+    - name: Start Flask server
+      run: poetry run python -m flask --app src.app run &
+      env:
+        FLASK_ENV: testing
+    - name: Wait for server to be ready
+      run: |
+        for i in {1..30}; do
+          curl -f http://localhost:5001/ && break
+          sleep 1
+        done
+    - name: Run robot tests
+      run: poetry run robot --variable BASE_URL:http://localhost:5001 src/story_tests/

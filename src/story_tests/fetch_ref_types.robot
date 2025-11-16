@@ -1,13 +1,13 @@
 *** Settings ***
 Documentation     User Story: As a user, I can choose reference type (book, article...)
 Library           SeleniumLibrary
-Suite Setup       Open Browser    http://127.0.0.1:5001    chrome
+Suite Setup       Open Browser    ${BASE_URL}    chrome
 Suite Teardown    Close Browser
 
 *** Test Cases ***        
 User Can Select Book Reference Type
     [Documentation]    User selects "book" from dropdown and sees book form
-    Go To    http://127.0.0.1:5001
+    Go To    ${BASE_URL}
     Select From List By Label    id:form    book
     Click Button    id:add_new-button
     Sleep    2s
@@ -21,7 +21,7 @@ User Can Select Book Reference Type
 
 User Can Select Article Reference Type
     [Documentation]    User selects "article" from dropdown and sees article form
-    Go To    http://127.0.0.1:5001
+    Go To    ${BASE_URL}
     Select From List By Label    id:form    article
     Click Button    + Lisää uusi viite
     Sleep    2s
@@ -34,7 +34,7 @@ User Can Select Article Reference Type
 
 User Can Select Inproceedings Reference Type
     [Documentation]    User selects "inproceedings" and sees inproceedings form
-    Go To    http://127.0.0.1:5001
+    Go To    ${BASE_URL}
     Select From List By Label    id:form    inproceedings
     Click Button    + Lisää uusi viite
     Sleep    2s
@@ -47,7 +47,7 @@ User Can Select Inproceedings Reference Type
 
 User Can Switch Between Reference Types
     [Documentation]    User can go back and select a different reference type
-    Go To    http://127.0.0.1:5001
+    Go To    ${BASE_URL}
     Select From List By Label    id:form    article
     Click Button    + Lisää uusi viite
     Sleep    2s
@@ -56,7 +56,7 @@ User Can Switch Between Reference Types
     # Go back to home
     Click Link    ← Takaisin etusivulle
     Sleep    2s
-    Location Should Be    http://127.0.0.1:5001/
+    Location Should Be    ${BASE_URL}/
     
     # Select different type
     Select From List By Label    id:form    book

@@ -41,7 +41,6 @@ CI: https://github.com/leevipun/outi-latex/actions
 - Koodin ylläpidettävyyden tulee olla mahdollisimman hyvä esim (järkevä nimeäminen)
 - Pylint-pisteet ≥ 8.5/10 eikä yhtään error-tason huomautusta
 
-
 ## 📦 Prerequisites
 
 - Python 3.10+
@@ -143,18 +142,27 @@ outi-latex/
 │   ├── schema.sql              # Database schema
 │   ├── util.py                 # Utility functions
 │   ├── templates/              # HTML templates
-│   │   └── index.html          # Main page template
-│   │   └── all.html            # Template for all added
+│   │   ├── index.html          # Main page template
+│   │   ├── all.html            # All references display template
 │   │   └── add_reference.html  # Add reference form template
+│   ├── static/                 # Static assets
+│   │   └── styles.css          # Application stylesheets
 │   ├── utils/                  # Utility modules
 │   │   └── references.py       # Reference management functions
-│   └── tests/                  # Test suite
-│       └── conftest.py
-│       └── e2e_tests.py
-│       └── references_tests.py
-│       └── util_tests.py
+│   ├── tests/                  # Unit tests (pytest)
+│   │   ├── __init__.py
+│   │   ├── conftest.py         # Pytest fixtures
+│   │   ├── app_tests.py        # Flask application tests
+│   │   ├── references_tests.py # Reference management tests
+│   │   └── util_tests.py       # Utility function tests
+│   └── story_tests/            # Acceptance tests (Robot Framework)
+│       ├── fetch_ref_types.robot         # Reference type selection tests
+│       ├── form_is_shown.robot           # Form display tests
+│       ├── references_are_saved.robot    # Reference persistence tests
+│       └── user_can_see_all_refs.robot   # Reference list view tests
 ├── pyproject.toml              # Project dependencies and configuration
 ├── poetry.lock                 # Locked dependency versions
+├── DATABASE.md                 # Database documentation
 ├── form-fields.json            # Form field definitions
 ├── seed_database.py            # Database seeding script
 ├── check_database.py           # Database inspection utility
@@ -196,7 +204,11 @@ The project includes `.vscode/settings.json` for VS Code integration:
 
 ## 🧪 Testing
 
-Run the test suite:
+The project uses a two-tier testing approach:
+
+### Unit Tests (pytest)
+
+Run the pytest unit test suite:
 
 ```bash
 poetry run pytest
@@ -213,6 +225,63 @@ Run specific test file:
 ```bash
 poetry run pytest src/tests/references_tests.py
 ```
+
+#### Test Coverage
+
+Generate coverage report for Python code:
+
+```bash
+poetry run pytest --cov=src
+```
+
+This generates an HTML coverage report in `htmlcov/index.html`. Coverage reports show which lines of your Flask application are executed by tests.
+
+**Coverage Goals:** According to the Definition of Done, test coverage must be **≥ 80%**.
+
+### Acceptance Tests (Robot Framework)
+
+Robot Framework tests validate user workflows end-to-end using Selenium for browser automation.
+
+#### Running Robot Tests
+
+Before running Robot tests, ensure:
+
+1. Application is running: `poetry run python -m flask --app src.app run --debug`
+2. Chrome/Chromium browser is installed
+3. ChromeDriver is in PATH or available
+
+Run all Robot tests:
+
+```bash
+poetry run robot src/story_tests/
+```
+
+Run specific test file:
+
+```bash
+poetry run robot src/story_tests/fetch_ref_types.robot
+```
+
+Run with detailed output:
+
+```bash
+poetry run robot -v DEBUG:DEBUG src/story_tests/
+```
+
+#### Test Files
+
+- **fetch_ref_types.robot** - User can select different reference types (book, article, inproceedings)
+- **form_is_shown.robot** - Correct form fields are displayed for each reference type
+- **references_are_saved.robot** - References are properly saved to database
+- **user_can_see_all_refs.robot** - User can view all saved references
+
+#### Robot Test Reports
+
+After running tests, Robot Framework generates:
+
+- **log.html** - Detailed execution log
+- **report.html** - Test summary report
+- **output.xml** - Machine-readable test results
 
 ## 🗄️ Database
 
@@ -296,11 +365,31 @@ Form field definitions are stored in `form-fields.json`. This file defines the s
 
 ## 📄 License
 
-Add your license information here.
+MIT License
+
+Copyright (c) 2025 Leevi Ilmari Puntanen
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 ## 👥 Author
 
-Add author information here.
+Leevi Puntanen, Otso ?, Vesa Vainio, Axel ?
 
 ---
 
