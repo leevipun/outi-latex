@@ -399,3 +399,257 @@ class TestGetAllAddedReferences:
 
         assert result[0]["fields"]["title"] == "Test Article"
         assert result[0]["fields"]["author"] == "Test Author"
+
+
+class TestAddReference:
+    """Test suite for add_reference function."""
+
+    @patch("src.utils.references.db")
+    def test_add_reference_successful_insert(self, mock_db):
+        """Test successful insertion of a reference with basic fields."""
+        # Mock the reference type lookup
+        type_result = MagicMock()
+        type_result.mappings.return_value.first.return_value = {"id": 1}
+
+        # Mock the insert reference
+        insert_result = MagicMock()
+        insert_result.scalar.return_value = 42
+
+        # Mock the field lookup
+        field_result = MagicMock()
+        field_result.mappings.return_value.first.return_value = {"id": 10}
+
+        mock_db.session.execute.side_effect = [
+            type_result,  # Reference type lookup
+            insert_result,  # Insert single_reference
+            field_result,  # Field lookup for "author"
+            MagicMock(),  # Insert reference_values for author
+            field_result,  # Field lookup for "title"
+            MagicMock(),  # Insert reference_values for title
+        ]
+
+        from src.utils.references import add_reference
+
+        data = {
+            "bib_key": "Einstein1905",
+            "author": "Albert Einstein",
+            "title": "On the Electrodynamics of Moving Bodies",
+        }
+
+        add_reference("article", data)
+
+        mock_db.session.commit.assert_called_once()
+
+    @patch("src.utils.references.db")
+    def test_add_reference_unknown_reference_type(self, mock_db):
+        """Test error when reference type does not exist."""
+        type_result = MagicMock()
+        type_result.mappings.return_value.first.return_value = None
+
+        mock_db.session.execute.return_value = type_result
+
+        from src.utils.references import add_reference, DatabaseError
+
+        data = {"bib_key": "test2025", "author": "Test Author"}
+
+        with pytest.raises(DatabaseError) as exc_info:
+            add_reference("unknown_type", data)
+
+        assert "Unknown reference type" in str(exc_info.value)
+        mock_db.session.rollback.assert_called_once()
+
+    @patch("src.utils.references.db")
+    def test_add_reference_skips_empty_values(self, mock_db):
+        """Test that empty string and None values are skipped."""
+        type_result = MagicMock()
+        type_result.mappings.return_value.first.return_value = {"id": 1}
+
+        insert_result = MagicMock()
+        insert_result.scalar.return_value = 42
+
+        field_result = MagicMock()
+        field_result.mappings.return_value.first.return_value = {"id": 10}
+
+        mock_db.session.execute.side_effect = [
+            type_result,  # Reference type lookup
+            insert_result,  # Insert single_reference
+            field_result,  # Field lookup for "author"
+            MagicMock(),  # Insert reference_values for author
+        ]
+
+        from src.utils.references import add_reference
+
+        data = {
+            "bib_key": "test2025",
+            "author": "John Doe",
+            "title": "",  # Should be skipped
+            "year": None,  # Should be skipped
+        }
+
+        add_reference("article", data)
+
+        # Only author field should be inserted (plus reference type and reference insert)
+        assert mock_db.session.execute.call_count == 4
+        mock_db.session.commit.assert_called_once()
+
+    @patch("src.utils.references.db")
+    def test_add_reference_skips_unknown_fields(self, mock_db):
+        """Test that fields not in schema are skipped."""
+        type_result = MagicMock()
+        type_result.mappings.return_value.first.return_value = {"id": 1}
+
+        insert_result = MagicMock()
+        insert_result.scalar.return_value = 42
+
+        # Field exists for "author" but not for "unknown_field"
+        author_field = MagicMock()
+        author_field.mappings.return_value.first.return_value = {"id": 10}
+
+        unknown_field = MagicMock()
+        unknown_field.mappings.return_value.first.return_value = None
+
+        mock_db.session.execute.side_effect = [
+            type_result,  # Reference type lookup
+            insert_result,  # Insert single_reference
+            author_field,  # Field lookup for "author"
+            MagicMock(),  # Insert reference_values for author
+            unknown_field,  # Field lookup for "unknown_field" - not found
+        ]
+
+        from src.utils.references import add_reference
+
+        data = {
+            "bib_key": "test2025",
+            "author": "John Doe",
+            "unknown_field": "some value",
+        }
+
+        add_reference("article", data)
+
+        mock_db.session.commit.assert_called_once()
+
+    @patch("src.utils.references.db")
+    def test_add_reference_uses_scalar_for_new_id(self, mock_db):
+        """Test that new reference ID is retrieved using scalar()."""
+        type_result = MagicMock()
+        type_result.mappings.return_value.first.return_value = {"id": 1}
+
+        insert_result = MagicMock()
+        insert_result.scalar.return_value = 99
+
+        mock_db.session.execute.side_effect = [
+            type_result,  # Reference type lookup
+            insert_result,  # Insert single_reference with scalar() returning ID
+        ]
+
+        from src.utils.references import add_reference
+
+        data = {"bib_key": "test2025"}
+
+        add_reference("article", data)
+
+        insert_result.scalar.assert_called_once()
+        mock_db.session.commit.assert_called_once()
+
+    @patch("src.utils.references.db")
+    def test_add_reference_fallback_to_mappings_for_id(self, mock_db):
+        """Test fallback to mappings().first() when scalar() returns None."""
+        type_result = MagicMock()
+        type_result.mappings.return_value.first.return_value = {"id": 1}
+
+        insert_result = MagicMock()
+        insert_result.scalar.return_value = None  # scalar() returns None
+        mappings_result = MagicMock()
+        mappings_result.first.return_value = {"id": 55}
+        insert_result.mappings.return_value = mappings_result
+
+        mock_db.session.execute.side_effect = [
+            type_result,  # Reference type lookup
+            insert_result,  # Insert single_reference
+        ]
+
+        from src.utils.references import add_reference
+
+        data = {"bib_key": "test2025"}
+
+        add_reference("article", data)
+
+        insert_result.scalar.assert_called_once()
+        insert_result.mappings.assert_called_once()
+        mock_db.session.commit.assert_called_once()
+
+    @patch("src.utils.references.db")
+    def test_add_reference_rollback_on_exception(self, mock_db):
+        """Test that rollback is called when an exception occurs."""
+        type_result = MagicMock()
+        type_result.mappings.return_value.first.return_value = {"id": 1}
+
+        mock_db.session.execute.side_effect = [
+            type_result,
+            Exception("Database error"),  # Simulate database error
+        ]
+
+        from src.utils.references import add_reference, DatabaseError
+
+        data = {"bib_key": "test2025"}
+
+        with pytest.raises(DatabaseError):
+            add_reference("article", data)
+
+        mock_db.session.rollback.assert_called_once()
+
+    @patch("src.utils.references.db")
+    def test_add_reference_with_multiple_fields(self, mock_db):
+        """Test adding reference with multiple field values."""
+        type_result = MagicMock()
+        type_result.mappings.return_value.first.return_value = {"id": 2}
+
+        insert_result = MagicMock()
+        insert_result.scalar.return_value = 123
+
+        field_result = MagicMock()
+        field_result.mappings.return_value.first.return_value = {"id": 10}
+
+        mock_db.session.execute.side_effect = [
+            type_result,  # Reference type lookup
+            insert_result,  # Insert single_reference
+            field_result,  # Field lookup for "author"
+            MagicMock(),  # Insert reference_values for author
+            field_result,  # Field lookup for "title"
+            MagicMock(),  # Insert reference_values for title
+            field_result,  # Field lookup for "year"
+            MagicMock(),  # Insert reference_values for year
+            field_result,  # Field lookup for "journal"
+            MagicMock(),  # Insert reference_values for journal
+        ]
+
+        from src.utils.references import add_reference
+
+        data = {
+            "bib_key": "einstein1905",
+            "author": "Albert Einstein",
+            "title": "On the Electrodynamics of Moving Bodies",
+            "year": "1905",
+            "journal": "Annalen der Physik",
+        }
+
+        add_reference("article", data)
+
+        mock_db.session.commit.assert_called_once()
+        # 1 type lookup + 1 insert ref + (4 fields * 2 calls each) = 10 total calls
+        assert mock_db.session.execute.call_count == 10
+
+    @patch("src.utils.references.db")
+    def test_add_reference_database_error_is_wrapped(self, mock_db):
+        """Test that database errors are wrapped in DatabaseError."""
+        mock_db.session.execute.side_effect = Exception("Connection lost")
+
+        from src.utils.references import add_reference, DatabaseError
+
+        data = {"bib_key": "test2025"}
+
+        with pytest.raises(DatabaseError) as exc_info:
+            add_reference("article", data)
+
+        assert "Failed to insert reference" in str(exc_info.value)
+        mock_db.session.rollback.assert_called_once()

@@ -44,6 +44,22 @@ try:
                 PRIMARY KEY(reference_type_id, field_id)
             )
         """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS single_reference (
+                id SERIAL PRIMARY KEY,
+                reference_type_id INT NOT NULL REFERENCES reference_types(id),
+                bib_key VARCHAR(100) UNIQUE NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS reference_values (
+                id SERIAL PRIMARY KEY,
+                reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
+                field_id INT NOT NULL REFERENCES fields(id),
+                value TEXT
+            )
+        """))
         conn.commit()
     print("✓ Ensured database tables exist")
 

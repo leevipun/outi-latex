@@ -8,7 +8,27 @@ from src.config import app, db
 
 
 def reset_db():
-    """Clear all data from the reference_types table."""
+    """Clear all data from the database, dropping all tables except reference_types metadata."""
+    print("Dropping reference_values table")
+    sql = text("DROP TABLE IF EXISTS reference_values CASCADE")
+    db.session.execute(sql)
+    db.session.commit()
+
+    print("Dropping single_reference table")
+    sql = text("DROP TABLE IF EXISTS single_reference CASCADE")
+    db.session.execute(sql)
+    db.session.commit()
+
+    print("Dropping reference_type_fields table")
+    sql = text("DROP TABLE IF EXISTS reference_type_fields CASCADE")
+    db.session.execute(sql)
+    db.session.commit()
+
+    print("Dropping fields table")
+    sql = text("DROP TABLE IF EXISTS fields CASCADE")
+    db.session.execute(sql)
+    db.session.commit()
+
     print("Clearing contents from table reference_types")
     sql = text("DELETE FROM reference_types")
     db.session.execute(sql)
