@@ -34,9 +34,10 @@ https://docs.google.com/spreadsheets/d/1c9JaIyMWyLqpMv7I3L1M4DubtTQdr-XJTI_NyptI
 
 - User storyille tulee määritellä hyväksymiskriteerit, jotka dokumentoidaan Robot Frameworkin syntaksilla
 - Toteutetun koodin testikattavuuden tulee olla yli 80 %
+- Testien tulee läpäistä ilman virheitä CI-palvelussa.
 - Asiakas pääsee näkemään koko ajan koodin ja testien tilanteen CI-palvelusta
 - Koodin ylläpidettävyyden tulee olla mahdollisimman hyvä esim (järkevä nimeäminen)
-- yhtenäinen koodityyli (valvotaan Pylintin avulla)
+- Pylint-pisteet ≥ 8.5/10 eikä yhtään error-tason huomautusta
 
 
 ## 📦 Prerequisites
