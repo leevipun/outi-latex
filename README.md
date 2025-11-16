@@ -9,6 +9,7 @@ https://docs.google.com/spreadsheets/d/1c9JaIyMWyLqpMv7I3L1M4DubtTQdr-XJTI_NyptI
 ## 📋 Table of Contents
 
 - [Features](#features)
+- [Definition Of Done](#dod)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -28,6 +29,15 @@ https://docs.google.com/spreadsheets/d/1c9JaIyMWyLqpMv7I3L1M4DubtTQdr-XJTI_NyptI
 - 🧪 Comprehensive test suite with pytest
 - 🔧 Automatic code formatting with Black and isort
 - 📊 Database seeding and management utilities
+
+## DoD
+
+- User storyille tulee määritellä hyväksymiskriteerit, jotka dokumentoidaan Robot Frameworkin syntaksilla
+- Toteutetun koodin testikattavuuden tulee olla yli 80 %
+- Asiakas pääsee näkemään koko ajan koodin ja testien tilanteen CI-palvelusta
+- Koodin ylläpidettävyyden tulee olla mahdollisimman hyvä esim (järkevä nimeäminen)
+- yhtenäinen koodityyli (valvotaan Pylintin avulla)
+
 
 ## 📦 Prerequisites
 
