@@ -3,7 +3,11 @@
 import json
 import os
 from typing import Any, Dict, List, Optional
+import requests
 
+SCHEMA = os.path.join(
+        os.path.dirname(os.path.dirname(__file__)), "form-fields.json"
+    )
 
 class UtilError(Exception):
     """Base exception for utility operations."""
@@ -90,3 +94,111 @@ def get_fields_for_type(type_name: str) -> List[Dict[str, Any]]:
         raise
     except Exception as e:
         raise FormFieldsError(f"Failed to get fields for type '{type_name}': {e}")
+    
+TYPE_MAP = {
+    "journal-article": "article",
+    "proceedings-article": "inproceedings",
+    "book": "book",
+    "book-chapter": "inbook",
+    "reference-entry": "misc",
+}
+
+import os
+import requests
+from typing import Any, Dict, Optional
+
+TYPE_MAP = {
+    "journal-article": "article",
+    "proceedings-article": "inproceedings",
+    "book": "book",
+    "book-chapter": "inbook",
+    "reference-entry": "misc",
+}
+
+
+def detect_type(crossref_type: str) -> str:
+    return TYPE_MAP.get(crossref_type, "misc")
+
+
+def parse_authors(authors: Optional[list]) -> Optional[str]:
+    if not authors:
+        return None
+    return ", ".join(f"{a.get('given','')} {a.get('family','')}".strip() for a in authors)
+
+
+def clean_values(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove keys with empty or None values."""
+    def valid(v):
+        if v is None:
+            return False
+        if isinstance(v, str) and not v.strip():
+            return False
+        if isinstance(v, (list, tuple)) and not v:
+            return False
+        return True
+
+    return {k: v for k, v in data.items() if valid(v)}
+
+
+def parse_doi(doi_data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Parse CrossRef API response data into a structured reference dictionary.
+    """
+    entry_type = detect_type(doi_data.get("type", "misc"))
+    parsed = {"type": entry_type}
+
+    form_fields = load_form_fields()  # Assuming returns dict of type -> fields
+
+    for field in form_fields.get(entry_type, []):
+        key = field["key"]
+
+        if key == "author":
+            parsed[key] = parse_authors(doi_data.get("author"))
+
+        elif key == "title":
+            parsed[key] = doi_data.get("title")
+
+        elif key in ("journal", "booktitle"):
+            container = doi_data.get("container-title")
+            parsed[key] = container[0] if container else None
+
+        elif key == "year":
+            date_parts = doi_data.get("issued", {}).get("date-parts", [[None]])
+            parsed[key] = date_parts[0][0]
+
+        elif key == "month":
+            date_parts = doi_data.get("issued", {}).get("date-parts", [[None, None]])
+            parsed[key] = date_parts[0][1] if len(date_parts[0]) > 1 else None
+
+        elif key in ("pages", "volume", "number", "publisher", "doi", "url"):
+            mapping = {
+                "pages": "page",
+                "number": "issue",
+                "doi": "DOI",
+            }
+            parsed[key] = doi_data.get(mapping.get(key, key))
+
+        elif key == "issn":
+            issn = doi_data.get("ISSN")
+            parsed[key] = issn[0] if issn else None
+
+        else:
+            parsed[key] = None
+
+    return clean_values(parsed)
+
+
+def get_doi_data_from_api(doi: str) -> Dict[str, Any]:
+    """
+    Fetch DOI metadata from CrossRef API and parse it.
+    """
+    url = f"https://citation.doi.org/metadata?doi={doi}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        doi_data = response.json()
+        parsed = parse_doi(doi_data)
+        print(f"Fetched and parsed DOI data for {doi}: {parsed}")
+        return parsed
+    except requests.exceptions.RequestException as e:
+        raise UtilError(f"Failed to fetch DOI data: {e}")

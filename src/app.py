@@ -6,9 +6,8 @@ from src.config import app, test_env
 from src.db_helper import reset_db
 from src.util import (
     FormFieldsError,
-    ReferenceTypeError,
     get_fields_for_type,
-    get_reference_type_by_id,
+    get_doi_data_from_api,
 )
 from src.utils import references
 from src.utils.references import DatabaseError
@@ -142,6 +141,15 @@ def save_reference():
 
     flash("Viite tallennettu!", "success")
     return redirect("/all")
+
+@app.route("/get-doi", methods=["POST"])
+def get_doi_data():
+    """
+    Haetaan doi:n tiedot api-rajapinnan kautta.
+    """
+    doi = request.form.get("doi-value")
+    get_doi_data_from_api(doi)
+    return redirect("/")
 
 
 # testausta varten oleva reitti
