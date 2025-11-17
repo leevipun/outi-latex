@@ -40,8 +40,14 @@ try:
         sql = text("DROP TABLE IF EXISTS fields CASCADE")
         conn.execute(sql)
 
-        print("Clearing contents from table reference_types")
-        sql = text("DELETE FROM reference_types")
+        print("Ensuring reference_types table exists before clearing contents")
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS reference_types (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(50) UNIQUE NOT NULL
+            )
+        """))
+        sql = text("TRUNCATE TABLE reference_types RESTART IDENTITY CASCADE")
         conn.execute(sql)
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS reference_types (
