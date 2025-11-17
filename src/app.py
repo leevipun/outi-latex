@@ -148,8 +148,14 @@ def get_doi_data():
     Haetaan doi:n tiedot api-rajapinnan kautta.
     """
     doi = request.form.get("doi-value")
-    get_doi_data_from_api(doi)
-    return redirect("/")
+    parsed_doi = get_doi_data_from_api(doi)
+        # Hae valitun tyypin kentät form-fields.json:sta
+    try:
+        fields = get_fields_for_type(parsed_doi['type'])
+    except FormFieldsError as e:
+        flash(f"Error loading form fields: {str(e)}", "error")
+        fields = []
+    return render_template(f"/add?form={parsed_doi['type']}", parsed_doi=parsed_doi, fields=fields)
 
 
 # testausta varten oleva reitti
