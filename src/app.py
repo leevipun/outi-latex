@@ -169,6 +169,17 @@ def export_bibtex():
         )
         return response
 
+    except DatabaseError as e:
+        flash(f"Database error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
+    except FormFieldsError as e:
+        flash(f"Form fields error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
+    except Exception as e:
+        flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
+
+
 # testausta varten oleva reitti
 if test_env:
 
