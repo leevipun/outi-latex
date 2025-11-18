@@ -108,13 +108,9 @@ def format_bibtex_entry(reference_data: dict) -> str:
     ref_type = reference_data.get('reference_type', 'misc')
     bib_key = reference_data.get('bib_key', 'unknown')
 
-    # BibTeX entry alkaa
     bibtex = f"@{ref_type}{{{bib_key},\n"
-    fields_json = reference_data.get('fields', '{}')
-    try:
-        fields_data = json.loads(fields_json)
-    except (json.JSONDecodeError, TypeError):
-        fields_data = {}
+
+    fields_data = reference_data.get('fields', {})
 
     for key, value in fields_data.items():
         if value and str(value).strip():
