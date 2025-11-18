@@ -90,3 +90,36 @@ def get_fields_for_type(type_name: str) -> List[Dict[str, Any]]:
         raise
     except Exception as e:
         raise FormFieldsError(f"Failed to get fields for type '{type_name}': {e}")
+
+def format_bibtex_value(key: str, value: str) -> str:
+    """Formatoi BibTeX-kentän arvo oikein"""
+    # Year, volume, number, pages kentät ilman aaltosulkeita jos numeerisia
+    numeric_fields = ['year', 'volume', 'number', 'pages']
+    if key.lower() in numeric_fields and value.replace('-', '').replace(' ', '').isdigit():
+        return value
+
+    # Muut kentät aaltosulkeissa
+    # Escapeta erikoismerkit
+    value = value.replace('\\', '\\\\').replace('{', '\\{').replace('}', '\\}')
+    return f"{{{value}}}"
+
+def format_bibtex_entry(reference_data: dict) -> str:
+    """Muodosta yksittäinen BibTeX-merkintä"""
+    ref_type = reference_data.get('reference_type', 'misc')
+    bib_key = reference_data.get('bib_key', 'unknown')
+
+    # BibTeX entry alkaa
+    bibtex = f"@{ref_type}{{{bib_key},\n"
+    fields_json = reference_data.get('fields', '{}')
+    try:
+        fields_data = json.loads(fields_json)
+    except (json.JSONDecodeError, TypeError):
+        fields_data = {}
+
+    for key, value in fields_data.items():
+        if value and str(value).strip():
+            formatted_value = format_bibtex_value(key, str(value))
+            bibtex += f"    {key} = {formatted_value},\n"
+
+    bibtex = bibtex.rstrip(',\n') + "\n}"
+    return bibtex
