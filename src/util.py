@@ -93,12 +93,6 @@ def get_fields_for_type(type_name: str) -> List[Dict[str, Any]]:
 
 def format_bibtex_value(key: str, value: str) -> str:
     """Formatoi BibTeX-kentän arvo oikein"""
-    # Year, volume, number, pages kentät ilman aaltosulkeita jos numeerisia
-    numeric_fields = ['year', 'volume', 'number', 'pages']
-    if key.lower() in numeric_fields and value.replace('-', '').replace(' ', '').isdigit():
-        return value
-
-    # Muut kentät aaltosulkeissa
     # Escapeta erikoismerkit
     value = value.replace('\\', '\\\\').replace('{', '\\{').replace('}', '\\}')
     return f"{{{value}}}"
