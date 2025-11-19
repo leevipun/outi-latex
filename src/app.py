@@ -6,6 +6,7 @@ from src.config import app, test_env
 from src.db_helper import reset_db
 from src.util import (
     FormFieldsError,
+    UtilError,
     get_fields_for_type,
     get_doi_data_from_api,
 )
@@ -147,15 +148,27 @@ def get_doi_data():
     """
     Haetaan doi:n tiedot api-rajapinnan kautta.
     """
-    doi = request.form.get("doi-value")
-    parsed_doi = get_doi_data_from_api(doi)
-        # Hae valitun tyypin kentät form-fields.json:sta
+
     try:
+        doi = request.form.get("doi-value")
+        parsed_doi = get_doi_data_from_api(doi)
+        # Hae valitun tyypin kentät form-fields.json:sta
         fields = get_fields_for_type(parsed_doi['type'])
     except FormFieldsError as e:
         flash(f"Error loading form fields: {str(e)}", "error")
         fields = []
-    return render_template(f"/add?form={parsed_doi['type']}", parsed_doi=parsed_doi, fields=fields)
+        return render_template("index.html")
+    except UtilError as e:
+        flash(f"Error fetching DOI data: {str(e)}", "error")
+        return render_template("index.html")
+    except KeyError as e:
+        flash(f"Missing expected data: {str(e)}", "error")
+        return render_template("index.html")
+    except Exception as e:
+        flash(f"An unexpected error occurred: {str(e)}", "error")
+        return render_template("index.html")
+    flash("DOI data fetched successfully.", "success")
+    return render_template("/add_reference.html", pre_filled_values=parsed_doi, fields=fields, selected_type=parsed_doi['type'])
 
 
 # testausta varten oleva reitti

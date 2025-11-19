@@ -156,11 +156,11 @@ def parse_doi(doi_data: Dict[str, Any]) -> Dict[str, Any]:
             parsed[key] = parse_authors(doi_data.get("author"))
 
         elif key == "title":
-            parsed[key] = doi_data.get("title")
+            parsed[key] = doi_data["title"]
 
         elif key in ("journal", "booktitle"):
-            container = doi_data.get("container-title")
-            parsed[key] = container[0] if container else None
+            container = doi_data["container-title"]
+            parsed[key] = container if container else None
 
         elif key == "year":
             date_parts = doi_data.get("issued", {}).get("date-parts", [[None]])
@@ -180,7 +180,7 @@ def parse_doi(doi_data: Dict[str, Any]) -> Dict[str, Any]:
 
         elif key == "issn":
             issn = doi_data.get("ISSN")
-            parsed[key] = issn[0] if issn else None
+            parsed[key] = issn if issn else None
 
         else:
             parsed[key] = None
