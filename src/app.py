@@ -143,6 +143,7 @@ def save_reference():
     flash("Viite tallennettu!", "success")
     return redirect("/all")
 
+
 @app.route("/get-doi", methods=["POST"])
 def get_doi_data():
     """
@@ -153,7 +154,7 @@ def get_doi_data():
         doi = request.form.get("doi-value")
         parsed_doi = get_doi_data_from_api(doi)
         # Hae valitun tyypin kentät form-fields.json:sta
-        fields = get_fields_for_type(parsed_doi['type'])
+        fields = get_fields_for_type(parsed_doi["type"])
     except FormFieldsError as e:
         flash(f"Error loading form fields: {str(e)}", "error")
         fields = []
@@ -168,7 +169,12 @@ def get_doi_data():
         flash(f"An unexpected error occurred: {str(e)}", "error")
         return render_template("index.html")
     flash("DOI data fetched successfully.", "success")
-    return render_template("/add_reference.html", pre_filled_values=parsed_doi, fields=fields, selected_type=parsed_doi['type'])
+    return render_template(
+        "/add_reference.html",
+        pre_filled_values=parsed_doi,
+        fields=fields,
+        selected_type=parsed_doi["type"],
+    )
 
 
 # testausta varten oleva reitti

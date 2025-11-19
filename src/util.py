@@ -5,9 +5,8 @@ import os
 from typing import Any, Dict, List, Optional
 import requests
 
-SCHEMA = os.path.join(
-        os.path.dirname(os.path.dirname(__file__)), "form-fields.json"
-    )
+SCHEMA = os.path.join(os.path.dirname(os.path.dirname(__file__)), "form-fields.json")
+
 
 class UtilError(Exception):
     """Base exception for utility operations."""
@@ -94,7 +93,8 @@ def get_fields_for_type(type_name: str) -> List[Dict[str, Any]]:
         raise
     except Exception as e:
         raise FormFieldsError(f"Failed to get fields for type '{type_name}': {e}")
-    
+
+
 TYPE_MAP = {
     "journal-article": "article",
     "proceedings-article": "inproceedings",
@@ -123,11 +123,14 @@ def detect_type(crossref_type: str) -> str:
 def parse_authors(authors: Optional[list]) -> Optional[str]:
     if not authors:
         return None
-    return ", ".join(f"{a.get('given','')} {a.get('family','')}".strip() for a in authors)
+    return ", ".join(
+        f"{a.get('given','')} {a.get('family','')}".strip() for a in authors
+    )
 
 
 def clean_values(data: Dict[str, Any]) -> Dict[str, Any]:
     """Remove keys with empty or None values."""
+
     def valid(v):
         if v is None:
             return False

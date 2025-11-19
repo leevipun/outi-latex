@@ -57,21 +57,23 @@ class TestAddReference:
         """Test adding a reference successfully."""
         with app.app_context():
             add_reference("article", sample_reference_data)
-            
+
             # Verify it was added
             result = get_all_added_references()
             assert len(result) == 1
             assert result[0]["bib_key"] == "Smith2020"
             assert result[0]["reference_type"] == "article"
 
-    def test_add_reference_with_all_fields(self, app, db_session, sample_reference_data):
+    def test_add_reference_with_all_fields(
+        self, app, db_session, sample_reference_data
+    ):
         """Test that all fields are stored correctly."""
         with app.app_context():
             add_reference("article", sample_reference_data)
-            
+
             result = get_all_added_references()
             ref = result[0]["fields"]
-            
+
             assert ref["author"] == "John Smith"
             assert ref["title"] == "A Great Paper"
             assert ref["journal"] == "Journal of Examples"
@@ -88,10 +90,10 @@ class TestAddReference:
                 "year": "",
             }
             add_reference("article", data)
-            
+
             result = get_all_added_references()
             ref = result[0]["fields"]
-            
+
             assert "author" in ref
             assert "title" in ref
             assert "journal" not in ref  # None values excluded
@@ -105,17 +107,17 @@ class TestAddReference:
                 "author": "Test Author",
                 "title": "Test Title",
             }
-            
+
             with pytest.raises(DatabaseError) as exc_info:
                 add_reference("unknown_type", data)
-            
+
             assert "Unknown reference type" in str(exc_info.value)
 
     def test_add_multiple_references(self, app, db_session, sample_reference_data):
         """Test adding multiple references."""
         with app.app_context():
             add_reference("article", sample_reference_data)
-            
+
             data2 = {
                 "bib_key": "Johnson2021",
                 "author": "Jane Johnson",
@@ -124,7 +126,7 @@ class TestAddReference:
                 "year": 2021,
             }
             add_reference("article", data2)
-            
+
             result = get_all_added_references()
             assert len(result) == 2
             bib_keys = {ref["bib_key"] for ref in result}
@@ -140,7 +142,7 @@ class TestAddReference:
                 "journal": "A Journal",
                 "year": 2020,
             }
-            
+
             book_data = {
                 "bib_key": "Book2020",
                 "author": "Author B",
@@ -148,13 +150,13 @@ class TestAddReference:
                 "publisher": "A Publisher",
                 "year": 2020,
             }
-            
+
             add_reference("article", article_data)
             add_reference("book", book_data)
-            
+
             result = get_all_added_references()
             assert len(result) == 2
-            
+
             types = {ref["reference_type"] for ref in result}
             assert types == {"article", "book"}
 
@@ -164,17 +166,17 @@ class TestAddReference:
             data = {
                 "bib_key": "Müller2020",
                 "author": "Dr. Müller & Co.",
-                "title": "Test's \"Special\" Title",
+                "title": 'Test\'s "Special" Title',
                 "journal": "Journal (International)",
                 "year": 2020,
             }
-            
+
             add_reference("article", data)
-            
+
             result = get_all_added_references()
             ref = result[0]["fields"]
             assert ref["author"] == "Dr. Müller & Co."
-            assert "\"Special\"" in ref["title"]
+            assert '"Special"' in ref["title"]
 
 
 class TestGetAllAddedReferences:
@@ -190,7 +192,7 @@ class TestGetAllAddedReferences:
         """Test retrieving added reference."""
         with app.app_context():
             add_reference("article", sample_reference_data)
-            
+
             result = get_all_added_references()
             assert len(result) == 1
             assert result[0]["bib_key"] == "Smith2020"
@@ -198,14 +200,16 @@ class TestGetAllAddedReferences:
             assert "fields" in result[0]
             assert "created_at" in result[0]
 
-    def test_returns_fields_correctly_grouped(self, app, db_session, sample_reference_data):
+    def test_returns_fields_correctly_grouped(
+        self, app, db_session, sample_reference_data
+    ):
         """Test that fields are grouped correctly per reference."""
         with app.app_context():
             add_reference("article", sample_reference_data)
-            
+
             result = get_all_added_references()
             fields = result[0]["fields"]
-            
+
             assert isinstance(fields, dict)
             assert len(fields) > 0
             for key, value in fields.items():
@@ -222,7 +226,7 @@ class TestGetAllAddedReferences:
                 "journal": "J1",
                 "year": 2020,
             }
-            
+
             data2 = {
                 "bib_key": "Second2020",
                 "author": "Author 2",
@@ -230,12 +234,12 @@ class TestGetAllAddedReferences:
                 "journal": "J2",
                 "year": 2020,
             }
-            
+
             add_reference("article", data1)
             add_reference("article", data2)
-            
+
             result = get_all_added_references()
-            
+
             # Most recent first
             assert result[0]["bib_key"] == "Second2020"
             assert result[1]["bib_key"] == "First2020"
@@ -244,10 +248,10 @@ class TestGetAllAddedReferences:
         """Test that returned reference has all required fields."""
         with app.app_context():
             add_reference("article", sample_reference_data)
-            
+
             result = get_all_added_references()
             ref = result[0]
-            
+
             assert "bib_key" in ref
             assert "reference_type" in ref
             assert "created_at" in ref
@@ -256,10 +260,10 @@ class TestGetAllAddedReferences:
     def test_created_at_is_datetime(self, app, db_session, sample_reference_data):
         """Test that created_at is a datetime object."""
         from datetime import datetime
-        
+
         with app.app_context():
             add_reference("article", sample_reference_data)
-            
+
             result = get_all_added_references()
             assert isinstance(result[0]["created_at"], datetime)
 
@@ -267,16 +271,18 @@ class TestGetAllAddedReferences:
 class TestIntegrationWorkflows:
     """Integration tests combining multiple functions."""
 
-    def test_full_workflow_add_and_retrieve(self, app, db_session, sample_reference_data):
+    def test_full_workflow_add_and_retrieve(
+        self, app, db_session, sample_reference_data
+    ):
         """Test complete workflow: get types -> add reference -> retrieve all."""
         with app.app_context():
             # Step 1: Get available types
             types = get_all_references()
             assert len(types) > 0
-            
+
             # Step 2: Add reference
             add_reference("article", sample_reference_data)
-            
+
             # Step 3: Retrieve all references
             references = get_all_added_references()
             assert len(references) == 1
@@ -290,7 +296,7 @@ class TestIntegrationWorkflows:
             type_names = {t["name"] for t in types}
             assert "article" in type_names
             assert "book" in type_names
-            
+
             # Add article
             article_data = {
                 "bib_key": "Art2020",
@@ -300,7 +306,7 @@ class TestIntegrationWorkflows:
                 "year": 2020,
             }
             add_reference("article", article_data)
-            
+
             # Add book
             book_data = {
                 "bib_key": "Book2020",
@@ -310,11 +316,11 @@ class TestIntegrationWorkflows:
                 "year": 2020,
             }
             add_reference("book", book_data)
-            
+
             # Retrieve all
             refs = get_all_added_references()
             assert len(refs) == 2
-            
+
             # Verify types
             ref_types = {r["reference_type"] for r in refs}
             assert ref_types == {"article", "book"}

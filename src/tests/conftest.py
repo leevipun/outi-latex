@@ -41,17 +41,19 @@ def db_session(app):
     with app.app_context():
         # Setup test database schema
         setup_db()
-        
+
         # Seed reference types
-        sql = text("""
+        sql = text(
+            """
             INSERT INTO reference_types (name) VALUES
             ('article'),
             ('book'),
             ('inproceedings')
-        """)
+        """
+        )
         db.session.execute(sql)
         db.session.commit()
-        
+
         # Seed fields for articles
         article_fields = [
             ("author", "str", "text"),
@@ -64,28 +66,35 @@ def db_session(app):
             ("doi", "str", "text"),
             ("url", "str", "text"),
         ]
-        
+
         for key_name, data_type, input_type in article_fields:
-            sql = text("""
+            sql = text(
+                """
                 INSERT INTO fields (key_name, data_type, input_type) 
                 VALUES (:key_name, :data_type, :input_type)
-            """)
-            db.session.execute(sql, {
-                "key_name": key_name,
-                "data_type": data_type,
-                "input_type": input_type
-            })
-        
+            """
+            )
+            db.session.execute(
+                sql,
+                {
+                    "key_name": key_name,
+                    "data_type": data_type,
+                    "input_type": input_type,
+                },
+            )
+
         db.session.commit()
-        
+
         # Link fields to article type
-        sql = text("""
+        sql = text(
+            """
             INSERT INTO reference_type_fields (reference_type_id, field_id, required)
             SELECT 1, f.id, CASE WHEN f.key_name IN ('author', 'title', 'journal', 'year') THEN TRUE ELSE FALSE END
             FROM fields f
-        """)
+        """
+        )
         db.session.execute(sql)
-        
+
         # Link fields to book type
         book_fields = [
             ("author", "str", "text"),
@@ -93,23 +102,27 @@ def db_session(app):
             ("publisher", "str", "text"),
             ("year", "int", "number"),
         ]
-        
+
         for key_name, data_type, input_type in book_fields:
-            sql = text("""
+            sql = text(
+                """
                 SELECT id FROM fields WHERE key_name = :key_name
-            """)
+            """
+            )
             result = db.session.execute(sql, {"key_name": key_name}).scalar()
             if result:
-                sql = text("""
+                sql = text(
+                    """
                     INSERT INTO reference_type_fields (reference_type_id, field_id, required)
                     VALUES (2, :field_id, CASE WHEN :key_name IN ('author', 'title', 'publisher', 'year') THEN TRUE ELSE FALSE END)
-                """)
+                """
+                )
                 db.session.execute(sql, {"field_id": result, "key_name": key_name})
-        
+
         db.session.commit()
-        
+
         yield db
-        
+
         # Cleanup after test
         db.session.rollback()
 
