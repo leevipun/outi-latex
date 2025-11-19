@@ -5,7 +5,10 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from src.util import get_fields_for_type, get_reference_type_by_id, load_form_fields, format_bibtex_value
+from src.util import (
+    get_fields_for_type, get_reference_type_by_id,
+    load_form_fields, format_bibtex_value, format_bibtex_entry
+)
 
 
 @pytest.fixture
@@ -372,3 +375,182 @@ class TestBibTeXFormatting:
         """Test empty string handling"""
         result = format_bibtex_value("title", "")
         assert result == "{}"
+
+    def test_format_bibtex_entry_article(self):
+        """Test complete article BibTeX entry formatting"""
+        reference_data = {
+            'reference_type': 'article',
+            'bib_key': 'doe2023',
+            'fields': {
+                'author': 'John Doe',
+                'title': 'Test Article',
+                'journal': 'Test Journal',
+                'year': '2023',
+                'volume': '42'
+            }
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Check entry structure
+        assert result.startswith("@article{doe2023,")
+        assert result.endswith("}")
+
+        # Check all fields are present with correct formatting
+        assert "author = {John Doe}" in result
+        assert "title = {Test Article}" in result
+        assert "journal = {Test Journal}" in result
+        assert "year = {2023}" in result
+        assert "volume = {42}" in result
+
+    def test_format_bibtex_entry_book(self):
+        """Test book BibTeX entry formatting"""
+        reference_data = {
+            'reference_type': 'book',
+            'bib_key': 'martin2008',
+            'fields': {
+                'author': 'Robert C. Martin',
+                'title': 'Clean Code',
+                'publisher': 'Prentice Hall',
+                'year': '2008'
+            }
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        assert result.startswith("@book{martin2008,")
+        assert "author = {Robert C. Martin}" in result
+        assert "title = {Clean Code}" in result
+        assert "publisher = {Prentice Hall}" in result
+        assert "year = {2008}" in result
+
+    def test_format_bibtex_entry_with_special_characters(self):
+        """Test entry with special characters in fields"""
+        reference_data = {
+            'reference_type': 'article',
+            'bib_key': 'special2023',
+            'fields': {
+                'author': 'Åke Ändersson & Co',
+                'title': 'Test {LaTeX} & Symbols',
+                'journal': 'Spëciál Journal'
+            }
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Special chars should be preserved, braces escaped
+        assert "author = {Åke Ändersson & Co}" in result
+        assert "title = {Test \\{LaTeX\\} & Symbols}" in result
+        assert "journal = {Spëciál Journal}" in result
+
+    def test_format_bibtex_entry_empty_fields(self):
+        """Test handling of empty and None fields"""
+        reference_data = {
+            'reference_type': 'article',
+            'bib_key': 'test2023',
+            'fields': {
+                'author': 'John Doe',
+                'title': '',        # Empty string
+                'journal': 'Test Journal',
+                'volume': None,     # None value
+                'pages': '   ',     # Only whitespace
+                'year': '2023'      # Valid value
+            }
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Empty fields should not appear
+        assert "title =" not in result
+        assert "volume =" not in result
+        assert "pages =" not in result
+
+        # Only filled fields should appear
+        assert "author = {John Doe}" in result
+        assert "journal = {Test Journal}" in result
+        assert "year = {2023}" in result
+
+    def test_format_bibtex_entry_missing_fields(self):
+        """Test handling when fields dictionary is missing"""
+        reference_data = {
+            'reference_type': 'misc',
+            'bib_key': 'minimal2023'
+            # 'fields' key missing
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Should produce minimal valid entry
+        expected = "@misc{minimal2023,\n}"
+        assert result == expected
+
+    def test_format_bibtex_entry_no_trailing_comma(self):
+        """Test that final entry has no trailing comma"""
+        reference_data = {
+            'reference_type': 'article',
+            'bib_key': 'test2023',
+            'fields': {
+                'author': 'John Doe',
+                'title': 'Test Title'
+            }
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Should not have comma before closing brace
+        assert ",\n}" not in result
+        assert result.endswith("\n}")
+
+        # But should have comma between fields
+        lines = result.split('\n')
+        assert lines[1].endswith(',')  # author line should have comma
+        assert not lines[2].endswith(',')  # title line should not have comma
+
+    def test_format_bibtex_entry_default_values(self):
+        """Test default values for missing reference_type and bib_key"""
+        reference_data = {
+            'fields': {
+                'title': 'Test Title'
+            }
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Should use defaults
+        assert result.startswith("@misc{unknown,")
+        assert "title = {Test Title}" in result
+
+    def test_format_bibtex_entry_fields_as_json_string(self):
+        """Test handling when fields is stored as JSON string"""
+        fields_dict = {
+            'author': 'John Doe',
+            'title': 'Test Article',
+            'year': '2023'
+        }
+
+        reference_data = {
+            'reference_type': 'article',
+            'bib_key': 'test2023',
+            'fields': json.dumps(fields_dict)  # JSON string instead of dict
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Should parse JSON and format correctly
+        assert "author = {John Doe}" in result
+        assert "title = {Test Article}" in result
+        assert "year = {2023}" in result
+
+    def test_format_bibtex_entry_invalid_json_fields(self):
+        """Test handling of invalid JSON in fields"""
+        reference_data = {
+            'reference_type': 'article',
+            'bib_key': 'test2023',
+            'fields': '{invalid json'  # Malformed JSON
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Should produce minimal entry when JSON parsing fails
+        expected = "@article{test2023,\n}"
+        assert result == expected
