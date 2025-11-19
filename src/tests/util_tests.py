@@ -5,7 +5,7 @@ from unittest.mock import mock_open, patch
 
 import pytest
 
-from src.util import get_fields_for_type, get_reference_type_by_id, load_form_fields
+from src.util import get_fields_for_type, get_reference_type_by_id, load_form_fields, format_bibtex_value
 
 
 @pytest.fixture
@@ -339,3 +339,36 @@ class TestLoadFormFieldsWithMocking:
         with patch("builtins.open", mock_open(read_data="invalid json")):
             with pytest.raises(json.JSONDecodeError):
                 load_form_fields()
+
+class TestBibTeXFormatting:
+    """Test BibTeX formatting functions"""
+
+    def test_format_bibtex_value_simple_text(self):
+        """Test simple text value formatting"""
+        result = format_bibtex_value("author", "John Doe")
+        assert result == "{John Doe}"
+
+    def test_format_bibtex_value_with_braces(self):
+        """Test text with braces gets escaped"""
+        result = format_bibtex_value("title", "Test {with} braces")
+        assert result == "{Test \\{with\\} braces}"
+
+    def test_format_bibtex_value_with_backslashes(self):
+        """Test backslashes are escaped"""
+        result = format_bibtex_value("title", "LaTeX\\command")
+        assert result == "{LaTeX\\\\command}"
+
+    def test_format_bibtex_value_complex_escaping(self):
+        """Test complex escaping with multiple special chars"""
+        result = format_bibtex_value("title", "Complex {A\\B} test")
+        assert result == "{Complex \\{A\\\\B\\} test}"
+
+    def test_format_bibtex_value_numbers(self):
+        """Test numeric values are wrapped in braces"""
+        result = format_bibtex_value("year", "2023")
+        assert result == "{2023}"
+
+    def test_format_bibtex_value_empty_string(self):
+        """Test empty string handling"""
+        result = format_bibtex_value("title", "")
+        assert result == "{}"
