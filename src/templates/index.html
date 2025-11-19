@@ -21,7 +21,7 @@
         <p class="subtitle" id="page-subtitle">Hallitse viitteesi helposti</p>
         
         <form method="POST" action="/" class="form-group" id="reference-type-form">
-            <label for="form" id="form-label">Valitse viitetyyppi</label>
+            <label for="form" id="form-label">Valitse viitetyyppi ja täytä tiedot käsin</label>
             <select name="form" id="form">
                 {% for reference_type in reference_types %}
                     <option value="{{reference_type['name']}}" id="option-{{ reference_type['name'] }}">{{reference_type['name']}}</option>

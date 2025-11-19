@@ -36,3 +36,12 @@ User Can Fetch with DOI
     Textfield Value Should Be    id:publisher    ACM
     Textfield Value Should Be    id:month    7
     Textfield Value Should Be    id:doi    10.1145/2783446.2783605
+
+User Sees Error on Invalid DOI
+    [Documentation]    User enters invalid DOI and sees error message
+    Go To    ${BASE_URL}
+    Wait Until Element Is Visible    id:doi-input    timeout=10s
+    Input Text    id:doi-input    invalid_doi_12345
+    Click Button    id:add_doi-button
+    Wait Until Element Is Visible    id:alert-error    timeout=10s
+    Page Should Contain Element    id:alert-error

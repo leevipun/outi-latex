@@ -4,6 +4,7 @@ import json
 from unittest.mock import mock_open, patch
 
 import pytest
+import requests
 
 from src.util import get_fields_for_type, get_reference_type_by_id, load_form_fields
 
@@ -339,3 +340,36 @@ class TestLoadFormFieldsWithMocking:
         with patch("builtins.open", mock_open(read_data="invalid json")):
             with pytest.raises(json.JSONDecodeError):
                 load_form_fields()
+
+class TestDOIParseFunction:
+    """Tests for get_doi_data_from_api function."""
+    
+    @patch("src.util.requests.get")
+    def test_fetch_doi_data_success(self, mock_get):
+        """Test successful DOI data fetch returns dict."""
+        from src.util import get_doi_data_from_api
+        
+        # Mock the response
+        mock_response = mock_get.return_value
+        mock_response.json.return_value = {
+            "type": "proceedings-article",
+            "author": [{"given": "John", "family": "Doe"}],
+            "title": "Sample Title",
+            "container-title": "Sample Conference",
+            "issued": {"date-parts": [[2020, 6]]},
+            "issn": ["1234-5678"],
+        }
+        
+        result = get_doi_data_from_api("10.1145/test")
+        assert isinstance(result, dict)
+        assert "type" in result
+
+    @patch("src.util.requests.get")
+    def test_fetch_doi_data_failure(self, mock_get):
+        """Test DOI data fetch failure raises UtilError."""
+        from src.util import get_doi_data_from_api, UtilError
+        
+        mock_get.side_effect = requests.exceptions.RequestException("API Error")
+        
+        with pytest.raises(UtilError):
+            get_doi_data_from_api("10.1000/invalid")
