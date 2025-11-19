@@ -18,9 +18,9 @@
         </div>
         {% endif %}
     {% endwith %}
-    <div class="container">
+    <div class="container" id="add-reference-container">
         <a href="/" class="back-link" id="back-to-home">← Takaisin etusivulle</a>
-        <h1 id="add-reference-title">Lisää uusi viite</h1>
+        <h1 id="add-reference-title">{% if pre_filled_values %}Tarkista ja täydennä haettuja tietoja{% else %}Lisää uusi viite{% endif %}</h1>
 
         {% if selected_type and fields %}
         <!-- Näytä valittu tyyppi -->
@@ -28,7 +28,7 @@
 
         <!-- Lomake tallennuksella -->
         <form action="/save_reference" method="post" id="add-reference-form">
-            <input type="hidden" name="reference_type" value="{{ selected_type }}">
+            <input type="hidden" name="reference_type" id="reference_type" value="{{ selected_type }}">
 
             <div class="form-group">
                 <label for="cite_key" id="cite_key-label">
@@ -54,19 +54,22 @@
                 <textarea id="{{ field.key }}"
                           name="{{ field.key }}"
                           rows="3"
-                          {% if field.required %}required{% endif %}></textarea>
+                          value="{% if pre_filled_values and pre_filled_values[field.key] %}{{ pre_filled_values[field.key] }}{% endif %}">
+                          {% if field.required %}required{% endif %} />
 
                 {% elif field['input-type'] == 'number' or field.type == 'int' %}
                 <input type="number"
                        id="{{ field.key }}"
                        name="{{ field.key }}"
-                       {% if field.required %}required{% endif %}>
+                       {% if field.required %}required{% endif %}
+                       value="{% if pre_filled_values and pre_filled_values[field.key] %}{{ pre_filled_values[field.key] }}{% endif %}">
 
                 {% else %}
                 <input type="text"
                        id="{{ field.key }}"
                        name="{{ field.key }}"
-                       {% if field.required %}required{% endif %}>
+                       {% if field.required %}required{% endif %}
+                       value="{% if pre_filled_values and pre_filled_values[field.key] %}{{ pre_filled_values[field.key] }}{% endif %}">
                 {% endif %}
             </div>
             {% endfor %}

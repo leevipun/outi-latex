@@ -45,6 +45,12 @@ python_files = ["*_tests.py", "test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 pythonpath = ["src"]
+norecursedirs = ["src/templates", "src/static"]
+addopts = "--ignore=src/app.py --ignore=src/utils/references.py"
+
+[tool.coverage.run]
+omit = ["src/app.py"]
+
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
