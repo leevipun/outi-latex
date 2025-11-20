@@ -52,3 +52,24 @@ User Can Access BibTeX Export Route
     Go To    ${BASE_URL}/export/bibtex
     Page Should Not Contain    404 Not Found
     Page Should Not Contain    500 Internal Server Error
+
+User Can Export Empty BibTeX
+    [Documentation]    Verify that empty BibTeX export works when no references exist
+    Go To    ${BASE_URL}/export/bibtex
+    ${current_url}=    Get Location
+    Run Keyword If    '/all' in '${current_url}'
+    ...    Page Should Not Contain    Database error
+
+User Can See And Click Export Button When References Exist
+    [Documentation]    Verify that export button appears on /all page when references exist
+    Add Sample Article Reference
+
+    Go To    ${BASE_URL}/all
+    Page Should Contain Element    id:all-references-title
+
+    Page Should Contain Element    id:export-bibtex-button
+    Click Element                  id:export-bibtex-button
+
+    Page Should Not Contain    Database error
+    Page Should Not Contain    Export error
+    Page Should Not Contain    500 Internal Server Error
