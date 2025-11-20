@@ -174,26 +174,46 @@ def add_reference(reference_type_name: str, data: dict) -> None:
 
         reference_type_id = result["id"]
 
-        # 2) Lisää rivi single_reference-tauluun ja hae uuden rivin id
-        insert_ref = db.session.execute(
-            text(
-                """
-                INSERT INTO single_reference (bib_key, reference_type_id)
-                VALUES (:bib_key, :reference_type_id)
-                RETURNING id;
-                """
-            ),
-            {
-                "bib_key": data["bib_key"],
-                "reference_type_id": reference_type_id,
-            },
+        # 2) Tarkista onko viite jo olemassa
+        existing_ref = (
+            db.session.execute(
+                text("SELECT id FROM single_reference WHERE bib_key = :bib_key"),
+                {"bib_key": data["bib_key"]},
+            )
+            .mappings()
+            .first()
         )
 
-        # .scalar() toimii useimmissa, mutta jos ei, käytetään mappings().first()
-        new_ref_id = insert_ref.scalar()
-        if new_ref_id is None:
-            row = insert_ref.mappings().first()
-            new_ref_id = row["id"]
+        if existing_ref:
+            # Viite on jo olemassa, päivitetään kentät
+            ref_id = existing_ref["id"]
+            
+            # Poistetaan vanhat kentät
+            db.session.execute(
+                text("DELETE FROM reference_values WHERE reference_id = :reference_id"),
+                {"reference_id": ref_id},
+            )
+        else:
+            # Luodaan uusi viite
+            insert_ref = db.session.execute(
+                text(
+                    """
+                    INSERT INTO single_reference (bib_key, reference_type_id)
+                    VALUES (:bib_key, :reference_type_id)
+                    RETURNING id;
+                    """
+                ),
+                {
+                    "bib_key": data["bib_key"],
+                    "reference_type_id": reference_type_id,
+                },
+            )
+
+            # .scalar() toimii useimmissa, mutta jos ei, käytetään mappings().first()
+            ref_id = insert_ref.scalar()
+            if ref_id is None:
+                row = insert_ref.mappings().first()
+                ref_id = row["id"]
 
         # 3) Jokaiselle kentälle (paitsi bib_key) lisätään rivi reference_values-tauluun
         for key, value in data.items():
@@ -238,7 +258,7 @@ def add_reference(reference_type_name: str, data: dict) -> None:
                     """
                 ),
                 {
-                    "reference_id": new_ref_id,
+                    "reference_id": ref_id,
                     "field_id": field_id,
                     "value": value,
                 },
