@@ -119,7 +119,7 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
     )
     try:
         results = db.session.execute(sql, {"bib_key": bib_key})
-        
+
         reference = None
         for row in results.mappings():
             if reference is None:
@@ -131,11 +131,11 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
                     "created_at": row["created_at"],
                     "fields": {},
                 }
-            
+
             # Add field value if it exists
             if row["key_name"] is not None:
                 reference["fields"][row["key_name"]] = row["value"]
-        
+
         return reference
     except Exception as e:
         raise DatabaseError(f"Failed to fetch reference by bib_key '{bib_key}': {e}")
@@ -143,8 +143,8 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
 
 def add_reference(reference_type_name: str, data: dict) -> None:
     """Lisää uusi viite tietokantaan tai päivitä olemassa oleva.
-    
-    Jos bib_key on jo olemassa, päivitetään sen kentät. 
+
+    Jos bib_key on jo olemassa, päivitetään sen kentät.
     Oletus: Viitetyyppi ei muutu, mutta kentät voivat muuttua.
 
     Args:
@@ -190,7 +190,7 @@ def add_reference(reference_type_name: str, data: dict) -> None:
         if existing_ref:
             # Viite on jo olemassa, päivitetään kentät
             ref_id = existing_ref["id"]
-            
+
             # Poistetaan vanhat kentät
             db.session.execute(
                 text("DELETE FROM reference_values WHERE reference_id = :reference_id"),

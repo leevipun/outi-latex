@@ -7,8 +7,8 @@ from src.db_helper import reset_db
 from src.util import (
     FormFieldsError,
     UtilError,
+    get_doi_data_from_api,
     get_fields_for_type,
-    get_doi_data_from_api
 )
 from src.utils import references
 from src.utils.references import DatabaseError, get_reference_by_bib_key
@@ -89,7 +89,7 @@ def all_references():
 @app.route("/edit/<bib_key>")
 def edit_reference(bib_key):
     """Display edit form for a specific reference.
-    
+
     Args:
         bib_key: Name of the reference that is to be edited.
     """
@@ -104,21 +104,18 @@ def edit_reference(bib_key):
         return redirect("/all")
 
     try:
-        fields = get_fields_for_type(reference['reference_type'])
+        fields = get_fields_for_type(reference["reference_type"])
     except FormFieldsError as e:
         flash(f"Error loading form fields: {str(e)}", "error")
         return redirect("/all")
 
-    pre_filled = {
-        'bib_key': reference['bib_key'],
-        **reference['fields']
-    }
+    pre_filled = {"bib_key": reference["bib_key"], **reference["fields"]}
 
     return render_template(
         "add_reference.html",
-        selected_type=reference['reference_type'],
+        selected_type=reference["reference_type"],
         fields=fields,
-        pre_filled_values=pre_filled
+        pre_filled_values=pre_filled,
     )
 
 
