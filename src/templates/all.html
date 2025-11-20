@@ -31,6 +31,8 @@
                     {% endfor %}
                 </ul>
                 <form style="margin-top: 2em;" method="POST" action="/" class="form-group" id="edit-form">
+                    <input type="hidden" name="reference-name" if="reference-name" value={{ reference['bib_key'] }}>
+                    <input type="hidden" name="form" id="form" value={{ reference["reference_type"] }}>
                     <button type="submit" id="edit-button">Muokkaa</button>
                 </form>
             </div>
