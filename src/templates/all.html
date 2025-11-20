@@ -30,11 +30,7 @@
                         <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
                     {% endfor %}
                 </ul>
-                <form style="margin-top: 2em;" method="POST" action="/" class="form-group" id="edit-form">
-                    <input type="hidden" name="reference-name" if="reference-name" value={{ reference['bib_key'] }}>
-                    <input type="hidden" name="form" id="form" value={{ reference["reference_type"] }}>
-                    <button type="submit" id="edit-button">Muokkaa</button>
-                </form>
+                <a href="/edit/{{ reference['bib_key'] }}">Muokkaa</a>
             </div>
         {% endfor %}
         <br/>
