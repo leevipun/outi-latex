@@ -3,6 +3,7 @@
 import json
 import os
 from typing import Any, Dict, List, Optional
+
 import requests
 
 SCHEMA = os.path.join(os.path.dirname(os.path.dirname(__file__)), "form-fields.json")
@@ -104,8 +105,9 @@ TYPE_MAP = {
 }
 
 import os
-import requests
 from typing import Any, Dict, Optional
+
+import requests
 
 TYPE_MAP = {
     "journal-article": "article",

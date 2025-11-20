@@ -30,6 +30,7 @@
                         <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
                     {% endfor %}
                 </ul>
+                <a href="/edit/{{ reference['bib_key'] }}">Muokkaa</a>
             </div>
         {% endfor %}
         <br/>

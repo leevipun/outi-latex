@@ -4,10 +4,10 @@ import pytest
 from sqlalchemy import text
 
 from src.utils.references import (
+    DatabaseError,
     add_reference,
     get_all_added_references,
     get_all_references,
-    DatabaseError,
 )
 
 

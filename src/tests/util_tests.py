@@ -368,7 +368,7 @@ class TestDOIParseFunction:
     @patch("src.util.requests.get")
     def test_fetch_doi_data_failure(self, mock_get):
         """Test DOI data fetch failure raises UtilError."""
-        from src.util import get_doi_data_from_api, UtilError
+        from src.util import UtilError, get_doi_data_from_api
 
         mock_get.side_effect = requests.exceptions.RequestException("API Error")
 

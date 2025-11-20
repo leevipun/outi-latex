@@ -7,11 +7,11 @@ from src.db_helper import reset_db
 from src.util import (
     FormFieldsError,
     UtilError,
-    get_fields_for_type,
     get_doi_data_from_api,
+    get_fields_for_type,
 )
 from src.utils import references
-from src.utils.references import DatabaseError
+from src.utils.references import DatabaseError, get_reference_by_bib_key
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -84,6 +84,39 @@ def all_references():
         timestamp = reference["created_at"]
         reference["created_at"] = timestamp.strftime("%H:%M, %m.%d.%y")
     return render_template("all.html", data=data)
+
+
+@app.route("/edit/<bib_key>")
+def edit_reference(bib_key):
+    """Display edit form for a specific reference.
+
+    Args:
+        bib_key: Name of the reference that is to be edited.
+    """
+    try:
+        reference = get_reference_by_bib_key(bib_key)
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        return redirect("/all")
+
+    if not reference:
+        flash(f"Reference with bib_key '{bib_key}' not found", "error")
+        return redirect("/all")
+
+    try:
+        fields = get_fields_for_type(reference["reference_type"])
+    except FormFieldsError as e:
+        flash(f"Error loading form fields: {str(e)}", "error")
+        return redirect("/all")
+
+    pre_filled = {"bib_key": reference["bib_key"], **reference["fields"]}
+
+    return render_template(
+        "add_reference.html",
+        selected_type=reference["reference_type"],
+        fields=fields,
+        pre_filled_values=pre_filled,
+    )
 
 
 @app.route("/save_reference", methods=["POST"])
