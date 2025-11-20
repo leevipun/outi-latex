@@ -87,6 +87,60 @@ def get_all_added_references() -> list:
         raise DatabaseError(f"Failed to fetch added references: {e}")
 
 
+def get_reference_by_bib_key(bib_key: str) -> dict:
+    """Fetch a single reference by its bib_key.
+
+    Args:
+        bib_key: The unique bib_key identifier for the reference.
+
+    Returns:
+        dict: Dictionary containing bib_key, reference_type, created_at,
+              and fields dictionary with all field values.
+              Returns None if reference is not found.
+
+    Raises:
+        DatabaseError: If database query fails.
+    """
+    sql = text(
+        """ SELECT 
+                sr.id,
+                sr.bib_key,
+                rt.name AS reference_type,
+                sr.reference_type_id,
+                sr.created_at,
+                f.key_name,
+                rv.value
+            FROM single_reference sr
+            JOIN reference_types rt ON sr.reference_type_id = rt.id
+            LEFT JOIN reference_values rv ON sr.id = rv.reference_id
+            LEFT JOIN fields f ON rv.field_id = f.id
+            WHERE sr.bib_key = :bib_key
+            ORDER BY f.key_name;"""
+    )
+    try:
+        results = db.session.execute(sql, {"bib_key": bib_key})
+        
+        reference = None
+        for row in results.mappings():
+            if reference is None:
+                reference = {
+                    "id": row["id"],
+                    "bib_key": row["bib_key"],
+                    "reference_type": row["reference_type"],
+                    "reference_type_id": row["reference_type_id"],
+                    "created_at": row["created_at"],
+                    "fields": {},
+                }
+            
+            # Add field value if it exists
+            if row["key_name"] is not None:
+                reference["fields"][row["key_name"]] = row["value"]
+        
+        return reference
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch reference by bib_key '{bib_key}': {e}")
+
+
 def add_reference(reference_type_name: str, data: dict) -> None:
     """Lisää uusi viite tietokantaan.
 
