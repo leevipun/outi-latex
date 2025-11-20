@@ -142,7 +142,10 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
 
 
 def add_reference(reference_type_name: str, data: dict) -> None:
-    """Lisää uusi viite tietokantaan.
+    """Lisää uusi viite tietokantaan tai päivitä olemassa oleva.
+    
+    Jos bib_key on jo olemassa, päivitetään sen kentät. 
+    Oletus: Viitetyyppi ei muutu, mutta kentät voivat muuttua.
 
     Args:
         reference_type_name: viitetyypin nimi, esim. "article" (tulee lomakkeelta / URL:sta)
