@@ -38,6 +38,7 @@
                        id="cite_key"
                        name="cite_key"
                        placeholder="esim. Martin2009"
+                       value="{% if pre_filled_values and pre_filled_values.get('bib_key') %}{{ pre_filled_values['bib_key'] }}{% endif %}"
                        required>
                 <small class="helper-text" id="cite_key-helper">Käytetään LaTeX:ssa: \cite{avain}</small>
             </div>
@@ -54,22 +55,21 @@
                 <textarea id="{{ field.key }}"
                           name="{{ field.key }}"
                           rows="3"
-                          value="{% if pre_filled_values and pre_filled_values[field.key] %}{{ pre_filled_values[field.key] }}{% endif %}">
-                          {% if field.required %}required{% endif %} />
+                          {% if field.required %}required{% endif %}>{% if pre_filled_values and pre_filled_values.get(field.key) %}{{ pre_filled_values[field.key] }}{% endif %}</textarea>
 
                 {% elif field['input-type'] == 'number' or field.type == 'int' %}
                 <input type="number"
                        id="{{ field.key }}"
                        name="{{ field.key }}"
                        {% if field.required %}required{% endif %}
-                       value="{% if pre_filled_values and pre_filled_values[field.key] %}{{ pre_filled_values[field.key] }}{% endif %}">
+                       value="{% if pre_filled_values and pre_filled_values.get(field.key) %}{{ pre_filled_values[field.key] }}{% endif %}">
 
                 {% else %}
                 <input type="text"
                        id="{{ field.key }}"
                        name="{{ field.key }}"
                        {% if field.required %}required{% endif %}
-                       value="{% if pre_filled_values and pre_filled_values[field.key] %}{{ pre_filled_values[field.key] }}{% endif %}">
+                       value="{% if pre_filled_values and pre_filled_values.get(field.key) %}{{ pre_filled_values[field.key] }}{% endif %}">
                 {% endif %}
             </div>
             {% endfor %}
