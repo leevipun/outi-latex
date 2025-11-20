@@ -75,7 +75,7 @@
             {% endfor %}
 
             <div class="button-group">
-                <button type="submit" class="button-primary" id="save-reference-button">Tallenna viite</button>
+                <button type="submit" class="button-primary" id="save-reference-button">{% if pre_filled_values %}Hyväksy muutokset{% else %}Tallenna viite{% endif %}</button>
             </div>
 
             <div class="info-text" id="info-text">
