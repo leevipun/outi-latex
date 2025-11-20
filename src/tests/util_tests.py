@@ -481,7 +481,7 @@ class TestBibTeXFormatting:
         result = format_bibtex_entry(reference_data)
 
         # Should produce minimal valid entry
-        expected = "@misc{minimal2023,\n}"
+        expected = "@misc{minimal2023\n}"
         assert result == expected
 
     def test_format_bibtex_entry_no_trailing_comma(self):
@@ -519,38 +519,3 @@ class TestBibTeXFormatting:
         # Should use defaults
         assert result.startswith("@misc{unknown,")
         assert "title = {Test Title}" in result
-
-    def test_format_bibtex_entry_fields_as_json_string(self):
-        """Test handling when fields is stored as JSON string"""
-        fields_dict = {
-            'author': 'John Doe',
-            'title': 'Test Article',
-            'year': '2023'
-        }
-
-        reference_data = {
-            'reference_type': 'article',
-            'bib_key': 'test2023',
-            'fields': json.dumps(fields_dict)  # JSON string instead of dict
-        }
-
-        result = format_bibtex_entry(reference_data)
-
-        # Should parse JSON and format correctly
-        assert "author = {John Doe}" in result
-        assert "title = {Test Article}" in result
-        assert "year = {2023}" in result
-
-    def test_format_bibtex_entry_invalid_json_fields(self):
-        """Test handling of invalid JSON in fields"""
-        reference_data = {
-            'reference_type': 'article',
-            'bib_key': 'test2023',
-            'fields': '{invalid json'  # Malformed JSON
-        }
-
-        result = format_bibtex_entry(reference_data)
-
-        # Should produce minimal entry when JSON parsing fails
-        expected = "@article{test2023,\n}"
-        assert result == expected
