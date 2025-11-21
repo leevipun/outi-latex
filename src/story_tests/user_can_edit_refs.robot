@@ -5,9 +5,6 @@ Library           RequestsLibrary
 Suite Setup       Initialize Test Environment
 Suite Teardown    Close Browser
 
-*** Variables ***
-${BASE_URL}  http://localhost:5001
-
 *** Keywords ***
 Initialize Test Environment
     [Documentation]    Initialize the test environment
