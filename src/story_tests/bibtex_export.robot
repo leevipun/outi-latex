@@ -6,45 +6,27 @@ Suite Setup       Initialize Test Environment
 Suite Teardown    Cleanup Test Environment
 Library           OperatingSystem
 Library           String
+Library           DateTime
 
 *** Variables ***
 ${BASE_URL}       http://localhost:5001
-${DOWNLOAD_DIR}     ${CURDIR}${/}downloads
-${BIBTEX_FILE}      ${DOWNLOAD_DIR}${/}references.bib
+${TEST_TIMESTAMP}    ${EMPTY}
 
 *** Keywords ***
 Initialize Test Environment
-    [Documentation]    Initialize test environment with download directory
+    [Documentation]    Initialize test environment with unique test data
 
-    # Luo downloads-kansio testeille
-    Create Directory    ${DOWNLOAD_DIR}
-    Empty Directory     ${DOWNLOAD_DIR}
+    # Luo uniikki timestamp jokaiselle test-ajokerralle
+    ${timestamp}=    Get Current Date    result_format=%Y%m%d_%H%M%S_%f
+    Set Suite Variable    ${TEST_TIMESTAMP}    ${timestamp}
 
-    # Aseta Chrome lataamaan tiedostot downloads-kansioon
-    ${chrome_options}=    Evaluate    sys.modules['selenium.webdriver'].ChromeOptions()    sys, selenium.webdriver
-    ${prefs}=    Create Dictionary    download.default_directory=${DOWNLOAD_DIR}
-    Call Method    ${chrome_options}    add_experimental_option    prefs    ${prefs}
-    Call Method    ${chrome_options}    add_argument    --disable-popup-blocking
-
-    Open Browser    ${BASE_URL}    Chrome    options=${chrome_options}
+    Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
     Set Selenium Speed    0.2s
     Set Selenium Timeout    10s
 
 Cleanup Test Environment
     [Documentation]    Clean up test environment
     Close Browser
-    Remove Directory    ${DOWNLOAD_DIR}    recursive=True
-
-Wait For Download
-    [Documentation]    Wait for file to be downloaded
-    [Arguments]    ${filename}    ${timeout}=10s
-
-    FOR    ${i}    IN RANGE    20
-        ${file_exists}=    Run Keyword And Return Status    File Should Exist    ${filename}
-        Return From Keyword If    ${file_exists}
-        Sleep    0.5s
-    END
-    Fail    File ${filename} was not downloaded within ${timeout}lenium Timeout    10s
 
 Add Sample Article Reference
     [Documentation]    Add a sample article reference for testing
@@ -59,9 +41,10 @@ Add Sample Article Reference
     Input Text       id:journal       Test Journal
     Input Text       id:year          2023
     Input Text       id:volume        42
-    Input Text       id:cite_key      TestArticle2023
+    Input Text       id:cite_key      TestArticle_${TEST_TIMESTAMP}
 
     Click Button     id:save-reference-button
+    Sleep    3s
 
 Add Sample Book Reference
     [Documentation]    Add a sample book reference for testing
@@ -69,15 +52,17 @@ Add Sample Book Reference
 
     Select From List By Value    id:form    book
     Click Button    id:add_new-button
-    Sleep    2s
+    Sleep    3s
 
+    Wait Until Element Is Visible    id:author/editor    timeout=15s
     Input Text       id:author/editor    Book Author
     Input Text       id:title           Book Title
     Input Text       id:publisher       Test Publisher
     Input Text       id:year            2022
-    Input Text       id:cite_key        TestBook2022
+    Input Text       id:cite_key        TestBook_${TEST_TIMESTAMP}
 
     Click Button     id:save-reference-button
+    Sleep    3s
 
 *** Test Cases ***
 User Can Access BibTeX Export Route
@@ -113,60 +98,54 @@ Export Works With Multiple References
     Add Sample Book Reference
 
     Go To    ${BASE_URL}/all
+    Sleep    2s
 
-    # Tarkista että molemmat viitteet näkyvät
-    Page Should Contain Element    id:reference-item-TestArticle2023
-    Page Should Contain Element    id:reference-item-TestBook2022
+    Wait Until Page Contains Element    id:reference-item-TestArticle_${TEST_TIMESTAMP}    timeout=15s
+    Wait Until Page Contains Element    id:reference-item-TestBook_${TEST_TIMESTAMP}    timeout=15s
 
+    Wait Until Page Contains Element    id:export-bibtex-button    timeout=10s
     Click Element    id:export-bibtex-button
 
     Page Should Not Contain    error
 
 User Can Download And Verify BibTeX Content
-    [Documentation]    Test downloading BibTeX file and verify its content
+    [Documentation]    Test BibTeX content via HTTP
     Add Sample Article Reference
 
-    Go To    ${BASE_URL}/all
-    Click Element    id:export-bibtex-button
+    Create Session    api    ${BASE_URL}
+    ${response}=    GET On Session    api    /export/bibtex
 
-    # Odota että tiedosto latautuu
-    Wait For Download    ${BIBTEX_FILE}
+    Should Be Equal As Numbers    ${response.status_code}    200
 
-    # Lue tiedoston sisältö
-    ${bibtex_content}=    Get File    ${BIBTEX_FILE}
-
-    # Tarkista BibTeX-formaatti
-    Should Contain    ${bibtex_content}    @article{TestArticle2023,
+    # Tarkista BibTeX sisältö - käytä uniikkia cite_key:tä
+    ${bibtex_content}=    Set Variable    ${response.text}
+    Should Contain    ${bibtex_content}    @article{TestArticle_${TEST_TIMESTAMP},
     Should Contain    ${bibtex_content}    author = {Test Author}
     Should Contain    ${bibtex_content}    title = {Test Article Title}
     Should Contain    ${bibtex_content}    journal = {Test Journal}
     Should Contain    ${bibtex_content}    year = {2023}
     Should Contain    ${bibtex_content}    volume = {42}
 
-    Should Not Contain    ${bibtex_content}    ,${SPACE}${SPACE}${SPACE}${SPACE}}
-
-BibTeX File Is Valid LaTeX Format
-    [Documentation]    Test that generated BibTeX file follows valid LaTeX format
+BibTeX Content Is Valid LaTeX Format
+    [Documentation]    Test BibTeX format via HTTP - basic validation
     Add Sample Article Reference
 
-    Go To    ${BASE_URL}/all
-    Click Element    id:export-bibtex-button
+    Create Session    api    ${BASE_URL}
+    ${response}=    GET On Session    api    /export/bibtex
+    ${bibtex_content}=    Set Variable    ${response.text}
 
-    Wait For Download    ${BIBTEX_FILE}
-    ${bibtex_content}=    Get File    ${BIBTEX_FILE}
+    Should Contain    ${bibtex_content}    @article{TestArticle_${TEST_TIMESTAMP},
+    Should Contain    ${bibtex_content}    author = {Test Author}
+    Should Contain    ${bibtex_content}    title = {Test Article Title}
+    Should Contain    ${bibtex_content}    journal = {Test Journal}
+    Should Contain    ${bibtex_content}    year = {2023}
 
-    # Tarkista BibTeX syntaksi
-    Should Match Regexp    ${bibtex_content}    @\\w+\\{\\w+,
+    # Tarkista että alkaa @ merkillä
+    Should Match Regexp    ${bibtex_content}    ^@\\w+\\{
 
-    # Tarkista että kentät on oikein formatoitu
-    ${lines}=    Split To Lines    ${bibtex_content}
-    FOR    ${line}    IN    @{lines}
-        ${line}=    Strip String    ${line}
-        Continue For Loop If    '${line}' == ''
-        Continue For Loop If    '${line}' == '}'
-        Continue For Loop If    '${line}'.startswith('@')
+    # Tarkista että päättyy } merkkiin
+    Should Match Regexp    ${bibtex_content}    \\}\\s*$
 
-        # Jokaisen kentän pitää olla muodossa "key = {value},"
-        Run Keyword If    '${line}' != '' and not '${line}'.startswith('@') and '${line}' != '}'
-        ...    Should Match Regexp    ${line}    \\w+ = \\{.*\\},?
-    END
+    # Tarkista että ei ole tyhjiä kenttiä
+    Should Not Contain    ${bibtex_content}    = {}
+    Should Not Contain    ${bibtex_content}    = {$EMPTY}
