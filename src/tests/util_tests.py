@@ -7,8 +7,11 @@ import pytest
 import requests
 
 from src.util import (
-    get_fields_for_type, get_reference_type_by_id,
-    load_form_fields, format_bibtex_value, format_bibtex_entry
+    get_fields_for_type,
+    get_reference_type_by_id,
+    load_form_fields,
+    format_bibtex_value,
+    format_bibtex_entry,
 )
 
 
@@ -344,6 +347,7 @@ class TestLoadFormFieldsWithMocking:
             with pytest.raises(json.JSONDecodeError):
                 load_form_fields()
 
+
 class TestBibTeXFormatting:
     """Test BibTeX formatting functions"""
 
@@ -380,15 +384,15 @@ class TestBibTeXFormatting:
     def test_format_bibtex_entry_article(self):
         """Test complete article BibTeX entry formatting"""
         reference_data = {
-            'reference_type': 'article',
-            'bib_key': 'doe2023',
-            'fields': {
-                'author': 'John Doe',
-                'title': 'Test Article',
-                'journal': 'Test Journal',
-                'year': '2023',
-                'volume': '42'
-            }
+            "reference_type": "article",
+            "bib_key": "doe2023",
+            "fields": {
+                "author": "John Doe",
+                "title": "Test Article",
+                "journal": "Test Journal",
+                "year": "2023",
+                "volume": "42",
+            },
         }
 
         result = format_bibtex_entry(reference_data)
@@ -407,14 +411,14 @@ class TestBibTeXFormatting:
     def test_format_bibtex_entry_book(self):
         """Test book BibTeX entry formatting"""
         reference_data = {
-            'reference_type': 'book',
-            'bib_key': 'martin2008',
-            'fields': {
-                'author': 'Robert C. Martin',
-                'title': 'Clean Code',
-                'publisher': 'Prentice Hall',
-                'year': '2008'
-            }
+            "reference_type": "book",
+            "bib_key": "martin2008",
+            "fields": {
+                "author": "Robert C. Martin",
+                "title": "Clean Code",
+                "publisher": "Prentice Hall",
+                "year": "2008",
+            },
         }
 
         result = format_bibtex_entry(reference_data)
@@ -428,13 +432,13 @@ class TestBibTeXFormatting:
     def test_format_bibtex_entry_with_special_characters(self):
         """Test entry with special characters in fields"""
         reference_data = {
-            'reference_type': 'article',
-            'bib_key': 'special2023',
-            'fields': {
-                'author': 'Åke Ändersson & Co',
-                'title': 'Test {LaTeX} & Symbols',
-                'journal': 'Spëciál Journal'
-            }
+            "reference_type": "article",
+            "bib_key": "special2023",
+            "fields": {
+                "author": "Åke Ändersson & Co",
+                "title": "Test {LaTeX} & Symbols",
+                "journal": "Spëciál Journal",
+            },
         }
 
         result = format_bibtex_entry(reference_data)
@@ -447,16 +451,16 @@ class TestBibTeXFormatting:
     def test_format_bibtex_entry_empty_fields(self):
         """Test handling of empty and None fields"""
         reference_data = {
-            'reference_type': 'article',
-            'bib_key': 'test2023',
-            'fields': {
-                'author': 'John Doe',
-                'title': '',        # Empty string
-                'journal': 'Test Journal',
-                'volume': None,     # None value
-                'pages': '   ',     # Only whitespace
-                'year': '2023'      # Valid value
-            }
+            "reference_type": "article",
+            "bib_key": "test2023",
+            "fields": {
+                "author": "John Doe",
+                "title": "",  # Empty string
+                "journal": "Test Journal",
+                "volume": None,  # None value
+                "pages": "   ",  # Only whitespace
+                "year": "2023",  # Valid value
+            },
         }
 
         result = format_bibtex_entry(reference_data)
@@ -474,8 +478,8 @@ class TestBibTeXFormatting:
     def test_format_bibtex_entry_missing_fields(self):
         """Test handling when fields dictionary is missing"""
         reference_data = {
-            'reference_type': 'misc',
-            'bib_key': 'minimal2023'
+            "reference_type": "misc",
+            "bib_key": "minimal2023",
             # 'fields' key missing
         }
 
@@ -488,12 +492,9 @@ class TestBibTeXFormatting:
     def test_format_bibtex_entry_no_trailing_comma(self):
         """Test that final entry has no trailing comma"""
         reference_data = {
-            'reference_type': 'article',
-            'bib_key': 'test2023',
-            'fields': {
-                'author': 'John Doe',
-                'title': 'Test Title'
-            }
+            "reference_type": "article",
+            "bib_key": "test2023",
+            "fields": {"author": "John Doe", "title": "Test Title"},
         }
 
         result = format_bibtex_entry(reference_data)
@@ -503,23 +504,20 @@ class TestBibTeXFormatting:
         assert result.endswith("\n}")
 
         # But should have comma between fields
-        lines = result.split('\n')
-        assert lines[1].endswith(',')  # author line should have comma
-        assert not lines[2].endswith(',')  # title line should not have comma
+        lines = result.split("\n")
+        assert lines[1].endswith(",")  # author line should have comma
+        assert not lines[2].endswith(",")  # title line should not have comma
 
     def test_format_bibtex_entry_default_values(self):
         """Test default values for missing reference_type and bib_key"""
-        reference_data = {
-            'fields': {
-                'title': 'Test Title'
-            }
-        }
+        reference_data = {"fields": {"title": "Test Title"}}
 
         result = format_bibtex_entry(reference_data)
 
         # Should use defaults
         assert result.startswith("@misc{unknown,")
         assert "title = {Test Title}" in result
+
 
 class TestDOIParseFunction:
     """Tests for get_doi_data_from_api function."""

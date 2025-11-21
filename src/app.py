@@ -204,6 +204,7 @@ def save_reference():
     flash("Viite tallennettu!", "success")
     return redirect("/all")
 
+
 @app.route("/export/bibtex")
 def export_bibtex():
     """Export all references as BibTeX format"""
@@ -211,8 +212,12 @@ def export_bibtex():
         data = references.get_all_added_references()
 
         if not data:
-            return "% No references found\n", 200, {'Content-Type': 'text/plain; charset=utf-8'}
-      # Muodosta BibTeX-sisältö
+            return (
+                "% No references found\n",
+                200,
+                {"Content-Type": "text/plain; charset=utf-8"},
+            )
+        # Muodosta BibTeX-sisältö
         bibtex_content = ""
         for ref in data:
             bibtex_entry = format_bibtex_entry(ref)
@@ -221,11 +226,11 @@ def export_bibtex():
         # Palauta BibTeX-tiedosto ladattavaksi
         response = app.response_class(
             bibtex_content,
-            mimetype='application/x-bibtex',
+            mimetype="application/x-bibtex",
             headers={
-                'Content-Disposition': 'attachment; filename=references.bib',
-                'Content-Type': 'application/x-bibtex; charset=utf-8'
-            }
+                "Content-Disposition": "attachment; filename=references.bib",
+                "Content-Type": "application/x-bibtex; charset=utf-8",
+            },
         )
         return response
 
@@ -271,6 +276,7 @@ def get_doi_data():
         fields=fields,
         selected_type=parsed_doi["type"],
     )
+
 
 # testausta varten oleva reitti
 if test_env:
