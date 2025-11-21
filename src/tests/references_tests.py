@@ -328,6 +328,22 @@ class TestIntegrationWorkflows:
             assert ref_types == {"article", "book"}
 
 
+class TestGetReferenceByBibKey:
+    """Tests for get_reference_by_bib_key function."""
+
+    def test_get_existing_reference(self, app, sample_reference_data):
+        """Test retrieving an existing reference by bib_key."""
+        with app.app_context():
+            add_reference("article", sample_reference_data)
+
+            ref = get_reference_by_bib_key("Smith2020")
+            assert ref is not None
+            assert ref["bib_key"] == "Smith2020"
+            assert ref["reference_type"] == "article"
+            assert "fields" in ref
+            assert ref["fields"]["author"] == "John Smith"
+
+
 class TestDeleteReference:
     """Tests for delete_reference_by_bib_key function."""
 
