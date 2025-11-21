@@ -343,6 +343,28 @@ class TestGetReferenceByBibKey:
             assert "fields" in ref
             assert ref["fields"]["author"] == "John Smith"
 
+    def test_get_nonexistent_reference_returns_none(self, app):
+        """Test that retrieving a non-existent bib_key returns None."""
+        with app.app_context():
+            ref = get_reference_by_bib_key("NonExistentKey")
+            assert ref is None
+
+    def test_get_reference_after_deletion(self, app, sample_reference_data):
+        """Test that a reference cannot be retrieved after deletion."""
+        with app.app_context():
+            add_reference("article", sample_reference_data)
+
+            # Ensure it exists
+            ref = get_reference_by_bib_key("Smith2020")
+            assert ref is not None
+
+            # Delete it
+            delete_reference_by_bib_key("Smith2020")
+
+            # Now it should return None
+            ref_after = get_reference_by_bib_key("Smith2020")
+            assert ref_after is None
+
 
 class TestDeleteReference:
     """Tests for delete_reference_by_bib_key function."""
