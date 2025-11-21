@@ -159,12 +159,13 @@ def save_reference():
 
     # Viiteavain / cite_key (pakollinen)
     cite_key = request.form.get("cite_key", "").strip()
+    old_cite_key = request.form.get("old_bib_key", "").strip()
     if not cite_key:
         flash("Viiteavain (bib_key) on pakollinen.", "error")
         return redirect(f"/add?form={reference_type}")
 
     # Oletus: tietokantataulussa sarake on nimeltä 'bib_key'
-    form_data = {"bib_key": cite_key}
+    form_data = {"bib_key": cite_key, "old_bib_key": old_cite_key}
 
     # Haetaan dynaamiset kentät, samoin kuin /add GET:ssä
     try:

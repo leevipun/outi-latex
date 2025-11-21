@@ -128,3 +128,5 @@ jobs:
         done
     - name: Run robot tests
       run: poetry run robot --variable BASE_URL:http://localhost:5001 src/story_tests/
+    - name: seed database
+      run: poetry run python seed_database.py
