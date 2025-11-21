@@ -11,7 +11,11 @@ from src.util import (
     get_fields_for_type,
 )
 from src.utils import references
-from src.utils.references import DatabaseError, get_reference_by_bib_key
+from src.utils.references import (
+    DatabaseError,
+    delete_reference_by_bib_key,
+    get_reference_by_bib_key,
+)
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -117,6 +121,28 @@ def edit_reference(bib_key):
         fields=fields,
         pre_filled_values=pre_filled,
     )
+
+
+@app.route("/delete/<bib_key>", methods=["POST"])
+def delete_reference(bib_key):
+    """Poista haluttu reference
+    Args:
+        bib_key: refen tunniste mikä halutaan poistaa
+    """
+    try:
+        reference = get_reference_by_bib_key(bib_key)
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        return redirect("/all")
+    if not reference:
+        flash(f"Reference with bib_key '{bib_key}' not found", "error")
+        return redirect("/all")
+    try:
+        delete_reference_by_bib_key(bib_key)
+        flash(f"Viite '{bib_key}' poistettu", "success")
+    except DatabaseError as e:
+        flash(f"Database error while deleting: {str(e)}", "error")
+    return redirect("/all")
 
 
 @app.route("/save_reference", methods=["POST"])
