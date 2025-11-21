@@ -2,6 +2,7 @@
 
 import os
 import sys
+import subprocess
 
 # Add the src directory to the path BEFORE any test imports
 # This must run at module import time, not in fixtures
@@ -19,10 +20,6 @@ def app():
     # Import app to register all routes
     from src import app as app_module  # noqa: F401
     from src.config import app as flask_app
-
-    # Set testing mode and use in-memory SQLite database
-    flask_app.config["TESTING"] = True
-    flask_app.config["DATABASE_URL"] = "sqlite:///:memory:"
 
     return flask_app
 
@@ -141,3 +138,27 @@ def sample_reference_data():
         "number": 3,
         "pages": "100-115",
     }
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Run seed_database.py after all tests are completed."""
+    # Change to project root directory
+    project_root = os.path.join(os.path.dirname(__file__), "..", "..")
+
+    try:
+        print("\n\n🌱 Seeding database after tests...")
+        result = subprocess.run(
+            [sys.executable, os.path.join(project_root, "seed_database.py")],
+            cwd=project_root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        print(result.stdout)
+        if result.stderr:
+            print(result.stderr)
+        print("✅ Database seeded successfully after tests")
+    except subprocess.CalledProcessError as e:
+        print(f"❌ Failed to seed database: {e}")
+        print(f"stdout: {e.stdout}")
+        print(f"stderr: {e.stderr}")
