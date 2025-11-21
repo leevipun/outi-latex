@@ -199,7 +199,9 @@ def add_reference(reference_type_name: str, data: dict, old_bib_key: str) -> Non
             db.session.flush()
 
             db.session.execute(
-                text("UPDATE single_reference SET bib_key = :new_bib_key WHERE id = :id"),
+                text(
+                    "UPDATE single_reference SET bib_key = :new_bib_key WHERE id = :id"
+                ),
                 {"new_bib_key": data["bib_key"], "id": ref_id},
             )
         else:
