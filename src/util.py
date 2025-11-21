@@ -104,11 +104,6 @@ TYPE_MAP = {
     "reference-entry": "misc",
 }
 
-import os
-from typing import Any, Dict, Optional
-
-import requests
-
 TYPE_MAP = {
     "journal-article": "article",
     "proceedings-article": "inproceedings",
@@ -199,7 +194,7 @@ def get_doi_data_from_api(doi: str) -> Dict[str, Any]:
     """
     url = f"https://citation.doi.org/metadata?doi={doi}"
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=5)
         response.raise_for_status()
         doi_data = response.json()
         parsed = parse_doi(doi_data)

@@ -272,3 +272,23 @@ def add_reference(reference_type_name: str, data: dict) -> None:
     except Exception as exc:  # voit tiukentaa myöhemmin
         db.session.rollback()
         raise DatabaseError(f"Failed to insert reference: {exc}") from exc
+
+
+def delete_reference_by_bib_key(bib_key: str) -> None:
+    """Delete a reference (and its values via cascade) by bib_key.
+
+    Args:
+        bib_key: The BibTeX key of the reference to delete.
+
+    Raises:
+        DatabaseError: If the delete operation fails.
+    """
+    try:
+        db.session.execute(
+            text("DELETE FROM single_reference WHERE bib_key = :bib_key"),
+            {"bib_key": bib_key},
+        )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise DatabaseError(f"Failed to delete reference '{bib_key}': {e}") from e

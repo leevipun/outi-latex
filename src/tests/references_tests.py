@@ -6,8 +6,10 @@ from sqlalchemy import text
 from src.utils.references import (
     DatabaseError,
     add_reference,
+    delete_reference_by_bib_key,
     get_all_added_references,
     get_all_references,
+    get_reference_by_bib_key,
 )
 
 
@@ -324,3 +326,63 @@ class TestIntegrationWorkflows:
             # Verify types
             ref_types = {r["reference_type"] for r in refs}
             assert ref_types == {"article", "book"}
+
+
+class TestDeleteReference:
+    """Tests for delete_reference_by_bib_key function."""
+
+    def test_delete_reference_removes_from_db(
+        self, app, db_session, sample_reference_data
+    ):
+        """Adding then deleting a reference removes it from DB."""
+        with app.app_context():
+            # Add a reference first
+            add_reference("article", sample_reference_data)
+
+            # Sanity: it exists
+            ref = get_reference_by_bib_key("Smith2020")
+            assert ref is not None
+
+            # Delete it
+            delete_reference_by_bib_key("Smith2020")
+
+            # Now it shouldn't exist
+            ref_after = get_reference_by_bib_key("Smith2020")
+            assert ref_after is None
+
+            # And get_all_added_references should be empty
+            all_refs = get_all_added_references()
+            assert all_refs == []
+
+    def test_delete_reference_also_deletes_values_via_cascade(
+        self, app, db_session, sample_reference_data
+    ):
+        """Deleting from single_reference removes related reference_values (ON DELETE CASCADE)."""
+        from sqlalchemy import text
+
+        from src.config import db
+
+        with app.app_context():
+            # Add reference
+            add_reference("article", sample_reference_data)
+
+            # Get its id
+            ref = get_reference_by_bib_key("Smith2020")
+            ref_id = ref["id"]
+
+            # There should be some rows in reference_values for this reference
+            count_before = db.session.execute(
+                text("SELECT COUNT(*) FROM reference_values WHERE reference_id = :rid"),
+                {"rid": ref_id},
+            ).scalar()
+            assert count_before > 0
+
+            # Delete using our helper
+            delete_reference_by_bib_key("Smith2020")
+
+            # Now no reference_values rows for that id should remain
+            count_after = db.session.execute(
+                text("SELECT COUNT(*) FROM reference_values WHERE reference_id = :rid"),
+                {"rid": ref_id},
+            ).scalar()
+            assert count_after == 0
