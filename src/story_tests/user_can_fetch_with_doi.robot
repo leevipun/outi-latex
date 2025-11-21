@@ -5,13 +5,16 @@ Library           RequestsLibrary
 Suite Setup       Initialize Test Environment
 Suite Teardown    Close Browser
 
+*** Variables ***
+${BASE_URL}       http://localhost:5001
+
 *** Keywords ***
 Initialize Test Environment
     [Documentation]    Initialize the test environment
     Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
     Set Selenium Implicit Wait    10s
 
-*** Test Cases ***        
+*** Test Cases ***
 User Can See DOI-button on home page
     [Documentation]    User sees DOI input and fetch button on home page
     Go To    ${BASE_URL}
@@ -19,7 +22,7 @@ User Can See DOI-button on home page
     Wait Until Element Is Visible    id:doi-input    timeout=10s
     Page Should Contain Element    id:add_doi-button
     Page Should Contain Element    id:doi-input
-    
+
 User Can Fetch with DOI
     [Documentation]    User enters DOI and clicks fetch button, sees pre-filled form with values
     Go To    ${BASE_URL}

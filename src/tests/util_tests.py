@@ -6,7 +6,13 @@ from unittest.mock import mock_open, patch
 import pytest
 import requests
 
-from src.util import get_fields_for_type, get_reference_type_by_id, load_form_fields
+from src.util import (
+    get_fields_for_type,
+    get_reference_type_by_id,
+    load_form_fields,
+    format_bibtex_value,
+    format_bibtex_entry,
+)
 
 
 @pytest.fixture
@@ -340,6 +346,177 @@ class TestLoadFormFieldsWithMocking:
         with patch("builtins.open", mock_open(read_data="invalid json")):
             with pytest.raises(json.JSONDecodeError):
                 load_form_fields()
+
+
+class TestBibTeXFormatting:
+    """Test BibTeX formatting functions"""
+
+    def test_format_bibtex_value_simple_text(self):
+        """Test simple text value formatting"""
+        result = format_bibtex_value("author", "John Doe")
+        assert result == "{John Doe}"
+
+    def test_format_bibtex_value_with_braces(self):
+        """Test text with braces gets escaped"""
+        result = format_bibtex_value("title", "Test {with} braces")
+        assert result == "{Test \\{with\\} braces}"
+
+    def test_format_bibtex_value_with_backslashes(self):
+        """Test backslashes are escaped"""
+        result = format_bibtex_value("title", "LaTeX\\command")
+        assert result == "{LaTeX\\\\command}"
+
+    def test_format_bibtex_value_complex_escaping(self):
+        """Test complex escaping with multiple special chars"""
+        result = format_bibtex_value("title", "Complex {A\\B} test")
+        assert result == "{Complex \\{A\\\\B\\} test}"
+
+    def test_format_bibtex_value_numbers(self):
+        """Test numeric values are wrapped in braces"""
+        result = format_bibtex_value("year", "2023")
+        assert result == "{2023}"
+
+    def test_format_bibtex_value_empty_string(self):
+        """Test empty string handling"""
+        result = format_bibtex_value("title", "")
+        assert result == "{}"
+
+    def test_format_bibtex_entry_article(self):
+        """Test complete article BibTeX entry formatting"""
+        reference_data = {
+            "reference_type": "article",
+            "bib_key": "doe2023",
+            "fields": {
+                "author": "John Doe",
+                "title": "Test Article",
+                "journal": "Test Journal",
+                "year": "2023",
+                "volume": "42",
+            },
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Check entry structure
+        assert result.startswith("@article{doe2023,")
+        assert result.endswith("}")
+
+        # Check all fields are present with correct formatting
+        assert "author = {John Doe}" in result
+        assert "title = {Test Article}" in result
+        assert "journal = {Test Journal}" in result
+        assert "year = {2023}" in result
+        assert "volume = {42}" in result
+
+    def test_format_bibtex_entry_book(self):
+        """Test book BibTeX entry formatting"""
+        reference_data = {
+            "reference_type": "book",
+            "bib_key": "martin2008",
+            "fields": {
+                "author": "Robert C. Martin",
+                "title": "Clean Code",
+                "publisher": "Prentice Hall",
+                "year": "2008",
+            },
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        assert result.startswith("@book{martin2008,")
+        assert "author = {Robert C. Martin}" in result
+        assert "title = {Clean Code}" in result
+        assert "publisher = {Prentice Hall}" in result
+        assert "year = {2008}" in result
+
+    def test_format_bibtex_entry_with_special_characters(self):
+        """Test entry with special characters in fields"""
+        reference_data = {
+            "reference_type": "article",
+            "bib_key": "special2023",
+            "fields": {
+                "author": "Åke Ändersson & Co",
+                "title": "Test {LaTeX} & Symbols",
+                "journal": "Spëciál Journal",
+            },
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Special chars should be preserved, braces escaped
+        assert "author = {Åke Ändersson & Co}" in result
+        assert "title = {Test \\{LaTeX\\} & Symbols}" in result
+        assert "journal = {Spëciál Journal}" in result
+
+    def test_format_bibtex_entry_empty_fields(self):
+        """Test handling of empty and None fields"""
+        reference_data = {
+            "reference_type": "article",
+            "bib_key": "test2023",
+            "fields": {
+                "author": "John Doe",
+                "title": "",  # Empty string
+                "journal": "Test Journal",
+                "volume": None,  # None value
+                "pages": "   ",  # Only whitespace
+                "year": "2023",  # Valid value
+            },
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Empty fields should not appear
+        assert "title =" not in result
+        assert "volume =" not in result
+        assert "pages =" not in result
+
+        # Only filled fields should appear
+        assert "author = {John Doe}" in result
+        assert "journal = {Test Journal}" in result
+        assert "year = {2023}" in result
+
+    def test_format_bibtex_entry_missing_fields(self):
+        """Test handling when fields dictionary is missing"""
+        reference_data = {
+            "reference_type": "misc",
+            "bib_key": "minimal2023",
+            # 'fields' key missing
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Should produce minimal valid entry
+        expected = "@misc{minimal2023\n}"
+        assert result == expected
+
+    def test_format_bibtex_entry_no_trailing_comma(self):
+        """Test that final entry has no trailing comma"""
+        reference_data = {
+            "reference_type": "article",
+            "bib_key": "test2023",
+            "fields": {"author": "John Doe", "title": "Test Title"},
+        }
+
+        result = format_bibtex_entry(reference_data)
+
+        # Should not have comma before closing brace
+        assert ",\n}" not in result
+        assert result.endswith("\n}")
+
+        # But should have comma between fields
+        lines = result.split("\n")
+        assert lines[1].endswith(",")  # author line should have comma
+        assert not lines[2].endswith(",")  # title line should not have comma
+
+    def test_format_bibtex_entry_default_values(self):
+        """Test default values for missing reference_type and bib_key"""
+        reference_data = {"fields": {"title": "Test Title"}}
+
+        result = format_bibtex_entry(reference_data)
+
+        # Should use defaults
+        assert result.startswith("@misc{unknown,")
+        assert "title = {Test Title}" in result
 
 
 class TestDOIParseFunction:
