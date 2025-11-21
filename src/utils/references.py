@@ -141,7 +141,7 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
         raise DatabaseError(f"Failed to fetch reference by bib_key '{bib_key}': {e}")
 
 
-def add_reference(reference_type_name: str, data: dict, old_bib_key: str) -> None:
+def add_reference(reference_type_name: str, data: dict) -> None:
     """Lisää uusi viite tietokantaan tai päivitä olemassa oleva.
 
     Jos bib_key on jo olemassa, päivitetään sen kentät.
@@ -181,7 +181,9 @@ def add_reference(reference_type_name: str, data: dict, old_bib_key: str) -> Non
         existing_ref = (
             db.session.execute(
                 text("SELECT id FROM single_reference WHERE bib_key = :bib_key"),
-                {"bib_key": old_bib_key},
+                {
+                    "bib_key": data["old_cite_key"]
+                },  # Käytetään old_cite_key tarkistukseen
             )
             .mappings()
             .first()

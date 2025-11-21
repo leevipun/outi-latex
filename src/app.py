@@ -165,7 +165,7 @@ def save_reference():
         return redirect(f"/add?form={reference_type}")
 
     # Oletus: tietokantataulussa sarake on nimeltä 'bib_key'
-    form_data = {"bib_key": cite_key}
+    form_data = {"bib_key": cite_key, "old_bib_key": old_cite_key}
 
     # Haetaan dynaamiset kentät, samoin kuin /add GET:ssä
     try:
@@ -197,7 +197,7 @@ def save_reference():
 
     # Tallennus tietokantaan
     try:
-        references.add_reference(reference_type, form_data, old_cite_key)
+        references.add_reference(reference_type, form_data)
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         return redirect(f"/add?form={reference_type}")
