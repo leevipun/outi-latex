@@ -20,8 +20,9 @@ def app():
     from src import app as app_module  # noqa: F401
     from src.config import app as flask_app
 
-    # Set testing mode
+    # Set testing mode and use in-memory SQLite database
     flask_app.config["TESTING"] = True
+    flask_app.config["DATABASE_URL"] = "sqlite:///:memory:"
 
     return flask_app
 

@@ -236,6 +236,7 @@ def add_reference(reference_type_name: str, data: dict) -> None:
 
         # 3) Jokaiselle kentälle (paitsi bib_key ja old_bib_key) lisätään rivi reference_values-tauluun
         for key, value in data.items():
+            print(key, value)  # --- DEBUG ---
             if key in ("bib_key", "old_bib_key"):
                 continue
             if value in (None, ""):

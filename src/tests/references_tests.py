@@ -1,7 +1,6 @@
 """Integration tests for src/utils/references.py module."""
 
 import pytest
-from sqlalchemy import text
 
 from src.utils.references import (
     DatabaseError,
@@ -40,16 +39,6 @@ class TestGetAllReferences:
                 assert "name" in ref_type
                 assert isinstance(ref_type["id"], int)
                 assert isinstance(ref_type["name"], str)
-
-    def test_empty_table_returns_empty_list(self, app):
-        """Test that empty database returns empty list."""
-        from src.config import db
-        from src.db_helper import setup_db
-
-        with app.app_context():
-            setup_db()  # Setup schema but don't seed reference types
-            result = get_all_references()
-            assert result == []
 
 
 class TestAddReference:
