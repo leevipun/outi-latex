@@ -29,6 +29,7 @@
         <!-- Lomake tallennuksella -->
         <form action="/save_reference" method="post" id="add-reference-form">
             <input type="hidden" name="reference_type" id="reference_type" value="{{ selected_type }}">
+            <input type="hidden" name="old_bib_key" id="old_bib_key" value="{% if pre_filled_values and pre_filled_values.get('bib_key') %}{{ pre_filled_values['bib_key'] }}{% endif %}"/>
 
             <div class="form-group">
                 <label for="cite_key" id="cite_key-label">

@@ -223,7 +223,6 @@ def get_doi_data_from_api(doi: str) -> Dict[str, Any]:
         response.raise_for_status()
         doi_data = response.json()
         parsed = parse_doi(doi_data)
-        print(f"Fetched and parsed DOI data for {doi}: {parsed}")
         return parsed
     except requests.exceptions.RequestException as e:
         raise UtilError(f"Failed to fetch DOI data: {e}")

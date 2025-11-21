@@ -141,7 +141,7 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
         raise DatabaseError(f"Failed to fetch reference by bib_key '{bib_key}': {e}")
 
 
-def add_reference(reference_type_name: str, data: dict) -> None:
+def add_reference(reference_type_name: str, data: dict, old_bib_key: str) -> None:
     """Lisää uusi viite tietokantaan tai päivitä olemassa oleva.
 
     Jos bib_key on jo olemassa, päivitetään sen kentät.
@@ -181,7 +181,7 @@ def add_reference(reference_type_name: str, data: dict) -> None:
         existing_ref = (
             db.session.execute(
                 text("SELECT id FROM single_reference WHERE bib_key = :bib_key"),
-                {"bib_key": data["bib_key"]},
+                {"bib_key": old_bib_key},
             )
             .mappings()
             .first()
@@ -195,6 +195,12 @@ def add_reference(reference_type_name: str, data: dict) -> None:
             db.session.execute(
                 text("DELETE FROM reference_values WHERE reference_id = :reference_id"),
                 {"reference_id": ref_id},
+            )
+            db.session.flush()
+
+            db.session.execute(
+                text("UPDATE single_reference SET bib_key = :new_bib_key WHERE id = :id"),
+                {"new_bib_key": data["bib_key"], "id": ref_id},
             )
         else:
             # Luodaan uusi viite
@@ -211,6 +217,7 @@ def add_reference(reference_type_name: str, data: dict) -> None:
                     "reference_type_id": reference_type_id,
                 },
             )
+            db.session.flush()
 
             # .scalar() toimii useimmissa, mutta jos ei, käytetään mappings().first()
             ref_id = insert_ref.scalar()

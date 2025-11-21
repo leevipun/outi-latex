@@ -159,6 +159,7 @@ def save_reference():
 
     # Viiteavain / cite_key (pakollinen)
     cite_key = request.form.get("cite_key", "").strip()
+    old_cite_key = request.form.get("old_bib_key", "").strip()
     if not cite_key:
         flash("Viiteavain (bib_key) on pakollinen.", "error")
         return redirect(f"/add?form={reference_type}")
@@ -196,7 +197,7 @@ def save_reference():
 
     # Tallennus tietokantaan
     try:
-        references.add_reference(reference_type, form_data)
+        references.add_reference(reference_type, form_data, old_cite_key)
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         return redirect(f"/add?form={reference_type}")
