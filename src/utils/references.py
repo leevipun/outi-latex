@@ -178,15 +178,17 @@ def add_reference(reference_type_name: str, data: dict) -> None:
         reference_type_id = result["id"]
 
         # 2) Tarkista onko viite jo olemassa
-        old_bib_key = data.get("old_bib_key", "").strip() if isinstance(data.get("old_bib_key"), str) else None
+        old_bib_key = (
+            data.get("old_bib_key", "").strip()
+            if isinstance(data.get("old_bib_key"), str)
+            else None
+        )
         bib_key_to_check = old_bib_key if old_bib_key else data["bib_key"]
-        
+
         existing_ref = (
             db.session.execute(
                 text("SELECT id FROM single_reference WHERE bib_key = :bib_key"),
-                {
-                    "bib_key": bib_key_to_check
-                },
+                {"bib_key": bib_key_to_check},
             )
             .mappings()
             .first()
