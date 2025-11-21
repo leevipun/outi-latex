@@ -178,12 +178,15 @@ def add_reference(reference_type_name: str, data: dict) -> None:
         reference_type_id = result["id"]
 
         # 2) Tarkista onko viite jo olemassa
+        old_bib_key = data.get("old_bib_key", "").strip() if isinstance(data.get("old_bib_key"), str) else None
+        bib_key_to_check = old_bib_key if old_bib_key else data["bib_key"]
+        
         existing_ref = (
             db.session.execute(
                 text("SELECT id FROM single_reference WHERE bib_key = :bib_key"),
                 {
-                    "bib_key": data["old_cite_key"]
-                },  # Käytetään old_cite_key tarkistukseen
+                    "bib_key": bib_key_to_check
+                },
             )
             .mappings()
             .first()
@@ -229,9 +232,9 @@ def add_reference(reference_type_name: str, data: dict) -> None:
                 row = insert_ref.mappings().first()
                 ref_id = row["id"]
 
-        # 3) Jokaiselle kentälle (paitsi bib_key) lisätään rivi reference_values-tauluun
+        # 3) Jokaiselle kentälle (paitsi bib_key ja old_bib_key) lisätään rivi reference_values-tauluun
         for key, value in data.items():
-            if key == "bib_key":
+            if key in ("bib_key", "old_bib_key"):
                 continue
             if value in (None, ""):
                 continue  # ei tallenneta tyhjiä
