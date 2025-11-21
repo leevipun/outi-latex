@@ -21,13 +21,25 @@
         <p class="subtitle" id="page-subtitle">Hallitse viitteesi helposti</p>
         
         <form method="POST" action="/" class="form-group" id="reference-type-form">
-            <label for="form" id="form-label">Valitse viitetyyppi</label>
+            <label for="form" id="form-label">Valitse viitetyyppi ja täytä tiedot käsin</label>
             <select name="form" id="form">
                 {% for reference_type in reference_types %}
                     <option value="{{reference_type['name']}}" id="option-{{ reference_type['name'] }}">{{reference_type['name']}}</option>
                 {% endfor %}
             </select>
             <button type="submit" id="add_new-button">+ Lisää uusi viite</button>
+        </form>
+
+        <div style="display: flex; align-items: center; text-align: center; margin: 20px 0;">
+            <hr style="flex-grow: 1; border: none; border-top: 1px solid #ccc; margin: 0;">
+            <span style="padding: 0 10px; color: #666;">tai</span>
+            <hr style="flex-grow: 1; border: none; border-top: 1px solid #ccc; margin: 0;">
+        </div>
+
+        <form method="POST" action="/get-doi" class="form-group" id="reference-type-form">
+            <label for="form" id="form-label">Hae tiedot DOI:n avulla</label>
+            <input id="doi-input" placeholder="10.1145/2783446.2783605" name="doi-value" type="text"/>
+            <button type="submit" id="add_doi-button">+ Hae viitteen tiedot</button>
         </form>
 
         <a href="/all" class="btn" id="view-all-references-button">Tarkastele kaikkia viitteitä</a>

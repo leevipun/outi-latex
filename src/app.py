@@ -6,13 +6,18 @@ from src.config import app, test_env
 from src.db_helper import reset_db
 from src.util import (
     FormFieldsError,
-    ReferenceTypeError,
+    UtilError,
+    get_doi_data_from_api,
     get_fields_for_type,
     get_reference_type_by_id,
     format_bibtex_entry,
 )
 from src.utils import references
-from src.utils.references import DatabaseError
+from src.utils.references import (
+    DatabaseError,
+    delete_reference_by_bib_key,
+    get_reference_by_bib_key,
+)
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -85,6 +90,61 @@ def all_references():
         timestamp = reference["created_at"]
         reference["created_at"] = timestamp.strftime("%H:%M, %m.%d.%y")
     return render_template("all.html", data=data)
+
+
+@app.route("/edit/<bib_key>")
+def edit_reference(bib_key):
+    """Display edit form for a specific reference.
+
+    Args:
+        bib_key: Name of the reference that is to be edited.
+    """
+    try:
+        reference = get_reference_by_bib_key(bib_key)
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        return redirect("/all")
+
+    if not reference:
+        flash(f"Reference with bib_key '{bib_key}' not found", "error")
+        return redirect("/all")
+
+    try:
+        fields = get_fields_for_type(reference["reference_type"])
+    except FormFieldsError as e:
+        flash(f"Error loading form fields: {str(e)}", "error")
+        return redirect("/all")
+
+    pre_filled = {"bib_key": reference["bib_key"], **reference["fields"]}
+
+    return render_template(
+        "add_reference.html",
+        selected_type=reference["reference_type"],
+        fields=fields,
+        pre_filled_values=pre_filled,
+    )
+
+
+@app.route("/delete/<bib_key>", methods=["POST"])
+def delete_reference(bib_key):
+    """Poista haluttu reference
+    Args:
+        bib_key: refen tunniste mikä halutaan poistaa
+    """
+    try:
+        reference = get_reference_by_bib_key(bib_key)
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        return redirect("/all")
+    if not reference:
+        flash(f"Reference with bib_key '{bib_key}' not found", "error")
+        return redirect("/all")
+    try:
+        delete_reference_by_bib_key(bib_key)
+        flash(f"Viite '{bib_key}' poistettu", "success")
+    except DatabaseError as e:
+        flash(f"Database error while deleting: {str(e)}", "error")
+    return redirect("/all")
 
 
 @app.route("/save_reference", methods=["POST"])
@@ -179,6 +239,38 @@ def export_bibtex():
         flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
         return redirect("/all")
 
+
+@app.route("/get-doi", methods=["POST"])
+def get_doi_data():
+    """
+    Haetaan doi:n tiedot api-rajapinnan kautta.
+    """
+
+    try:
+        doi = request.form.get("doi-value")
+        parsed_doi = get_doi_data_from_api(doi)
+        # Hae valitun tyypin kentät form-fields.json:sta
+        fields = get_fields_for_type(parsed_doi["type"])
+    except FormFieldsError as e:
+        flash(f"Error loading form fields: {str(e)}", "error")
+        fields = []
+        return render_template("index.html")
+    except UtilError as e:
+        flash(f"Error fetching DOI data: {str(e)}", "error")
+        return render_template("index.html")
+    except KeyError as e:
+        flash(f"Missing expected data: {str(e)}", "error")
+        return render_template("index.html")
+    except Exception as e:
+        flash(f"An unexpected error occurred: {str(e)}", "error")
+        return render_template("index.html")
+    flash("DOI data fetched successfully.", "success")
+    return render_template(
+        "/add_reference.html",
+        pre_filled_values=parsed_doi,
+        fields=fields,
+        selected_type=parsed_doi["type"],
+    )
 
 # testausta varten oleva reitti
 if test_env:

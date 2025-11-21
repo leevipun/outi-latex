@@ -87,8 +87,65 @@ def get_all_added_references() -> list:
         raise DatabaseError(f"Failed to fetch added references: {e}")
 
 
+def get_reference_by_bib_key(bib_key: str) -> dict:
+    """Fetch a single reference by its bib_key.
+
+    Args:
+        bib_key: The unique bib_key identifier for the reference.
+
+    Returns:
+        dict: Dictionary containing bib_key, reference_type, created_at,
+              and fields dictionary with all field values.
+              Returns None if reference is not found.
+
+    Raises:
+        DatabaseError: If database query fails.
+    """
+    sql = text(
+        """ SELECT 
+                sr.id,
+                sr.bib_key,
+                rt.name AS reference_type,
+                sr.reference_type_id,
+                sr.created_at,
+                f.key_name,
+                rv.value
+            FROM single_reference sr
+            JOIN reference_types rt ON sr.reference_type_id = rt.id
+            LEFT JOIN reference_values rv ON sr.id = rv.reference_id
+            LEFT JOIN fields f ON rv.field_id = f.id
+            WHERE sr.bib_key = :bib_key
+            ORDER BY f.key_name;"""
+    )
+    try:
+        results = db.session.execute(sql, {"bib_key": bib_key})
+
+        reference = None
+        for row in results.mappings():
+            if reference is None:
+                reference = {
+                    "id": row["id"],
+                    "bib_key": row["bib_key"],
+                    "reference_type": row["reference_type"],
+                    "reference_type_id": row["reference_type_id"],
+                    "created_at": row["created_at"],
+                    "fields": {},
+                }
+
+            # Add field value if it exists
+            if row["key_name"] is not None:
+                reference["fields"][row["key_name"]] = row["value"]
+
+        return reference
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch reference by bib_key '{bib_key}': {e}")
+
+
 def add_reference(reference_type_name: str, data: dict) -> None:
-    """Lisää uusi viite tietokantaan.
+    """Lisää uusi viite tietokantaan tai päivitä olemassa oleva.
+
+    Jos bib_key on jo olemassa, päivitetään sen kentät.
+    Oletus: Viitetyyppi ei muutu, mutta kentät voivat muuttua.
 
     Args:
         reference_type_name: viitetyypin nimi, esim. "article" (tulee lomakkeelta / URL:sta)
@@ -120,26 +177,46 @@ def add_reference(reference_type_name: str, data: dict) -> None:
 
         reference_type_id = result["id"]
 
-        # 2) Lisää rivi single_reference-tauluun ja hae uuden rivin id
-        insert_ref = db.session.execute(
-            text(
-                """
-                INSERT INTO single_reference (bib_key, reference_type_id)
-                VALUES (:bib_key, :reference_type_id)
-                RETURNING id;
-                """
-            ),
-            {
-                "bib_key": data["bib_key"],
-                "reference_type_id": reference_type_id,
-            },
+        # 2) Tarkista onko viite jo olemassa
+        existing_ref = (
+            db.session.execute(
+                text("SELECT id FROM single_reference WHERE bib_key = :bib_key"),
+                {"bib_key": data["bib_key"]},
+            )
+            .mappings()
+            .first()
         )
 
-        # .scalar() toimii useimmissa, mutta jos ei, käytetään mappings().first()
-        new_ref_id = insert_ref.scalar()
-        if new_ref_id is None:
-            row = insert_ref.mappings().first()
-            new_ref_id = row["id"]
+        if existing_ref:
+            # Viite on jo olemassa, päivitetään kentät
+            ref_id = existing_ref["id"]
+
+            # Poistetaan vanhat kentät
+            db.session.execute(
+                text("DELETE FROM reference_values WHERE reference_id = :reference_id"),
+                {"reference_id": ref_id},
+            )
+        else:
+            # Luodaan uusi viite
+            insert_ref = db.session.execute(
+                text(
+                    """
+                    INSERT INTO single_reference (bib_key, reference_type_id)
+                    VALUES (:bib_key, :reference_type_id)
+                    RETURNING id;
+                    """
+                ),
+                {
+                    "bib_key": data["bib_key"],
+                    "reference_type_id": reference_type_id,
+                },
+            )
+
+            # .scalar() toimii useimmissa, mutta jos ei, käytetään mappings().first()
+            ref_id = insert_ref.scalar()
+            if ref_id is None:
+                row = insert_ref.mappings().first()
+                ref_id = row["id"]
 
         # 3) Jokaiselle kentälle (paitsi bib_key) lisätään rivi reference_values-tauluun
         for key, value in data.items():
@@ -184,7 +261,7 @@ def add_reference(reference_type_name: str, data: dict) -> None:
                     """
                 ),
                 {
-                    "reference_id": new_ref_id,
+                    "reference_id": ref_id,
                     "field_id": field_id,
                     "value": value,
                 },
@@ -195,3 +272,23 @@ def add_reference(reference_type_name: str, data: dict) -> None:
     except Exception as exc:  # voit tiukentaa myöhemmin
         db.session.rollback()
         raise DatabaseError(f"Failed to insert reference: {exc}") from exc
+
+
+def delete_reference_by_bib_key(bib_key: str) -> None:
+    """Delete a reference (and its values via cascade) by bib_key.
+
+    Args:
+        bib_key: The BibTeX key of the reference to delete.
+
+    Raises:
+        DatabaseError: If the delete operation fails.
+    """
+    try:
+        db.session.execute(
+            text("DELETE FROM single_reference WHERE bib_key = :bib_key"),
+            {"bib_key": bib_key},
+        )
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        raise DatabaseError(f"Failed to delete reference '{bib_key}': {e}") from e
