@@ -55,3 +55,21 @@ User Can Edit A Reference
     Element Text Should Be    id:value-EditableArticle-title    Edited Title
     Element Text Should Be    id:value-EditableArticle-volume    8
     Element Text Should Be    id:value-EditableArticle-year    1984
+
+User Can Edit Reference Bibkey
+    [Documentation]    Verify that reference's bib key can be changed
+
+    Go To    ${BASE_URL}/all
+    Page Should Contain Element    id:reference-key-EditableArticle
+    Element Text Should Be    id:value-EditableArticle-year    1984
+    Click Button    id:edit-button-EditableArticle
+    Sleep    2s
+    Location Should Contain    ${BASE_URL}/edit/EditableArticle?
+    Input Text    id:cite_key    EditedArticle
+    Click Button    id:save-reference-button
+    Sleep    2s
+    Location Should Contain    ${BASE_URL}/all
+    Page Should Not Contain Element    id:reference-key-EditableArticle
+    Page Should Contain Element    id:reference-key-EditedArticle
+    Element Text Should Be    id:value-EditedArticle-author    John Lennon
+
