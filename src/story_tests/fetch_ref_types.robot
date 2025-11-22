@@ -5,12 +5,15 @@ Library           RequestsLibrary
 Suite Setup       Initialize Test Environment
 Suite Teardown    Close Browser
 
+*** Variables ***
+${BASE_URL}       http://localhost:5001
+
 *** Keywords ***
 Initialize Test Environment
     [Documentation]    Initialize the test environment
     Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
 
-*** Test Cases ***        
+*** Test Cases ***
 User Can Select Book Reference Type
     [Documentation]    User selects "book" from dropdown and sees book form
     Go To    ${BASE_URL}
@@ -54,12 +57,12 @@ User Can Switch Between Reference Types
     Click Button    id:add_new-button
     Sleep    2s
     Page Should Contain Element    id:reference-type-heading
-    
+
     # Go back to home
     Click Link    id:back-to-home
     Sleep    2s
     Location Should Be    ${BASE_URL}/
-    
+
     # Select different type
     Select From List By Value    id:form    book
     Click Button    id:add_new-button

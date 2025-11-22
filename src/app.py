@@ -9,6 +9,8 @@ from src.util import (
     UtilError,
     get_doi_data_from_api,
     get_fields_for_type,
+    get_reference_type_by_id,
+    format_bibtex_entry,
 )
 from src.utils import references
 from src.utils.references import (
@@ -157,12 +159,13 @@ def save_reference():
 
     # Viiteavain / cite_key (pakollinen)
     cite_key = request.form.get("cite_key", "").strip()
+    old_cite_key = request.form.get("old_bib_key", "").strip()
     if not cite_key:
         flash("Viiteavain (bib_key) on pakollinen.", "error")
         return redirect(f"/add?form={reference_type}")
 
     # Oletus: tietokantataulussa sarake on nimeltä 'bib_key'
-    form_data = {"bib_key": cite_key}
+    form_data = {"bib_key": cite_key, "old_bib_key": old_cite_key}
 
     # Haetaan dynaamiset kentät, samoin kuin /add GET:ssä
     try:
@@ -201,6 +204,46 @@ def save_reference():
 
     flash("Viite tallennettu!", "success")
     return redirect("/all")
+
+
+@app.route("/export/bibtex")
+def export_bibtex():
+    """Export all references as BibTeX format"""
+    try:
+        data = references.get_all_added_references()
+
+        if not data:
+            return (
+                "% No references found\n",
+                200,
+                {"Content-Type": "text/plain; charset=utf-8"},
+            )
+        # Muodosta BibTeX-sisältö
+        bibtex_content = ""
+        for ref in data:
+            bibtex_entry = format_bibtex_entry(ref)
+            bibtex_content += bibtex_entry + "\n\n"
+
+        # Palauta BibTeX-tiedosto ladattavaksi
+        response = app.response_class(
+            bibtex_content,
+            mimetype="application/x-bibtex",
+            headers={
+                "Content-Disposition": "attachment; filename=references.bib",
+                "Content-Type": "application/x-bibtex; charset=utf-8",
+            },
+        )
+        return response
+
+    except DatabaseError as e:
+        flash(f"Database error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
+    except FormFieldsError as e:
+        flash(f"Form fields error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
+    except Exception as e:
+        flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
 
 
 @app.route("/get-doi", methods=["POST"])

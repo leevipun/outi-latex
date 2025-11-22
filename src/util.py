@@ -96,6 +96,31 @@ def get_fields_for_type(type_name: str) -> List[Dict[str, Any]]:
         raise FormFieldsError(f"Failed to get fields for type '{type_name}': {e}")
 
 
+def format_bibtex_value(key: str, value: str) -> str:
+    """Formatoi BibTeX-kentän arvo oikein"""
+    # Escapeta erikoismerkit
+    value = value.replace("\\", "\\\\").replace("{", "\\{").replace("}", "\\}")
+    return f"{{{value}}}"
+
+
+def format_bibtex_entry(reference_data: dict) -> str:
+    """Muodosta yksittäinen BibTeX-merkintä"""
+    ref_type = reference_data.get("reference_type", "misc")
+    bib_key = reference_data.get("bib_key", "unknown")
+
+    bibtex = f"@{ref_type}{{{bib_key},\n"
+
+    fields_data = reference_data.get("fields", {})
+
+    for key, value in fields_data.items():
+        if value and str(value).strip():
+            formatted_value = format_bibtex_value(key, str(value))
+            bibtex += f"    {key} = {formatted_value},\n"
+
+    bibtex = bibtex.rstrip(",\n") + "\n}"
+    return bibtex
+
+
 TYPE_MAP = {
     "journal-article": "article",
     "proceedings-article": "inproceedings",
@@ -198,7 +223,6 @@ def get_doi_data_from_api(doi: str) -> Dict[str, Any]:
         response.raise_for_status()
         doi_data = response.json()
         parsed = parse_doi(doi_data)
-        print(f"Fetched and parsed DOI data for {doi}: {parsed}")
         return parsed
     except requests.exceptions.RequestException as e:
         raise UtilError(f"Failed to fetch DOI data: {e}")

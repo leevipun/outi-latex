@@ -49,6 +49,15 @@
         {% endfor %}
         <br/>
         <a href="/" id="back-to-home-button">Etusivu</a>
+        {% if data %}
+            <a href="/export/bibtex"
+            id="export-bibtex-button"
+            class="button button-primary"
+            download="references.bib"
+            style="margin-left: 10px; background: #28a745;">
+            📄 Lataa BibTeX (.bib)
+        </a>
+        {% endif %}
     </div>
 </body>
 </html>
