@@ -7,11 +7,11 @@ import pytest
 import requests
 
 from src.util import (
+    format_bibtex_entry,
+    format_bibtex_value,
     get_fields_for_type,
     get_reference_type_by_id,
     load_form_fields,
-    format_bibtex_value,
-    format_bibtex_entry,
 )
 
 
