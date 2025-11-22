@@ -30,7 +30,12 @@
                         <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
                     {% endfor %}
                 </ul>
-                <a href="/edit/{{ reference['bib_key'] }}">Muokkaa</a>
+                <form 
+                    method="get"
+                    action="/edit/{{ reference['bib_key'] }}" 
+                    style="display:inline;">
+                    <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
+                </form>
                 <form 
                     method="post" 
                     action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}" 
