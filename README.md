@@ -85,16 +85,34 @@ Or prefix commands with `poetry run` to run in the virtual environment.
 
 ### Environment Variables
 
-Create a `.env` file in the project root:
+Create a `.env` file in the project root by copying `.env.example`:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your settings:
 
 ```env
 FLASK_ENV=development
-DATABASE_URL=postgresql://user:password@localhost:5432/outi_latex
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/outi_latex
 SECRET_KEY=your-secret-key-here
 TEST_ENV=false
 ```
 
 ### Database Setup
+
+#### Option 1: Using Docker Compose (Recommended for local development)
+
+If you have Docker installed, the easiest way to set up PostgreSQL is:
+
+```bash
+docker-compose up -d
+```
+
+This starts a PostgreSQL container. Wait a moment for it to be ready, then proceed to seeding.
+
+#### Option 2: Local PostgreSQL Installation
 
 1. Create a PostgreSQL database:
 
@@ -112,6 +130,18 @@ poetry run python src/index.py
 
 ```bash
 poetry run python seed_database.py
+```
+
+#### Stopping Docker Postgres
+
+```bash
+docker-compose down
+```
+
+To also remove the data volume:
+
+```bash
+docker-compose down -v
 ```
 
 ## 🏃 Running the Application
