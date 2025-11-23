@@ -7,10 +7,10 @@ from src.db_helper import reset_db
 from src.util import (
     FormFieldsError,
     UtilError,
+    format_bibtex_entry,
     get_doi_data_from_api,
     get_fields_for_type,
     get_reference_type_by_id,
-    format_bibtex_entry,
 )
 from src.utils import references
 from src.utils.references import (

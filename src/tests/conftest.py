@@ -1,8 +1,8 @@
 """Pytest configuration for tests."""
 
 import os
-import sys
 import subprocess
+import sys
 
 # Add the src directory to the path BEFORE any test imports
 # This must run at module import time, not in fixtures
