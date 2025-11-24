@@ -75,6 +75,21 @@
             </div>
             {% endfor %}
 
+            <div class="form-group">
+                <label for="category">Avainsana</label>
+                <select id="category" name="category">
+                    <option value="">Valitse olemassa oleva avainsana</option>
+                    {% for tag in tags %}
+                    <option value="{{ tag.id }}">{{ tag.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+    
+            <div class="form-group">
+                <label for="new_tag">Tai lisää uusi avainsana</label>
+                <input type="text" id="new_tag" name="new_tag" placeholder="Syötä uusi avainsanan nimi (korvataan yllä oleva valinta)" />
+            </div>
+
             <div class="button-group">
                 <button type="submit" class="button-primary" id="save-reference-button">{% if pre_filled_values %}Hyväksy muutokset{% else %}Tallenna viite{% endif %}</button>
             </div>
