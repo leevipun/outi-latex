@@ -278,6 +278,13 @@ def get_doi_data():
         selected_type=parsed_doi["type"],
     )
 
+@app.route("/search", methods=["GET", "POST"])
+def search():
+    if request.method == "GET":
+        return render_template("search.html")
+
+
+
 
 # testausta varten oleva reitti
 if test_env:
