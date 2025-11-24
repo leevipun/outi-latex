@@ -29,6 +29,30 @@
             <button type="submit" id="search-button">Hae viitteitä</button>
         </form>
 
+            {% for reference in data %}
+            <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
+                <h3 id="reference-key-{{ reference['bib_key'] }}">{{ reference["bib_key"] }}</h3>
+                <ul id="reference-meta-{{ reference['bib_key'] }}">
+                    <li id="reference-type-{{ reference['bib_key'] }}">{{ reference["reference_type"] }}</li>
+                    <li id="reference-date-{{ reference['bib_key'] }}">{{ reference["created_at"] }}</li>
+                </ul>
+                <ul class="fields-list" id="reference-fields-{{ reference['bib_key'] }}">
+                    {% for key, value in reference["fields"].items() %}
+                    <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span
+                            id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
+                    {% endfor %}
+                </ul>
+                <form method="get" action="/edit/{{ reference['bib_key'] }}" style="display:inline;">
+                    <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
+                </form>
+                <form method="post" action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}" style="display:inline;"
+                    onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');">
+                    <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
+                    <button type="submit">Poista</button>
+                </form>
+            </div>
+            {% endfor %}
+
         <a href="/" class="btn" id="back-to-home-button">Takaisin etusivulle</a>
     </div>
 </body>

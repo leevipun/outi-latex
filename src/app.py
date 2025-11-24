@@ -281,8 +281,11 @@ def get_doi_data():
 @app.route("/search", methods=["GET", "POST"])
 def search():
     if request.method == "GET":
-        return render_template("search.html")
-
+        return render_template("search.html", data=[])
+    
+    query = request.form.get("search-query")
+    result = references.search_reference_by_query(query)
+    return render_template("search.html", data=result)
 
 
 
