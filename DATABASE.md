@@ -162,6 +162,52 @@ Stores the actual metadata for references. For example:
 
 ---
 
+### Table: `tags`
+
+Stores reference categories.
+
+```sql
+CREATE TABLE tags (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL
+);
+```
+
+**Columns:**
+
+- `id` - Unique identifier (primary key)
+- `name` - Tag name (e.g., "machine-learning", "computer-vision", "nlp")
+
+**Purpose:**
+Allows categorization and organization of references using keywords/tags.
+
+---
+
+### Table: `reference_tags`
+
+Junction table implementing many-to-many relationship between references and tags.
+
+```sql
+CREATE TABLE reference_tags (
+    reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
+    tag_id INT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY(reference_id, tag_id)
+);
+```
+
+**Columns:**
+
+- `reference_id` - Foreign key to `single_reference`
+- `tag_id` - Foreign key to `tags`
+
+**Purpose:**
+Enables multiple tags per reference and multiple references per tag. For example:
+
+- Reference "Smith2023" can have tags: "machine-learning", "nlp", "transformers"
+- Tag "machine-learning" can be associated with many references
+
+---
+
 ## Data Relationships
 
 ```
@@ -173,7 +219,11 @@ fields (1) ──┬──→ (Many) reference_type_fields
              │
              └──→ (Many) reference_values
 
-single_reference (1) ──→ (Many) reference_values
+single_reference (1) ──┬──→ (Many) reference_values
+                       │
+                       └──→ (Many) reference_tags
+
+tags (1) ──→ (Many) reference_tags
 ```
 
 ---
@@ -467,6 +517,113 @@ ORDER BY r.bib_key;
 
 ---
 
+### 13. View All Tags
+
+```sql
+SELECT id, name
+FROM tags
+ORDER BY name;
+```
+
+**Returns:** All available tags in alphabetical order.
+
+**Use Case:** Displaying available tags for selection, tag management.
+
+---
+
+### 14. View Tags for a Specific Reference
+
+```sql
+SELECT t.id, t.name
+FROM tags t
+JOIN reference_tags rt ON t.id = rt.tag_id
+JOIN single_reference r ON rt.reference_id = r.id
+WHERE r.bib_key = 'Smith2023'
+ORDER BY t.name;
+```
+
+**Returns:** All tags associated with a specific reference.
+
+**Example Output:**
+
+```
+ id |      name
+----+------------------
+  3 | machine-learning
+  5 | nlp
+  7 | transformers
+```
+
+---
+
+### 15. Find References by Tag
+
+```sql
+SELECT r.id, r.bib_key, rt.name as reference_type
+FROM single_reference r
+JOIN reference_types rt ON r.reference_type_id = rt.id
+JOIN reference_tags reftag ON r.id = reftag.reference_id
+JOIN tags t ON reftag.tag_id = t.id
+WHERE t.name = 'machine-learning'
+ORDER BY r.bib_key;
+```
+
+**Returns:** All references tagged with a specific tag.
+
+**Use Case:** Filtering references by topic/category.
+
+---
+
+### 16. Count References per Tag
+
+```sql
+SELECT t.name, COUNT(rt.reference_id) as reference_count
+FROM tags t
+LEFT JOIN reference_tags rt ON t.id = rt.tag_id
+GROUP BY t.id, t.name
+ORDER BY reference_count DESC, t.name;
+```
+
+**Returns:** Tag usage statistics.
+
+**Example Output:**
+
+```
+       name        | reference_count
+-------------------+-----------------
+ machine-learning  |              15
+ computer-vision   |              12
+ nlp               |               8
+ reinforcement     |               3
+ unused-tag        |               0
+```
+
+---
+
+### 17. Find References with Multiple Specific Tags
+
+```sql
+SELECT r.id, r.bib_key
+FROM single_reference r
+WHERE EXISTS (
+    SELECT 1 FROM reference_tags rt
+    JOIN tags t ON rt.tag_id = t.id
+    WHERE rt.reference_id = r.id AND t.name = 'machine-learning'
+)
+AND EXISTS (
+    SELECT 1 FROM reference_tags rt
+    JOIN tags t ON rt.tag_id = t.id
+    WHERE rt.reference_id = r.id AND t.name = 'nlp'
+)
+ORDER BY r.bib_key;
+```
+
+**Returns:** References that have both specified tags (AND logic).
+
+**Use Case:** Advanced filtering, finding references in intersection of topics.
+
+---
+
 ## Python Scripts
 
 ### `check_database.py`
@@ -511,11 +668,22 @@ python seed_database.py
 **Process:**
 
 1. Connects to database via `DATABASE_URL`
-2. Creates tables if missing:
+2. Drops existing tables (in FK-safe order):
+   - `reference_values`
+   - `single_reference`
+   - `reference_tags`
+   - `tags`
+   - `reference_type_fields`
+   - `fields`
+   - Clears `reference_types` table
+3. Creates all tables if missing:
    - `reference_types`
    - `fields`
    - `reference_type_fields`
-3. Clears existing data (deletes in FK order)
+   - `tags`
+   - `single_reference`
+   - `reference_tags`
+   - `reference_values`
 4. Reads `form-fields.json` structure
 5. Inserts all reference types
 6. Inserts all unique fields with metadata
@@ -536,6 +704,26 @@ VALUES (:key, :type, :input_type, :additional)
 # Create mappings
 INSERT INTO reference_type_fields (reference_type_id, field_id, required)
 VALUES (:ref_type_id, :field_id, :required)
+```
+
+**Output:**
+```
+✓ Connected to database
+Clearing exsisting
+Dropping reference_values table
+Dropping single_reference table
+Dropping tags table
+Dropping reference_type_fields table
+Dropping fields table
+Ensuring reference_types table exists before clearing contents
+✓ Ensured database tables exist
+✓ Loaded form-fields.json with N reference types
+✓ Cleared existing data
+✓ Inserted N reference types
+✓ Inserted N unique fields
+✓ Inserted N reference_type_field mappings
+
+✅ Database seeded successfully!
 ```
 
 ---
@@ -673,7 +861,72 @@ session.execute(
 session.commit()
 ```
 
-(Automatically cascades to `reference_values`)
+(Automatically cascades to `reference_values` and `reference_tags`)
+
+---
+
+### Adding Tags to a Reference
+
+```python
+with Session(engine) as session:
+    # 1. Create tag if it doesn't exist
+    session.execute(
+        text("""
+            INSERT INTO tags (name)
+            VALUES (:tag_name)
+            ON CONFLICT (name) DO NOTHING
+        """),
+        {"tag_name": "machine-learning"}
+    )
+    
+    # 2. Get tag ID
+    tag_id = session.execute(
+        text("SELECT id FROM tags WHERE name = :name"),
+        {"name": "machine-learning"}
+    ).scalar()
+    
+    # 3. Associate tag with reference
+    session.execute(
+        text("""
+            INSERT INTO reference_tags (reference_id, tag_id)
+            VALUES (:ref_id, :tag_id)
+            ON CONFLICT DO NOTHING
+        """),
+        {"ref_id": 1, "tag_id": tag_id}
+    )
+    
+    session.commit()
+```
+
+### Removing a Tag from a Reference
+
+```python
+session.execute(
+    text("""
+        DELETE FROM reference_tags
+        WHERE reference_id = :ref_id
+          AND tag_id = (SELECT id FROM tags WHERE name = :tag_name)
+    """),
+    {"ref_id": 1, "tag_name": "machine-learning"}
+)
+session.commit()
+```
+
+### Getting All Tags for a Reference
+
+```python
+result = session.execute(
+    text("""
+        SELECT t.name
+        FROM tags t
+        JOIN reference_tags rt ON t.id = rt.tag_id
+        WHERE rt.reference_id = :ref_id
+        ORDER BY t.name
+    """),
+    {"ref_id": 1}
+)
+tags = [row[0] for row in result.fetchall()]
+```
 
 ---
 
@@ -707,8 +960,9 @@ The database design provides:
 
 - **Flexibility** - Different reference types have different field requirements
 - **Integrity** - Foreign keys and constraints prevent invalid data
-- **Scalability** - Easy to add new reference types and fields
-- **Maintainability** - Clear separation of concerns (types, fields, values)
+- **Scalability** - Easy to add new reference types, fields, and tags
+- **Maintainability** - Clear separation of concerns (types, fields, values, tags)
+- **Organization** - Tag system enables categorization and filtering of references
 
 Key tables to remember:
 
@@ -717,3 +971,5 @@ Key tables to remember:
 - `reference_type_fields` - Which fields apply to which types
 - `single_reference` - The actual bibliography entries
 - `reference_values` - The field values for each entry
+- `tags` - Available keyword tags for categorization
+- `reference_tags` - Many-to-many relationship between references and tags
