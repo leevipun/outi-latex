@@ -13,6 +13,7 @@ from src.util import (
     get_reference_type_by_id,
 )
 from src.utils import references
+import re
 from src.utils.references import (
     DatabaseError,
     delete_reference_by_bib_key,
@@ -294,6 +295,13 @@ def get_doi_data():
 
     try:
         doi = request.form.get("doi-value")
+        if not doi:
+            flash("DOI value is required.", "error")
+            return render_template("index.html")
+        if not re.match(r"^10\.\d{4,}/\S+$", doi):
+            flash("Invalid DOI format.", "error")
+            return render_template("index.html")
+
         parsed_doi = get_doi_data_from_api(doi)
         # Hae valitun tyypin kentät form-fields.json:sta
         fields = get_fields_for_type(parsed_doi["type"])
@@ -322,11 +330,11 @@ def get_doi_data():
 @app.route("/search", methods=["GET", "POST"])
 def search():
     if request.method == "GET":
-        return render_template("search.html", data=[])
+        return render_template("search.html", data=[], query="")
 
     query = request.form.get("search-query")
     result = references.search_reference_by_query(query)
-    return render_template("search.html", data=result)
+    return render_template("search.html", data=result, query=query)
 
 
 # testausta varten oleva reitti

@@ -19,7 +19,7 @@ User Can Select Book Reference Type
     Go To    ${BASE_URL}
     Select From List By Value    id:form    book
     Click Button    id:add_new-button
-    Sleep    2s
+    Wait Until Page Contains Element    id:reference-type-heading    timeout=5s
     Location Should Contain    /add
     Page Should Contain Element    id:reference-type-heading
     Page Should Contain Element    id:author/editor
@@ -31,7 +31,7 @@ User Can Select Article Reference Type
     Go To    ${BASE_URL}
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
-    Sleep    2s
+    Wait Until Page Contains Element    id:reference-type-heading    timeout=5s
     Location Should Contain    /add
     Page Should Contain Element    id:reference-type-heading
     Page Should Contain Element    id:author
@@ -43,7 +43,7 @@ User Can Select Inproceedings Reference Type
     Go To    ${BASE_URL}
     Select From List By Value    id:form    inproceedings
     Click Button    id:add_new-button
-    Sleep    2s
+    Wait Until Page Contains Element    id:reference-type-heading    timeout=5s
     Location Should Contain    /add
     Page Should Contain Element    id:reference-type-heading
     Page Should Contain Element    id:author
@@ -55,16 +55,15 @@ User Can Switch Between Reference Types
     Go To    ${BASE_URL}
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
-    Sleep    2s
-    Page Should Contain Element    id:reference-type-heading
+    Wait Until Page Contains Element    id:reference-type-heading    timeout=5s
+    # Page Should Contain Element    id:reference-type-heading
 
     # Go back to home
     Click Link    id:back-to-home
-    Sleep    2s
+    Wait Until Page Contains Element    id:reference-type-form    timeout=5s
     Location Should Be    ${BASE_URL}/
 
     # Select different type
     Select From List By Value    id:form    book
     Click Button    id:add_new-button
-    Sleep    2s
-    Page Should Contain Element    id:reference-type-heading
+    Wait Until Page Contains Element    id:reference-type-heading    timeout=5s

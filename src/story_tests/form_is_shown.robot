@@ -19,7 +19,7 @@ User Sees Form After Selecting Reference Type
     Go To    ${BASE_URL}
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
-    Sleep    2s
+    Wait Until Page Contains Element    id:add-reference-form    timeout=5s
     Location Should Contain    ${BASE_URL}/add
     Page Should Contain Element    id:add-reference-form
     Page Should Contain Element    id:reference-type-heading
