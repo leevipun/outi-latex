@@ -1,13 +1,11 @@
 """Integration tests for src/utils/tags.py module."""
 
-import pytest
-
 from src.utils.tags import (
+    add_tag,
     add_tag_to_reference,
     delete_tag_from_reference,
     get_tag_by_reference,
     get_tags,
-    add_tag,
 )
 
 
@@ -18,7 +16,7 @@ class TestAddTagToReference:
         """Test adding a tag to a reference successfully."""
         with app.app_context():
             tag_id = add_tag("Test Tag")
-            reference_id = 1 
+            reference_id = 1
 
             add_tag_to_reference(tag_id, reference_id)
             tag = get_tag_by_reference(reference_id)

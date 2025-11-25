@@ -1,10 +1,10 @@
 """Tag management utilities."""
 
 from sqlalchemy import text
-
 from sqlalchemy.exc import IntegrityError
 
 from src.config import db
+
 
 class TagError(Exception):
     """Base exception for tag operations."""
@@ -119,16 +119,12 @@ def add_tag_to_reference(tag_id: int, reference_id: int):
             "INSERT INTO reference_tags (tag_id, reference_id) "
             "VALUES (:tag_id, :reference_id);"
         )
-        db.session.execute(
-            insert_sql, {"tag_id": tag_id, "reference_id": reference_id}
-        )
+        db.session.execute(insert_sql, {"tag_id": tag_id, "reference_id": reference_id})
         db.session.commit()
 
     except Exception as e:
         db.session.rollback()
-        raise TagError(
-            f"Failed to add tag {tag_id} to reference {reference_id}: {e}."
-        )
+        raise TagError(f"Failed to add tag {tag_id} to reference {reference_id}: {e}.")
 
 
 def delete_tag_from_reference(reference_id: int):
@@ -151,6 +147,4 @@ def delete_tag_from_reference(reference_id: int):
 
     except Exception as e:
         db.session.rollback()
-        raise TagError(
-            f"Failed to delete tag from reference {reference_id}: {e}."
-        )
+        raise TagError(f"Failed to delete tag from reference {reference_id}: {e}.")

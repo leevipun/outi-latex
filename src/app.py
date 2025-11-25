@@ -1,5 +1,7 @@
 """Flask application routes and initialization."""
 
+import re
+
 from flask import flash, jsonify, redirect, render_template, request
 
 from src.config import app, test_env
@@ -13,7 +15,6 @@ from src.util import (
     get_reference_type_by_id,
 )
 from src.utils import references
-import re
 from src.utils.references import (
     DatabaseError,
     delete_reference_by_bib_key,
@@ -22,12 +23,13 @@ from src.utils.references import (
 from src.utils.tags import (
     TagError,
     TagExistsError,
+    add_tag,
     add_tag_to_reference,
     delete_tag_from_reference,
     get_tag_by_reference,
     get_tags,
-    add_tag,
 )
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -89,7 +91,9 @@ def add():
         flash(f"Error loading tags: {str(e)}", "error")
         tags = []
 
-    return render_template("add_reference.html", selected_type=form_name, fields=fields, tags=tags)
+    return render_template(
+        "add_reference.html", selected_type=form_name, fields=fields, tags=tags
+    )
 
 
 @app.route("/all")
@@ -152,7 +156,7 @@ def edit_reference(bib_key):
         selected_type=reference["reference_type"],
         fields=fields,
         pre_filled_values=pre_filled,
-        tags=tags
+        tags=tags,
     )
 
 
@@ -213,7 +217,7 @@ def save_reference():
             selected_tag_id = add_tag(new_tag_name)
             flash(f"Uusi avainsana '{new_tag_name}' lisätty", "success")
         except TagExistsError:
-            pass # Avainsana on jo olemassa, ei tarvitse tehdä mitään
+            pass  # Avainsana on jo olemassa, ei tarvitse tehdä mitään
         except TagError as e:
             flash(f"Error adding tag: {str(e)}", "error")
             return redirect(f"/add?form={reference_type}")

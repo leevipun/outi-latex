@@ -82,12 +82,12 @@ def get_all_added_references() -> list:
                     "fields": {},
                     "tag": None,
                 }
-                
+
                 # Add tag if it exists
                 if row["tag_id"] is not None:
                     references[ref_id]["tag"] = {
                         "id": row["tag_id"],
-                        "name": row["tag_name"]
+                        "name": row["tag_name"],
                     }
 
             # Add field value if it exists
