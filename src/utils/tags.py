@@ -65,6 +65,37 @@ def get_tags():
         raise TagError(f"Failed to fetch tags: {e}.")
 
 
+def get_tag_by_reference(reference_id: int):
+    """Fetch the tag associated with a specific reference.
+
+    Args:
+        reference_id: The ID of the reference.
+
+    Returns:
+        dict or None: A dictionary containing tag id and name if found,
+                      otherwise None. The dictionary has the format:
+                      {"id": int, "name": str}
+
+    Raises:
+        TagError: If the database query fails.
+    """
+    sql = text(
+        "SELECT t.id, t.name "
+        "FROM tags t "
+        "JOIN reference_tags rt ON t.id = rt.tag_id "
+        "WHERE rt.reference_id = :reference_id;"
+    )
+    try:
+        result = db.session.execute(sql, {"reference_id": reference_id})
+        row = result.fetchone()
+        if row:
+            return {"id": row[0], "name": row[1]}
+        return None
+
+    except Exception as e:
+        raise TagError(f"Failed to fetch tag for reference {reference_id}: {e}.")
+
+
 def add_tag_to_reference(tag_id: int, reference_id: int):
     """Associate a tag with a reference, removing any existing tag associations first.
 
