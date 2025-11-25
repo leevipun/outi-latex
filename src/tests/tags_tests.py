@@ -3,8 +3,6 @@
 import pytest
 
 from src.utils.tags import (
-    TagError,
-    TagExistsError,
     add_tag_to_reference,
     delete_tag_from_reference,
     get_tag_by_reference,
@@ -70,3 +68,45 @@ class TestDeleteTagFromReference:
             tag = get_tag_by_reference(reference_id)
 
             assert tag is None
+
+
+class TestGetTagByReference:
+    """Tests for get_tag_by_reference function."""
+
+    def test_get_tag_by_reference_no_tag(self, app):
+        """Test getting a tag for a reference with no tag."""
+        with app.app_context():
+            reference_id = 5
+            tag = get_tag_by_reference(reference_id)
+
+            assert tag is None
+
+    def test_get_tag_by_reference_with_tag(self, app):
+        """Test getting a tag for a reference that has a tag."""
+        with app.app_context():
+            tag_id = add_tag("Existing Tag")
+            reference_id = 6
+
+            add_tag_to_reference(tag_id, reference_id)
+            tag = get_tag_by_reference(reference_id)
+
+            assert tag is not None
+            assert tag["id"] == tag_id
+            assert tag["name"] == "Existing Tag"
+
+
+class TestGetTags:
+    """Tests for get_tags function."""
+
+    def test_get_tags_returns_all_tags(self, app):
+        """Test that get_tags returns all tags in the database."""
+        with app.app_context():
+            tag_names = ["Tag One", "Tag Two", "Tag Three"]
+            for name in tag_names:
+                add_tag(name)
+
+            tags = get_tags()
+            retrieved_tag_names = [tag["name"] for tag in tags]
+
+            for name in tag_names:
+                assert name in retrieved_tag_names
