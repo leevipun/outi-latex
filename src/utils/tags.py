@@ -65,3 +65,16 @@ def add_tag_to_reference(tag_id:int, reference_id:int):
             f"Failed to add tag {tag_id} to reference {reference_id}: {e}."
         )
 
+def delete_tag_from_reference(reference_id:int):
+    try:
+        delete_sql = text(
+            "DELETE FROM reference_tags WHERE reference_id = :reference_id;"
+        )
+        db.session.execute(delete_sql, {"reference_id": reference_id})
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()
+        raise TagError(
+            f"Failed to delete tag from reference {reference_id}: {e}."
+        )

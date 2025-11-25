@@ -23,6 +23,7 @@ from src.utils.tags import (
     TagError,
     TagExistsError,
     add_tag_to_reference,
+    delete_tag_from_reference,
     get_tags,
     add_tag,
 )
@@ -238,6 +239,9 @@ def save_reference():
                 add_tag_to_reference(int(selected_tag_id), ref_id)
             except (TagExistsError, TagError) as e:
                 flash(f"Error associating tag to reference: {str(e)}", "error")
+        else:
+            # Poista mahdollinen vanha avainsana
+            delete_tag_from_reference(ref_id)
 
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
