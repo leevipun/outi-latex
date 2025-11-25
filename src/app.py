@@ -18,7 +18,12 @@ from src.utils.references import (
     delete_reference_by_bib_key,
     get_reference_by_bib_key,
 )
-
+from src.utils.tags import (
+    TagError,
+    TagExistsError,
+    get_tags,
+    add_tag,
+)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -73,7 +78,14 @@ def add():
         flash(f"Error loading form fields: {str(e)}", "error")
         fields = []
 
-    return render_template("add_reference.html", selected_type=form_name, fields=fields)
+    # Hae tagit
+    try:
+        tags = get_tags()
+    except TagError as e:
+        flash(f"Error loading tags: {str(e)}", "error")
+        tags = []
+
+    return render_template("add_reference.html", selected_type=form_name, fields=fields, tags=tags)
 
 
 @app.route("/all")
