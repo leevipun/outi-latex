@@ -32,6 +32,10 @@ try:
         sql = text("DROP TABLE IF EXISTS single_reference CASCADE")
         conn.execute(sql)
 
+        print("Dropping tags table")
+        sql = text("DROP TABLE IF EXISTS tags CASCADE")
+        conn.execute(sql)
+
         print("Dropping reference_type_fields table")
         sql = text("DROP TABLE IF EXISTS reference_type_fields CASCADE")
         conn.execute(sql)
@@ -70,6 +74,12 @@ try:
                 field_id INT NOT NULL REFERENCES fields(id),
                 required BOOLEAN DEFAULT FALSE,
                 PRIMARY KEY(reference_type_id, field_id)
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS tags (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(100) UNIQUE NOT NULL
             )
         """))
         conn.execute(text("""

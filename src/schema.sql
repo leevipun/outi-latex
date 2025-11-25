@@ -36,3 +36,9 @@ CREATE TABLE reference_values (
     field_id INT NOT NULL REFERENCES fields(id),
     value TEXT
 );
+
+-- Avainsanat
+CREATE TABLE tags (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL
+);
