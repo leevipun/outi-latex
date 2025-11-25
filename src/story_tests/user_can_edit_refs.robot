@@ -31,8 +31,7 @@ Create Test Reference
     Input Text    id:pages    ${pages}
     Input Text    id:publisher    ${publisher}
     Click Button    id:save-reference-button
-    Sleep    2s
-    Location Should Be    ${BASE_URL}/all
+    Wait Until Page Contains Element    id:all-references-title    timeout=5s
 
 Delete Test Reference
     [Documentation]    Delete a test reference by its cite key
@@ -41,7 +40,7 @@ Delete Test Reference
     Page Should Contain Element    id:reference-key-${cite_key}
     Click Button    id:delete-button-${cite_key}
     Handle Alert    ACCEPT
-    Sleep    1s
+    Wait Until Page Contains Element    id:all-references-title    timeout=5s
     Page Should Not Contain Element    id:reference-key-${cite_key}
 
 *** Test Cases ***
@@ -54,7 +53,7 @@ User Can Edit A Reference
     Page Should Contain Element    id:reference-key-EditableArticle
     Element Text Should Be    id:value-EditableArticle-year    2002
     Click Button    id:edit-button-EditableArticle
-    Sleep    2s
+    Wait Until Page Contains Element    id:save-reference-button    timeout=5s
     Location Should Contain    ${BASE_URL}/edit/EditableArticle?
     Input Text    id:author    John Lennon
     Input Text    id:title    Edited Title
@@ -65,7 +64,7 @@ User Can Edit A Reference
     Input Text    id:pages    1-5
     Input Text    id:publisher    Edited Publisher
     Click Button    id:save-reference-button
-    Sleep    2s
+    Wait Until Page Contains Element    id:all-references-title    timeout=5s
     Location Should Contain    ${BASE_URL}/all
     Page Should Contain Element    id:reference-key-EditableArticle
     Element Text Should Be    id:value-EditableArticle-author    John Lennon
@@ -85,11 +84,11 @@ User Can Edit Reference Bibkey
     Page Should Contain Element    id:reference-key-EditableArticle
     Element Text Should Be    id:value-EditableArticle-year    1984
     Click Button    id:edit-button-EditableArticle
-    Sleep    2s
+    Wait Until Page Contains Element    id:save-reference-button    timeout=5s
     Location Should Contain    ${BASE_URL}/edit/EditableArticle?
     Input Text    id:cite_key    EditedArticle
     Click Button    id:save-reference-button
-    Sleep    2s
+    Wait Until Page Contains Element    id:all-references-title    timeout=5s
     Location Should Contain    ${BASE_URL}/all
     Page Should Not Contain Element    id:reference-key-EditableArticle
     Page Should Contain Element    id:reference-key-EditedArticle

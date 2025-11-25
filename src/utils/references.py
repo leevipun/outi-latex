@@ -328,19 +328,24 @@ def search_reference_by_query(query: str) -> list:
     try:
         sql = text(
             """
-            SELECT DISTINCT
-                sr.id,
-                sr.bib_key,
-                rt.name AS reference_type,
-                sr.created_at,
-                f.key_name,
-                rv.value
+            SELECT 
+            sr.id,
+            sr.bib_key,
+            rt.name AS reference_type,
+            sr.created_at,
+            f.key_name,
+            rv.value
             FROM single_reference sr
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
-            WHERE sr.bib_key LIKE :query
-               OR rv.value LIKE :query
+            WHERE sr.id IN (
+            SELECT DISTINCT sr2.id
+            FROM single_reference sr2
+            LEFT JOIN reference_values rv2 ON sr2.id = rv2.reference_id
+            WHERE sr2.bib_key LIKE :query
+               OR rv2.value LIKE :query
+            )
             ORDER BY sr.created_at DESC, sr.id, f.key_name;
             """
         )

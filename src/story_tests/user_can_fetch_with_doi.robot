@@ -1,5 +1,5 @@
 *** Settings ***
-Documentation     User Story: As a user, I can choose reference type (book, article...)
+Documentation     User Story: As a user, I can fetch a reference with DOI
 Library           SeleniumLibrary
 Library           RequestsLibrary
 Suite Setup       Initialize Test Environment
