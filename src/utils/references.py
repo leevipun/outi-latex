@@ -285,6 +285,7 @@ def add_reference(reference_type_name: str, data: dict) -> None:
             )
 
         db.session.commit()
+        return ref_id
 
     except Exception as exc:  # voit tiukentaa myöhemmin
         db.session.rollback()
