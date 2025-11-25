@@ -24,6 +24,7 @@ from src.utils.tags import (
     TagExistsError,
     add_tag_to_reference,
     delete_tag_from_reference,
+    get_tag_by_reference,
     get_tags,
     add_tag,
 )
@@ -130,7 +131,14 @@ def edit_reference(bib_key):
         flash(f"Error loading form fields: {str(e)}", "error")
         return redirect("/all")
 
+    try:
+        tag = get_tag_by_reference(reference["id"])
+    except TagError as e:
+        flash(f"Error loading tag for reference: {str(e)}", "error")
+
     pre_filled = {"bib_key": reference["bib_key"], **reference["fields"]}
+    if tag:
+        pre_filled["tag"] = tag
 
     # Hae tagit
     try:
