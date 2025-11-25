@@ -129,11 +129,19 @@ def edit_reference(bib_key):
 
     pre_filled = {"bib_key": reference["bib_key"], **reference["fields"]}
 
+    # Hae tagit
+    try:
+        tags = get_tags()
+    except TagError as e:
+        flash(f"Error loading tags: {str(e)}", "error")
+        tags = []
+
     return render_template(
         "add_reference.html",
         selected_type=reference["reference_type"],
         fields=fields,
         pre_filled_values=pre_filled,
+        tags=tags
     )
 
 
