@@ -43,7 +43,7 @@
                     onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');"
                 >
                     <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
-                    <button type="submit">Poista</button>
+                    <button type="submit" id="delete-button-{{reference['bib_key']}}">Poista</button>
                 </form>
             </div>
         {% endfor %}

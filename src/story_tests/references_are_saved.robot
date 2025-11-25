@@ -13,9 +13,20 @@ Initialize Test Environment
     [Documentation]    Initialize the test environment
     Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
 
+Delete Test Reference
+    [Documentation]    Delete a test reference by its cite key
+    [Arguments]    ${cite_key}
+    Go To    ${BASE_URL}/all
+    Run Keyword And Continue On Failure    Page Should Contain Element    id:reference-key-${cite_key}
+    Run Keyword And Continue On Failure    Click Button    id:delete-button-${cite_key}
+    Handle Alert    ACCEPT
+    Sleep    1s
+
 *** Test Cases ***
 User Can Save Reference
     [Documentation]    Verify that a user can save a reference and it is stored correctly
+    [Teardown]    Delete Test Reference    TestArticle2024
+
     Go To    ${BASE_URL}
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
