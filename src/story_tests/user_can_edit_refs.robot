@@ -5,32 +5,52 @@ Library           RequestsLibrary
 Suite Setup       Initialize Test Environment
 Suite Teardown    Close Browser
 
+*** Variables ***
+${BASE_URL}       http://localhost:5001
+
 *** Keywords ***
 Initialize Test Environment
     [Documentation]    Initialize the test environment
     Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
 
-*** Test Cases ***
-User Can Edit A Reference
-    [Documentation]    Verify that an added reference changes upon edit
-
+Create Test Reference
+    [Documentation]    Create a test reference with initial values
+    [Arguments]    ${cite_key}    ${author}    ${title}    ${journal}    ${year}    ${volume}    ${number}    ${pages}    ${publisher}
     Go To    ${BASE_URL}
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
     Sleep    2s
     Location Should Contain    ${BASE_URL}/add?form=article
-    Input Text    id:cite_key    EditableArticle
-    Input Text    id:author    John Snow
-    Input Text    id:title    Title
-    Input Text    id:journal    Journal
-    Input Text    id:year    2002
-    Input Text    id:volume    9
-    Input Text    id:number    2
-    Input Text    id:pages    2-4
-    Input Text    id:publisher    Publisher
+    Input Text    id:cite_key    ${cite_key}
+    Input Text    id:author    ${author}
+    Input Text    id:title    ${title}
+    Input Text    id:journal    ${journal}
+    Input Text    id:year    ${year}
+    Input Text    id:volume    ${volume}
+    Input Text    id:number    ${number}
+    Input Text    id:pages    ${pages}
+    Input Text    id:publisher    ${publisher}
     Click Button    id:save-reference-button
     Sleep    2s
     Location Should Be    ${BASE_URL}/all
+
+Delete Test Reference
+    [Documentation]    Delete a test reference by its cite key
+    [Arguments]    ${cite_key}
+    Go To    ${BASE_URL}/all
+    Page Should Contain Element    id:reference-key-${cite_key}
+    Click Button    id:delete-button-${cite_key}
+    Handle Alert    ACCEPT
+    Sleep    1s
+    Page Should Not Contain Element    id:reference-key-${cite_key}
+
+*** Test Cases ***
+User Can Edit A Reference
+    [Documentation]    Verify that an added reference changes upon edit
+    [Setup]    Create Test Reference    EditableArticle    John Snow    Title    Journal    2002    9    2    2-4    Publisher
+    [Teardown]    Delete Test Reference    EditableArticle
+
+    Go To    ${BASE_URL}/all
     Page Should Contain Element    id:reference-key-EditableArticle
     Element Text Should Be    id:value-EditableArticle-year    2002
     Click Button    id:edit-button-EditableArticle
@@ -58,6 +78,8 @@ User Can Edit A Reference
 
 User Can Edit Reference Bibkey
     [Documentation]    Verify that reference's bib key can be changed
+    [Setup]    Create Test Reference    EditableArticle    John Lennon    Edited Title    Edited Journal    1984    8    3    1-5    Edited Publisher
+    [Teardown]    Delete Test Reference    EditedArticle
 
     Go To    ${BASE_URL}/all
     Page Should Contain Element    id:reference-key-EditableArticle

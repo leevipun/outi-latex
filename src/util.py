@@ -219,7 +219,7 @@ def get_doi_data_from_api(doi: str) -> Dict[str, Any]:
     """
     url = f"https://citation.doi.org/metadata?doi={doi}"
     try:
-        response = requests.get(url, timeout=5)
+        response = requests.get(url, timeout=15)
         response.raise_for_status()
         doi_data = response.json()
         parsed = parse_doi(doi_data)
