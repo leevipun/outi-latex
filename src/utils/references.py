@@ -40,11 +40,11 @@ def get_all_references() -> list:
 
 
 def get_all_added_references() -> list:
-    """Fetch all added reference from the database with all their field values.
+    """Fetch all added reference from the database with all their field values and tags.
 
     Returns:
         list: List of dictionaries containing bib-key, reference type,
-              timestamp, and all field values, sorted by timestamp.
+              timestamp, all field values, and associated tag, sorted by timestamp.
 
     Raises:
         DatabaseError: If database query fails.
@@ -56,11 +56,15 @@ def get_all_added_references() -> list:
                 rt.name AS reference_type,
                 sr.created_at,
                 f.key_name,
-                rv.value
+                rv.value,
+                t.id AS tag_id,
+                t.name AS tag_name
             FROM single_reference sr
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
+            LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
+            LEFT JOIN tags t ON reftag.tag_id = t.id
             ORDER BY sr.created_at DESC, sr.id, f.key_name;"""
     )
     try:
@@ -76,7 +80,15 @@ def get_all_added_references() -> list:
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
                     "fields": {},
+                    "tag": None,
                 }
+                
+                # Add tag if it exists
+                if row["tag_id"] is not None:
+                    references[ref_id]["tag"] = {
+                        "id": row["tag_id"],
+                        "name": row["tag_name"]
+                    }
 
             # Add field value if it exists
             if row["key_name"] is not None:
