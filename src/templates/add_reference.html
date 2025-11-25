@@ -85,7 +85,7 @@
                 <select id="tag" name="tag" autocomplete="off">
                     <option value="">Valitse avainsana</option>
                     {% for tag in tags %}
-                    <option value="{{ tag.id }}" {% if pre_filled_values and pre_filled_values['tag']['id'] == tag.id %}selected{% endif %}>{{ tag.name }}</option>
+                    <option value="{{ tag.id }}" {% if pre_filled_values and pre_filled_values['tag'] and pre_filled_values['tag']['id'] == tag.id %}selected{% endif %}>{{ tag.name }}</option>
                     {% endfor %}
                 </select>
                 {% else %}
