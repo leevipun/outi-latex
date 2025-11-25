@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 
-<body class="index-page">
+<body class="search-page">
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
         <div class="flash-messages">
@@ -25,10 +25,13 @@
 
         <form method="POST" action="/search" class="form-group" id="search-form">
             <label for="search-query" id="search-label">Etsi viitteitä</label>
-            <input id="search-query" name="search-query" type="text" placeholder="Kirjoita hakusana..."/>
-            <button type="submit" id="search-button">Hae viitteitä</button>
+            <div class="search-input-group">
+                <input id="search-query" name="search-query" type="text" placeholder="Kirjoita hakusana..." value="{% if query %}{{query}}{% endif %}"/>
+                <button type="submit" id="search-button">Hae viitteitä</button>
+            </div>
         </form>
-
+        {% if data %}
+        <h2 id="search-results-heading">Hakutulokset:</h2>
             {% for reference in data %}
             <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
                 <h3 id="reference-key-{{ reference['bib_key'] }}">{{ reference["bib_key"] }}</h3>
@@ -52,6 +55,11 @@
                 </form>
             </div>
             {% endfor %}
+        {% else %}
+            <div class="no-results" id="no-results-div">
+                <p id="no-results-message">Ei hakutuloksia.</p>
+            </div>
+        {% endif %}
 
         <a href="/" class="btn" id="back-to-home-button">Takaisin etusivulle</a>
     </div>
