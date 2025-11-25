@@ -21,9 +21,9 @@ class TagExistsError(Exception):
 def add_tag(tag:str):
     sql = text("INSERT INTO tags (name) VALUES (:tag) RETURNING id;")
     try:
-        result = db.session.execute(sql, {"tag": tag})
+        tag_id = db.session.execute(sql, {"tag": tag})
         db.session.commit()
-        return result.fetchone()[0]
+        return tag_id.fetchone()[0]
 
     except IntegrityError as e:
         db.session.rollback()
@@ -41,3 +41,27 @@ def get_tags():
 
     except Exception as e:
         raise TagError(f"Failed to fetch tags: {e}.")
+
+
+def add_tag_to_reference(tag_id:int, reference_id:int):
+    sql = text(
+        "INSERT INTO reference_tags (tag_id, reference_id) "
+        "VALUES (:tag_id, :reference_id);"
+    )
+    try:
+        db.session.execute(
+            sql, {"tag_id": tag_id, "reference_id": reference_id}
+        )
+        db.session.commit()
+
+    except IntegrityError as e:
+        db.session.rollback()
+        raise TagExistsError(
+            f"Failed to add tag {tag_id} to reference {reference_id}: {e}."
+        )
+    except Exception as e:
+        db.session.rollback()
+        raise TagError(
+            f"Failed to add tag {tag_id} to reference {reference_id}: {e}."
+        )
+
