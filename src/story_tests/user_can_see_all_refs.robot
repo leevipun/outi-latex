@@ -41,7 +41,7 @@ Delete Test Reference
     Page Should Contain Element    id:reference-key-${cite_key}
     Click Button    id:delete-button-${cite_key}
     Handle Alert    ACCEPT
-    Sleep    1s
+    Wait Until Page Contains Element    id:all-references-title    timeout=5s
     Page Should Not Contain Element    id:reference-key-${cite_key}
 
 *** Test Cases ***
@@ -76,7 +76,7 @@ User Can Delete Reference From All Page
     # Confirm the JS confirm(...) dialog
     Handle Alert    ACCEPT
 
-    Sleep    1s
+    Wait Until Page Contains Element    id:all-references-title    timeout=5s
 
     # After deletion, the reference card should be gone
     Page Should Not Contain Element    id:reference-item-TestArticle2024

@@ -17,7 +17,8 @@
         {% endif %}
     {% endwith %}
     <div class="container">
-        <h1 id="all-references-title">Tässä kaikki lisäämäsi viitteet</h1>
+        <h1 id="all-references-title">Kaikki viitteet</h1>
+        {% if data %}
         {% for reference in data %}
             <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
                 <h3 id="reference-key-{{ reference['bib_key'] }}">{{ reference["bib_key"] }}</h3>
@@ -47,8 +48,14 @@
                 </form>
             </div>
         {% endfor %}
+        {% else %}
+        <div class="no-references" id="no-references-div">
+            <h2 id="no-references-title">Ei viitteitä lisättynä</h2>
+            <p id="no-references-message">Et ole vielä lisännyt viitteitä. Voit lisätä viitteitä etusivulta.</p>
+        </div>
+        {% endif %}
         <br/>
-        <a href="/" id="back-to-home-button">Etusivu</a>
+        <a href="/" id="back-to-home-button" class="btn">Etusivu</a>
         <a href="/search" class="btn" id="view-all-references-button">Hae viitteitä</a>
         {% if data %}
             <a href="/export/bibtex"

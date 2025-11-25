@@ -30,7 +30,7 @@ User Can Save Reference
     Go To    ${BASE_URL}
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
-    Sleep    2s
+    Wait Until Page Contains Element    id:save-reference-button    timeout=5s
     Location Should Contain    ${BASE_URL}/add?form=article
     Input Text    id:cite_key    TestArticle2024
     Input Text    id:author    John Doe
@@ -42,6 +42,6 @@ User Can Save Reference
     Input Text    id:pages    100-110
     Input Text    id:publisher    Testing Publishers
     Click Button    id:save-reference-button
-    Sleep    2s
+    Wait Until Page Contains Element    id:all-references-title    timeout=5s
     Location Should Be    ${BASE_URL}/all
     Page Should Contain Element    id:all-references-title
