@@ -91,6 +91,13 @@ try:
             )
         """))
         conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS reference_tags (
+                reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
+                tag_id INT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                PRIMARY KEY(reference_id, tag_id)
+            )
+        """))
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS reference_values (
                 id SERIAL PRIMARY KEY,
                 reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
