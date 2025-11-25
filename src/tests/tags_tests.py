@@ -43,3 +43,30 @@ class TestAddTagToReference:
             assert tag is not None
             assert tag["id"] == second_tag_id
             assert tag["name"] == "Second Tag"
+
+
+class TestDeleteTagFromReference:
+    """Tests for delete_tag_from_reference function."""
+
+    def test_delete_tag_from_reference_success(self, app):
+        """Test deleting a tag from a reference successfully."""
+        with app.app_context():
+            tag_id = add_tag("Tag to Delete")
+            reference_id = 3
+
+            add_tag_to_reference(tag_id, reference_id)
+            delete_tag_from_reference(reference_id)
+            tag = get_tag_by_reference(reference_id)
+
+            assert tag is None
+
+    def test_delete_tag_from_reference_no_existing_tag(self, app):
+        """Test deleting a tag from a reference that has no tag."""
+        with app.app_context():
+            reference_id = 4
+
+            # Ensure no exception is raised when deleting non-existing tag
+            delete_tag_from_reference(reference_id)
+            tag = get_tag_by_reference(reference_id)
+
+            assert tag is None
