@@ -2,8 +2,9 @@
 
 from sqlalchemy import text
 
-from src.config import db
+from sqlalchemy.exc import IntegrityError
 
+from src.config import db
 
 class TagError(Exception):
     """Base exception for tag operations."""
@@ -18,24 +19,21 @@ class TagExistsError(Exception):
 
 
 def add_tag(tag:str):
-    sql = text(
-        """ INSERT INTO tags (name)
-            VALUES (:tag);
-        """
-    )
+    sql = text("INSERT INTO tags (name) VALUES (:tag);")
     try:
         db.session.execute(sql, {"tag": tag})
         db.session.commit()
 
-    except Exception as e:
+    except IntegrityError as e:
         db.session.rollback()
         raise TagExistsError(f"Failed to add tag {tag}: {e}.")
+    except Exception as e:
+        db.session.rollback()
+        raise TagError(f"Failed to add tag {tag}: {e}.")
 
 
 def get_tags():
-    sql = text(
-        "SELECT id, name FROM tags ORDER BY name;"
-    )
+    sql = text("SELECT id, name FROM tags ORDER BY name;")
     try:
         result = db.session.execute(sql)
         return [{"id": row[0], "name": row[1]} for row in result.fetchall()]
