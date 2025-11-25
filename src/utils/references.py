@@ -362,4 +362,6 @@ def search_reference_by_query(query: str) -> list:
 
         return list(references.values())
     except Exception as e:
-        raise DatabaseError(f"Failed to search references with query '{query}': {e}") from e
+        raise DatabaseError(
+            f"Failed to search references with query '{query}': {e}"
+        ) from e

@@ -278,15 +278,15 @@ def get_doi_data():
         selected_type=parsed_doi["type"],
     )
 
+
 @app.route("/search", methods=["GET", "POST"])
 def search():
     if request.method == "GET":
         return render_template("search.html", data=[])
-    
+
     query = request.form.get("search-query")
     result = references.search_reference_by_query(query)
     return render_template("search.html", data=result)
-
 
 
 # testausta varten oleva reitti
