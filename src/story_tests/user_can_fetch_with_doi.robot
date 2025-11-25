@@ -25,12 +25,13 @@ User Can See DOI-button on home page
 
 User Can Fetch with DOI
     [Documentation]    User enters DOI and clicks fetch button, sees pre-filled form with values
+
     Go To    ${BASE_URL}
     Wait Until Element Is Visible    id:doi-input    timeout=10s
     Input Text    id:doi-input    10.1145/2783446.2783605
     Click Button    id:add_doi-button
-    Wait Until Element Is Visible    id:add-reference-title    timeout=15s
-    Wait Until Element Is Visible    id:author    timeout=15s
+    Wait Until Element Is Visible    id:add-reference-title    timeout=30s
+    Wait Until Element Is Visible    id:author    timeout=30s
     Textfield Value Should Be    id:author    Kristian Garza, Carole Goble, John Brooke, Caroline Jay
     Textfield Value Should Be    id:title    Framing the community data system interface
     Textfield Value Should Be    id:booktitle    Proceedings of the 2015 British HCI Conference

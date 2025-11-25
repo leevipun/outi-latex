@@ -309,3 +309,59 @@ def delete_reference_by_bib_key(bib_key: str) -> None:
     except Exception as e:
         db.session.rollback()
         raise DatabaseError(f"Failed to delete reference '{bib_key}': {e}") from e
+
+
+def search_reference_by_query(query: str) -> list:
+    """Search for references matching the given query string.
+
+    Searches across bib_key, author, title, and other field values.
+
+    Args:
+        query: The search query string.
+
+    Returns:
+        list: List of dictionaries containing matching references with their fields.
+
+    Raises:
+        DatabaseError: If the search query fails.
+    """
+    try:
+        sql = text(
+            """
+            SELECT DISTINCT
+                sr.id,
+                sr.bib_key,
+                rt.name AS reference_type,
+                sr.created_at,
+                f.key_name,
+                rv.value
+            FROM single_reference sr
+            JOIN reference_types rt ON sr.reference_type_id = rt.id
+            LEFT JOIN reference_values rv ON sr.id = rv.reference_id
+            LEFT JOIN fields f ON rv.field_id = f.id
+            WHERE sr.bib_key LIKE :query
+               OR rv.value LIKE :query
+            ORDER BY sr.created_at DESC, sr.id, f.key_name;
+            """
+        )
+        results = db.session.execute(sql, {"query": f"%{query}%"})
+        references = {}
+        for row in results.mappings():
+            ref_id = row["id"]
+            if ref_id not in references:
+                references[ref_id] = {
+                    "bib_key": row["bib_key"],
+                    "reference_type": row["reference_type"],
+                    "created_at": row["created_at"],
+                    "fields": {},
+                }
+
+            # Add field value if it exists
+            if row["key_name"] is not None:
+                references[ref_id]["fields"][row["key_name"]] = row["value"]
+
+        return list(references.values())
+    except Exception as e:
+        raise DatabaseError(
+            f"Failed to search references with query '{query}': {e}"
+        ) from e

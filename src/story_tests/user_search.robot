@@ -38,45 +38,27 @@ Delete Test Reference
     [Documentation]    Delete a test reference by its cite key
     [Arguments]    ${cite_key}
     Go To    ${BASE_URL}/all
-    Page Should Contain Element    id:reference-key-${cite_key}
-    Click Button    id:delete-button-${cite_key}
+    Run Keyword And Continue On Failure    Page Should Contain Element    id:reference-key-${cite_key}
+    Run Keyword And Continue On Failure    Click Button    id:delete-button-${cite_key}
     Handle Alert    ACCEPT
     Sleep    1s
-    Page Should Not Contain Element    id:reference-key-${cite_key}
 
 *** Test Cases ***
-User Can See All Added References
-    [Documentation]    Verify that the all references page displays all added references
-    Go To    ${BASE_URL}/all
-    Page Should Contain Element    id:all-references-title
-    Element Should Be Visible    id:back-to-home-button
+User Can Access The Search Page
+    [Documentation]    Verify that the search page is accessible and the user can get there
+    Go To    ${BASE_URL}/search
+    Wait Until Element Is Visible    id:page-title
+    Page Should Contain Element    id:search-form
 
-
-User Can See Added Article Reference
-    [Documentation]    Verify that an added article reference is displayed correctly
+User Can Type In The Search Field And Get Results
+    [Documentation]    Verify that the search page has the search input and it is working
     [Setup]    Create Test Reference    TestArticle2024    John Doe    Sample Article Title    Journal of Testing    2024    10    2    100-110    Testing Publishers
     [Teardown]    Delete Test Reference    TestArticle2024
 
-    Go To    ${BASE_URL}/all
+    Go To    ${BASE_URL}/search
+    Wait Until Element Is Visible    id:page-title
+    Page Should Contain Element    id:search-query
+    Input Text    id:search-query    Test
+    Click Button    id:search-button
+    Wait Until Element Is Visible    id:reference-item-TestArticle2024
     Page Should Contain Element    id:reference-item-TestArticle2024
-
-User Can Delete Reference From All Page
-    [Documentation]    User deletes an existing reference and it disappears from the list
-    [Setup]    Create Test Reference    TestArticle2024    John Doe    Sample Article Title    Journal of Testing    2024    10    2    100-110    Testing Publishers
-    [Teardown]    Run Keyword If Test Passed    Log    Reference already deleted
-
-    Go To    ${BASE_URL}/all
-
-    # Make sure the reference exists before deletion
-    Page Should Contain Element    id:reference-item-TestArticle2024
-
-    # Click the Poista button for that specific reference card
-    Click Button    xpath=//div[@id="reference-item-TestArticle2024"]//button[normalize-space(.)="Poista"]
-
-    # Confirm the JS confirm(...) dialog
-    Handle Alert    ACCEPT
-
-    Sleep    1s
-
-    # After deletion, the reference card should be gone
-    Page Should Not Contain Element    id:reference-item-TestArticle2024

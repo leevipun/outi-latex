@@ -28,6 +28,15 @@ Cleanup Test Environment
     [Documentation]    Clean up test environment
     Close Browser
 
+Delete Test Reference
+    [Documentation]    Delete a test reference by its cite key
+    [Arguments]    ${cite_key}
+    Go To    ${BASE_URL}/all
+    Run Keyword And Continue On Failure    Page Should Contain Element    id:reference-key-${cite_key}
+    Run Keyword And Continue On Failure    Click Button    id:delete-button-${cite_key}
+    Handle Alert    ACCEPT
+    Sleep    1s
+
 Add Sample Article Reference
     [Documentation]    Add a sample article reference for testing
     Go To    ${BASE_URL}
@@ -80,7 +89,8 @@ User Can Export Empty BibTeX
 
 User Can See And Click Export Button When References Exist
     [Documentation]    Verify that export button appears on /all page when references exist
-    Add Sample Article Reference
+    [Setup]    Add Sample Article Reference
+    [Teardown]    Delete Test Reference    TestArticle_${TEST_TIMESTAMP}
 
     Go To    ${BASE_URL}/all
     Page Should Contain Element    id:all-references-title
@@ -94,8 +104,8 @@ User Can See And Click Export Button When References Exist
 
 Export Works With Multiple References
     [Documentation]    Verify that export works when multiple references exist
-    Add Sample Article Reference
-    Add Sample Book Reference
+    [Setup]    Run Keywords    Add Sample Article Reference    AND    Add Sample Book Reference
+    [Teardown]    Run Keywords    Delete Test Reference    TestArticle_${TEST_TIMESTAMP}    AND    Delete Test Reference    TestBook_${TEST_TIMESTAMP}
 
     Go To    ${BASE_URL}/all
     Sleep    2s
@@ -110,7 +120,8 @@ Export Works With Multiple References
 
 User Can Download And Verify BibTeX Content
     [Documentation]    Test BibTeX content via HTTP
-    Add Sample Article Reference
+    [Setup]    Add Sample Article Reference
+    [Teardown]    Delete Test Reference    TestArticle_${TEST_TIMESTAMP}
 
     Create Session    api    ${BASE_URL}
     ${response}=    GET On Session    api    /export/bibtex
@@ -128,7 +139,8 @@ User Can Download And Verify BibTeX Content
 
 BibTeX Content Is Valid LaTeX Format
     [Documentation]    Test BibTeX format via HTTP - basic validation
-    Add Sample Article Reference
+    [Setup]    Add Sample Article Reference
+    [Teardown]    Delete Test Reference    TestArticle_${TEST_TIMESTAMP}
 
     Create Session    api    ${BASE_URL}
     ${response}=    GET On Session    api    /export/bibtex
