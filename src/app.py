@@ -21,6 +21,7 @@ from src.utils.references import (
 from src.utils.tags import (
     TagError,
     TagExistsError,
+    add_tag_to_reference,
     get_tags,
     add_tag,
 )
@@ -230,7 +231,13 @@ def save_reference():
 
     # Tallennus tietokantaan
     try:
-        references.add_reference(reference_type, form_data)
+        ref_id = references.add_reference(reference_type, form_data)
+        if selected_tag_id:
+            try:
+                add_tag_to_reference(int(selected_tag_id), ref_id)
+            except (TagExistsError, TagError) as e:
+                flash(f"Error associating tag to reference: {str(e)}", "error")
+
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         return redirect(f"/add?form={reference_type}")
