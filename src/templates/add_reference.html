@@ -19,7 +19,11 @@
         {% endif %}
     {% endwith %}
     <div class="container" id="add-reference-container">
-        <a href="/" class="back-link" id="back-to-home">← Takaisin etusivulle</a>
+        <form action="/" method="get">
+            <button type="submit" class="button-primary" id="back-to-home" style="margin-bottom: 1em;">
+                ← Takaisin etusivulle
+            </button>
+        </form>
         <h1 id="add-reference-title">{% if pre_filled_values %}Tarkista ja täydennä haettuja tietoja{% else %}Lisää uusi viite{% endif %}</h1>
 
         {% if selected_type and fields %}
@@ -83,6 +87,9 @@
                     <label for="tag_{{ tag.id }}">{{ tag.name }}</label>
                 </div>
                 {% endfor %}
+                {% if not tags %}
+                <p><small>Ei vielä avainsanoja. Lisää uusi avainsana alla.</small></p>
+                {% endif %}
             </div>
 
             <div class="button-group">
