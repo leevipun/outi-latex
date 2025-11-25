@@ -33,4 +33,12 @@ def add_tag(tag:str):
 
 
 def get_tags():
-    ...
+    sql = text(
+        "SELECT id, name FROM tags ORDER BY name;"
+    )
+    try:
+        result = db.session.execute(sql)
+        return [{"id": row[0], "name": row[1]} for row in result.fetchall()]
+
+    except Exception as e:
+        raise TagError(f"Failed to fetch tags: {e}.")
