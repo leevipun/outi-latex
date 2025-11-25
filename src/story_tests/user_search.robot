@@ -63,7 +63,6 @@ User Can Access The Search Page
 User Can Type In The Search Field And Get Results
     [Documentation]    Verify that the search page has the search input and it is working
     [Setup]    Create Two Test References
-    [Teardown]    Delete Two Test References
 
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id:search-query
@@ -75,8 +74,6 @@ User Can Type In The Search Field And Get Results
 
 User Can Search With Author Name
     [Documentation]    Verify that searching by author works
-    [Setup]    Create Two Test References
-    [Teardown]    Delete Two Test References
 
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id:search-query
@@ -88,8 +85,6 @@ User Can Search With Author Name
 
 User Can Search With Title Keyword
     [Documentation]    Verify that searching by title works
-    [Setup]    Create Two Test References
-    [Teardown]    Delete Two Test References
 
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id:search-query
@@ -101,8 +96,6 @@ User Can Search With Title Keyword
 
 User Can Search With Journal Name
     [Documentation]    Verify that searching by journal works
-    [Setup]    Create Two Test References
-    [Teardown]    Delete Two Test References
 
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id:search-query
@@ -114,7 +107,6 @@ User Can Search With Journal Name
 
 User Can Search With Year
     [Documentation]    Verify that searching by year works
-    [Setup]    Create Two Test References
     [Teardown]    Delete Two Test References
 
     Go To    ${BASE_URL}/search
