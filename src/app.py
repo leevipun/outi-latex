@@ -194,6 +194,19 @@ def save_reference():
         flash(f"Error loading form fields: {str(e)}", "error")
         return redirect(f"/add?form={reference_type}")
 
+    new_tag_name = request.form.get("new_tag", "").strip()
+    selected_tag_id = request.form.get("tag", "").strip()
+
+    if new_tag_name:
+        try:
+            selected_tag_id = add_tag(new_tag_name)
+            flash(f"Uusi avainsana '{new_tag_name}' lisätty", "success")
+        except TagExistsError:
+            pass # Avainsana on jo olemassa, ei tarvitse tehdä mitään
+        except TagError as e:
+            flash(f"Error adding tag: {str(e)}", "error")
+            return redirect(f"/add?form={reference_type}")
+
     errors = []
 
     for field in fields:

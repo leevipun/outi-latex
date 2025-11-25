@@ -19,10 +19,11 @@ class TagExistsError(Exception):
 
 
 def add_tag(tag:str):
-    sql = text("INSERT INTO tags (name) VALUES (:tag);")
+    sql = text("INSERT INTO tags (name) VALUES (:tag) RETURNING id;")
     try:
-        db.session.execute(sql, {"tag": tag})
+        result = db.session.execute(sql, {"tag": tag})
         db.session.commit()
+        return result.fetchone()[0]
 
     except IntegrityError as e:
         db.session.rollback()

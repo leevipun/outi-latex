@@ -83,6 +83,7 @@
                 <label for="tag">Avainsana</label>
                 {% if tags %}
                 <select id="tag" name="tag">
+                    <option value="">Valitse avainsana</option>
                     {% for tag in tags %}
                     <option value="{{ tag.id }}">{{ tag.name }}</option>
                     {% endfor %}
