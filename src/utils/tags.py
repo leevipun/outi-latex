@@ -44,21 +44,21 @@ def get_tags():
 
 
 def add_tag_to_reference(tag_id:int, reference_id:int):
-    sql = text(
-        "INSERT INTO reference_tags (tag_id, reference_id) "
-        "VALUES (:tag_id, :reference_id);"
-    )
     try:
+        delete_sql = text(
+            "DELETE FROM reference_tags WHERE reference_id = :reference_id;"
+        )
+        db.session.execute(delete_sql, {"reference_id": reference_id})
+
+        insert_sql = text(
+            "INSERT INTO reference_tags (tag_id, reference_id) "
+            "VALUES (:tag_id, :reference_id);"
+        )
         db.session.execute(
-            sql, {"tag_id": tag_id, "reference_id": reference_id}
+            insert_sql, {"tag_id": tag_id, "reference_id": reference_id}
         )
         db.session.commit()
 
-    except IntegrityError as e:
-        db.session.rollback()
-        raise TagExistsError(
-            f"Failed to add tag {tag_id} to reference {reference_id}: {e}."
-        )
     except Exception as e:
         db.session.rollback()
         raise TagError(
