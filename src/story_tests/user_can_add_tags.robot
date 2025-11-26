@@ -15,11 +15,11 @@ Initialize Test Environment
 
 Create Test Reference
     [Documentation]    Create a test reference with initial values
-    [Arguments]    ${cite_key}    ${author}    ${title}    ${journal}    ${year}    ${volume}    ${number}    ${pages}    ${publisher}
+    [Arguments]    ${cite_key}    ${author}    ${title}    ${journal}    ${year}    ${volume}    ${number}    ${pages}    ${publisher}    ${tag}
     Go To    ${BASE_URL}
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
-    Sleep    2s
+    Sleep    1s
     Location Should Contain    ${BASE_URL}/add?form=article
     Input Text    id:cite_key    ${cite_key}
     Input Text    id:author    ${author}
@@ -30,6 +30,7 @@ Create Test Reference
     Input Text    id:number    ${number}
     Input Text    id:pages    ${pages}
     Input Text    id:publisher    ${publisher}
+    Input Text    id:new_tag    ${tag}
     Click Button    id:save-reference-button
     Wait Until Page Contains Element    id:all-references-title    timeout=5s
 
@@ -44,7 +45,12 @@ Delete Test Reference
     Page Should Not Contain Element    id:reference-key-${cite_key}
 
 *** Test Cases ***
-User Can Choose Tag
-    [Documentation]    Verify that an added reference changes upon edit
-    [Setup]    Create Test Reference    TagArticle    Test Author    Test Title    Test Journal    2001    8    1    1-3    Test Publisher
+User Can Create Tag
+    [Documentation]    Verify that a tag created in creating a reference is shown
+    [Setup]    Create Test Reference    TagArticle    Test Author    Test Title    Test Journal    2001    8    1    1-3    Test Publisher    test tag
     [Teardown]    Delete Test Reference    TagArticle
+
+    Go To    ${BASE_URL}/all
+    Sleep    2s
+    Page Should Contain Element    id:reference-key-TagArticle
+    Element Text Should Be    id:value-TagArticle-tag    test tag
