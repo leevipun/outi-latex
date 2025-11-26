@@ -65,6 +65,30 @@ def get_tags():
         raise TagError(f"Failed to fetch tags: {e}.")
 
 
+def get_tag_id_by_name(tag_name: str):
+    """Fetch a tag's ID by its name.
+
+    Args:
+        tag_name: The name of the tag to fetch.
+
+    Returns:
+        int or None: The ID of the tag if found, otherwise None.
+
+    Raises:
+        TagError: If the database query fails.
+    """
+    sql = text("SELECT id FROM tags WHERE name = :tag_name;")
+    try:
+        result = db.session.execute(sql, {"tag_name": tag_name})
+        row = result.fetchone()
+        if row:
+            return row[0]
+        return None
+
+    except Exception as e:
+        raise TagError(f"Failed to fetch tag ID by name '{tag_name}': {e}.")
+
+
 def get_tag_by_reference(reference_id: int):
     """Fetch the tag associated with a specific reference.
 

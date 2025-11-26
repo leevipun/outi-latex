@@ -26,6 +26,7 @@ from src.utils.tags import (
     add_tag,
     add_tag_to_reference,
     delete_tag_from_reference,
+    get_tag_id_by_name,
     get_tag_by_reference,
     get_tags,
 )
@@ -217,7 +218,12 @@ def save_reference():
             selected_tag_id = add_tag(new_tag_name)
             flash(f"Uusi avainsana '{new_tag_name}' lisätty", "success")
         except TagExistsError:
-            pass  # Avainsana on jo olemassa, ei tarvitse tehdä mitään
+            # Avainsana on jo olemassa, haetaan sen ID
+            try:
+                selected_tag_id = get_tag_id_by_name(new_tag_name)
+            except TagError as e:
+                flash(f"Error fetching existing tag: {str(e)}", "error")
+                return redirect(f"/add?form={reference_type}")
         except TagError as e:
             flash(f"Error adding tag: {str(e)}", "error")
             return redirect(f"/add?form={reference_type}")
