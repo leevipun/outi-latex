@@ -28,8 +28,8 @@ def get_all_references() -> list:
         DatabaseError: If database query fails.
     """
     sql = text(
-        """SELECT id, name 
-             FROM reference_types 
+        """SELECT id, name
+             FROM reference_types
              ORDER BY id;"""
     )
     try:
@@ -50,7 +50,7 @@ def get_all_added_references() -> list:
         DatabaseError: If database query fails.
     """
     sql = text(
-        """ SELECT 
+        """ SELECT
                 sr.id,
                 sr.bib_key,
                 rt.name AS reference_type,
@@ -102,7 +102,7 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
         DatabaseError: If database query fails.
     """
     sql = text(
-        """ SELECT 
+        """ SELECT
                 sr.id,
                 sr.bib_key,
                 rt.name AS reference_type,
@@ -328,7 +328,7 @@ def search_reference_by_query(query: str) -> list:
     try:
         sql = text(
             """
-            SELECT 
+            SELECT
             sr.id,
             sr.bib_key,
             rt.name AS reference_type,
@@ -370,3 +370,166 @@ def search_reference_by_query(query: str) -> list:
         raise DatabaseError(
             f"Failed to search references with query '{query}': {e}"
         ) from e
+
+def get_references_filtered_sorted(
+    ref_type_filter: str = "",
+    year_filter: str = "",
+    sort_by: str = "created_at",
+    sort_order: str = "desc"
+) -> list:
+    """Get references with simple filtering and sorting.
+
+    Args:
+        ref_type_filter: Filter by reference type (article, book, etc.) or empty for all
+        year_filter: Filter by year - options: "recent" (2020+), "older" (pre-2020), or specific year
+        sort_by: Sort field - "title", "author", "created_at", "bib_key"
+        sort_order: "asc" or "desc"
+
+    Returns:
+        list: Filtered and sorted references with fields
+    """
+    try:
+        base_sql = """
+            SELECT DISTINCT
+                sr.id,
+                sr.bib_key,
+                rt.name AS reference_type,
+                sr.created_at,
+                f.key_name,
+                rv.value
+            FROM single_reference sr
+            JOIN reference_types rt ON sr.reference_type_id = rt.id
+            LEFT JOIN reference_values rv ON sr.id = rv.reference_id
+            LEFT JOIN fields f ON rv.field_id = f.id
+            WHERE 1=1
+        """
+
+        params = {}
+        conditions = []
+
+        if ref_type_filter.strip():
+            conditions.append("rt.name = :ref_type")
+            params["ref_type"] = ref_type_filter.strip()
+
+        if year_filter.strip():
+            if year_filter == "recent":
+                conditions.append("""
+                    sr.id IN (
+                        SELECT rv_year.reference_id
+                        FROM reference_values rv_year
+                        JOIN fields f_year ON rv_year.field_id = f_year.id
+                        WHERE f_year.key_name = 'year'
+                        AND CAST(rv_year.value AS INTEGER) >= 2020
+                    )
+                """)
+            elif year_filter == "older":
+                conditions.append("""
+                    sr.id IN (
+                        SELECT rv_year.reference_id
+                        FROM reference_values rv_year
+                        JOIN fields f_year ON rv_year.field_id = f_year.id
+                        WHERE f_year.key_name = 'year'
+                        AND CAST(rv_year.value AS INTEGER) < 2020
+                    )
+                """)
+            elif year_filter.isdigit():
+                conditions.append("""
+                    sr.id IN (
+                        SELECT rv_year.reference_id
+                        FROM reference_values rv_year
+                        JOIN fields f_year ON rv_year.field_id = f_year.id
+                        WHERE f_year.key_name = 'year'
+                        AND rv_year.value = :specific_year
+                    )
+                """)
+                params["specific_year"] = year_filter
+
+        if conditions:
+            base_sql += " AND " + " AND ".join(conditions)
+
+        valid_sort_fields = ["bib_key", "reference_type", "created_at", "title", "author"]
+        if sort_by not in valid_sort_fields:
+            sort_by = "created_at"
+
+        if sort_order not in ["asc", "desc"]:
+            sort_order = "desc"
+
+        if sort_by in ["bib_key", "reference_type", "created_at"]:
+            if sort_by == "reference_type":
+                base_sql += f" ORDER BY rt.name {sort_order.upper()}, sr.created_at DESC"
+            elif sort_by == "created_at":
+                base_sql += f" ORDER BY sr.created_at {sort_order.upper()}, sr.bib_key ASC"
+            else:
+                base_sql += f" ORDER BY sr.bib_key {sort_order.upper()}"
+        else:
+            base_sql = f"""
+                SELECT DISTINCT
+                    sr.id,
+                    sr.bib_key,
+                    rt.name AS reference_type,
+                    sr.created_at,
+                    f.key_name,
+                    rv.value,
+                    sort_rv.value AS sort_value
+                FROM single_reference sr
+                JOIN reference_types rt ON sr.reference_type_id = rt.id
+                LEFT JOIN reference_values rv ON sr.id = rv.reference_id
+                LEFT JOIN fields f ON rv.field_id = f.id
+                LEFT JOIN (
+                    SELECT rv_sort.reference_id, rv_sort.value
+                    FROM reference_values rv_sort
+                    JOIN fields f_sort ON rv_sort.field_id = f_sort.id
+                    WHERE f_sort.key_name = :sort_field
+                ) sort_rv ON sr.id = sort_rv.reference_id
+                WHERE 1=1
+            """
+
+            if conditions:
+                base_sql += " AND " + " AND ".join(conditions)
+
+            params["sort_field"] = sort_by
+            base_sql += f" ORDER BY sort_rv.value {sort_order.upper()}, sr.created_at DESC"
+
+        results = db.session.execute(text(base_sql), params)
+
+        references = {}
+        for row in results.mappings():
+            ref_id = row["id"]
+            if ref_id not in references:
+                references[ref_id] = {
+                    "id": ref_id,
+                    "bib_key": row["bib_key"],
+                    "reference_type": row["reference_type"],
+                    "created_at": row["created_at"],
+                    "fields": {}
+                }
+
+            if row["key_name"] and row["value"]:
+                references[ref_id]["fields"][row["key_name"]] = row["value"]
+
+        return list(references.values())
+
+    except Exception as e:
+        raise DatabaseError(f"Failed to filter and sort references: {e}") from e
+
+
+def get_available_years() -> list:
+    """Get all years that exist in references for dropdown."""
+    try:
+        sql = """
+            SELECT DISTINCT rv.value as year
+            FROM reference_values rv
+            JOIN fields f ON rv.field_id = f.id
+            WHERE f.key_name = 'year'
+            AND rv.value IS NOT NULL
+            AND rv.value != ''
+            ORDER BY rv.value DESC
+        """
+
+        results = db.session.execute(text(sql))
+        years = [row["year"] for row in results.mappings() if row["year"].isdigit()]
+        return years
+
+    except Exception as e:
+        print(f"Failed to get years: {e}")
+        return []
