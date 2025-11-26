@@ -19,11 +19,7 @@
         {% endif %}
     {% endwith %}
     <div class="container" id="add-reference-container">
-        <form action="/" method="get">
-            <button type="submit" class="button-primary" id="back-to-home" style="margin-bottom: 1em;">
-                ← Takaisin etusivulle
-            </button>
-        </form>
+        <a href="/" id="back-to-home" class="btn">← Takaisin etusivulle</a>
         <h1 id="add-reference-title">{% if pre_filled_values %}Tarkista ja täydennä haettuja tietoja{% else %}Lisää uusi viite{% endif %}</h1>
 
         {% if selected_type and fields %}
