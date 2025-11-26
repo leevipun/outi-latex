@@ -26,8 +26,8 @@ from src.utils.tags import (
     add_tag,
     add_tag_to_reference,
     delete_tag_from_reference,
-    get_tag_id_by_name,
     get_tag_by_reference,
+    get_tag_id_by_name,
     get_tags,
 )
 
