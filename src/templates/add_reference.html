@@ -19,7 +19,7 @@
         {% endif %}
     {% endwith %}
     <div class="container" id="add-reference-container">
-        <a href="/" class="back-link" id="back-to-home">← Takaisin etusivulle</a>
+        <a href="/" id="back-to-home" class="btn">← Takaisin etusivulle</a>
         <h1 id="add-reference-title">{% if pre_filled_values %}Tarkista ja täydennä haettuja tietoja{% else %}Lisää uusi viite{% endif %}</h1>
 
         {% if selected_type and fields %}
@@ -74,6 +74,25 @@
                 {% endif %}
             </div>
             {% endfor %}
+
+            <div class="form-group">
+                <label for="tag">Avainsana</label>
+                {% if tags %}
+                <select id="tag" name="tag" autocomplete="off">
+                    <option value="">Valitse avainsana</option>
+                    {% for tag in tags %}
+                    <option value="{{ tag.id }}" {% if pre_filled_values and pre_filled_values['tag'] and pre_filled_values['tag']['id'] == tag.id %}selected{% endif %}>{{ tag.name }}</option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <p><small>Ei vielä avainsanoja. Lisää uusi avainsana alla.</small></p>
+                {% endif %}
+            </div>
+    
+            <div class="form-group">
+                <label for="new_tag">Lisää uusi avainsana</label>
+                <input type="text" id="new_tag" name="new_tag" placeholder="Uuden avainsanan nimi" />
+            </div>
 
             <div class="button-group">
                 <button type="submit" class="button-primary" id="save-reference-button">{% if pre_filled_values %}Hyväksy muutokset{% else %}Tallenna viite{% endif %}</button>

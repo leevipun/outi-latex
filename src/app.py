@@ -1,5 +1,7 @@
 """Flask application routes and initialization."""
 
+import re
+
 from flask import flash, jsonify, redirect, render_template, request
 
 from src.config import app, test_env
@@ -13,11 +15,20 @@ from src.util import (
     get_reference_type_by_id,
 )
 from src.utils import references
-import re
 from src.utils.references import (
     DatabaseError,
     delete_reference_by_bib_key,
     get_reference_by_bib_key,
+)
+from src.utils.tags import (
+    TagError,
+    TagExistsError,
+    add_tag,
+    add_tag_to_reference,
+    delete_tag_from_reference,
+    get_tag_by_reference,
+    get_tag_id_by_name,
+    get_tags,
 )
 
 
@@ -74,7 +85,16 @@ def add():
         flash(f"Error loading form fields: {str(e)}", "error")
         fields = []
 
-    return render_template("add_reference.html", selected_type=form_name, fields=fields)
+    # Hae tagit
+    try:
+        tags = get_tags()
+    except TagError as e:
+        flash(f"Error loading tags: {str(e)}", "error")
+        tags = []
+
+    return render_template(
+        "add_reference.html", selected_type=form_name, fields=fields, tags=tags
+    )
 
 
 @app.route("/all")
@@ -116,13 +136,28 @@ def edit_reference(bib_key):
         flash(f"Error loading form fields: {str(e)}", "error")
         return redirect("/all")
 
+    try:
+        tag = get_tag_by_reference(reference["id"])
+    except TagError as e:
+        flash(f"Error loading tag for reference: {str(e)}", "error")
+
     pre_filled = {"bib_key": reference["bib_key"], **reference["fields"]}
+    if tag:
+        pre_filled["tag"] = tag
+
+    # Hae tagit
+    try:
+        tags = get_tags()
+    except TagError as e:
+        flash(f"Error loading tags: {str(e)}", "error")
+        tags = []
 
     return render_template(
         "add_reference.html",
         selected_type=reference["reference_type"],
         fields=fields,
         pre_filled_values=pre_filled,
+        tags=tags,
     )
 
 
@@ -175,6 +210,24 @@ def save_reference():
         flash(f"Error loading form fields: {str(e)}", "error")
         return redirect(f"/add?form={reference_type}")
 
+    new_tag_name = request.form.get("new_tag", "").strip()
+    selected_tag_id = request.form.get("tag", "").strip()
+
+    if new_tag_name:
+        try:
+            selected_tag_id = add_tag(new_tag_name)
+            flash(f"Uusi avainsana '{new_tag_name}' lisätty", "success")
+        except TagExistsError:
+            # Avainsana on jo olemassa, haetaan sen ID
+            try:
+                selected_tag_id = get_tag_id_by_name(new_tag_name)
+            except TagError as e:
+                flash(f"Error fetching existing tag: {str(e)}", "error")
+                return redirect(f"/add?form={reference_type}")
+        except TagError as e:
+            flash(f"Error adding tag: {str(e)}", "error")
+            return redirect(f"/add?form={reference_type}")
+
     errors = []
 
     for field in fields:
@@ -198,7 +251,16 @@ def save_reference():
 
     # Tallennus tietokantaan
     try:
-        references.add_reference(reference_type, form_data)
+        ref_id = references.add_reference(reference_type, form_data)
+        if selected_tag_id:
+            try:
+                add_tag_to_reference(int(selected_tag_id), ref_id)
+            except (TagExistsError, TagError) as e:
+                flash(f"Error associating tag to reference: {str(e)}", "error")
+        else:
+            # Poista mahdollinen vanha avainsana
+            delete_tag_from_reference(ref_id)
+
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         return redirect(f"/add?form={reference_type}")

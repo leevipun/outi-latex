@@ -36,3 +36,16 @@ CREATE TABLE reference_values (
     field_id INT NOT NULL REFERENCES fields(id),
     value TEXT
 );
+
+-- Avainsanat
+CREATE TABLE tags (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) UNIQUE NOT NULL
+);
+
+-- Viitteiden ja avainsanojen välinen moni-moneen suhde
+CREATE TABLE reference_tags (
+    reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
+    tag_id INT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY(reference_id, tag_id)
+);

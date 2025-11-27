@@ -32,6 +32,10 @@ try:
         sql = text("DROP TABLE IF EXISTS single_reference CASCADE")
         conn.execute(sql)
 
+        print("Dropping tags table")
+        sql = text("DROP TABLE IF EXISTS tags CASCADE")
+        conn.execute(sql)
+
         print("Dropping reference_type_fields table")
         sql = text("DROP TABLE IF EXISTS reference_type_fields CASCADE")
         conn.execute(sql)
@@ -73,11 +77,24 @@ try:
             )
         """))
         conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS tags (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(100) UNIQUE NOT NULL
+            )
+        """))
+        conn.execute(text("""
             CREATE TABLE IF NOT EXISTS single_reference (
                 id SERIAL PRIMARY KEY,
                 reference_type_id INT NOT NULL REFERENCES reference_types(id),
                 bib_key VARCHAR(100) UNIQUE NOT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS reference_tags (
+                reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
+                tag_id INT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+                PRIMARY KEY(reference_id, tag_id)
             )
         """))
         conn.execute(text("""
