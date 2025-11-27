@@ -29,6 +29,30 @@
                 <input id="search-query" name="search-query" type="text" placeholder="Kirjoita hakusana..." value="{% if query %}{{query}}{% endif %}"/>
                 <button type="submit" id="search-button">Hae viitteitä</button>
             </div>
+
+            <div class="filter-controls">
+                <div class="filter-group">
+                    <label for="filter-type">Viitetyyppi:</label>
+                    <select id="filter-type" name="filter-type">
+                        <option value="">Kaikki tyypit</option>
+                        <option value="article" {% if filter_type == 'article' %}selected{% endif %}>Article</option>
+                        <option value="book" {% if filter_type == 'book' %}selected{% endif %}>Book</option>
+                        <option value="inproceedings" {% if filter_type == 'inproceedings' %}selected{% endif %}>Inproceedings</option>
+                        <option value="misc" {% if filter_type == 'misc' %}selected{% endif %}>Misc</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="sort-by">Järjestys:</label>
+                    <select id="sort-by" name="sort-by">
+                        <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Uusin ensin</option>
+                        <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Vanhin ensin</option>
+                        <option value="bib_key" {% if sort_by == 'bib_key' %}selected{% endif %}>Viiteavain (A-Ö)</option>
+                        <option value="title" {% if sort_by == 'title' %}selected{% endif %}>Otsikko (A-Ö)</option>
+                        <option value="author" {% if sort_by == 'author' %}selected{% endif %}>Tekijä (A-Ö)</option>
+                    </select>
+                </div>
+            </div>
         </form>
         {% if data %}
         <h2 id="search-results-heading">Hakutulokset:</h2>
@@ -64,3 +88,4 @@
         <a href="/" class="btn" id="back-to-home-button">Takaisin etusivulle</a>
     </div>
 </body>
+</html>
