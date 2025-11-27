@@ -460,3 +460,109 @@ def sort_references_by_bib_key(references: list, sort_order: str = "asc") -> lis
         print(f"Warning: Bib key sorting failed: {e}")
         return references
 
+def get_references_filtered_sorted(
+    ref_type_filter: str = "",
+    sort_by: str = "newest"
+) -> list:
+    try:
+        base_sql = """
+            SELECT DISTINCT
+                sr.id,
+                sr.bib_key,
+                rt.name AS reference_type,
+                sr.created_at,
+                f.key_name,
+                rv.value
+            FROM single_reference sr
+            JOIN reference_types rt ON sr.reference_type_id = rt.id
+            LEFT JOIN reference_values rv ON sr.id = rv.reference_id
+            LEFT JOIN fields f ON rv.field_id = f.id
+            WHERE 1=1
+        """
+
+        params = {}
+        conditions = []
+
+        if ref_type_filter.strip():
+            conditions.append("rt.name = :ref_type")
+            params["ref_type"] = ref_type_filter.strip()
+
+        if conditions:
+            base_sql += " AND " + " AND ".join(conditions)
+
+        if sort_by == "oldest":
+            order_clause = "ORDER BY sr.created_at ASC, sr.id, f.key_name"
+        elif sort_by == "bib_key":
+            order_clause = "ORDER BY sr.bib_key ASC, sr.id, f.key_name"
+        else:
+            order_clause = "ORDER BY sr.created_at DESC, sr.id, f.key_name"
+
+        base_sql += " " + order_clause
+
+        results = db.session.execute(text(base_sql), params)
+
+        references = {}
+        for row in results.mappings():
+            ref_id = row["id"]
+            if ref_id not in references:
+                references[ref_id] = {
+                    "id": ref_id,
+                    "bib_key": row["bib_key"],
+                    "reference_type": row["reference_type"],
+                    "created_at": row["created_at"],
+                    "fields": {}
+                }
+
+            if row["key_name"] and row["value"]:
+                references[ref_id]["fields"][row["key_name"]] = row["value"]
+
+        reference_list = list(references.values())
+
+        if sort_by == "title":
+            reference_list = sort_references_by_field(reference_list, "title", "asc")
+        elif sort_by == "author":
+            reference_list = sort_references_by_field(reference_list, "author", "asc")
+        return reference_list
+
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch filtered references: {e}") from e
+
+
+def filter_and_sort_search_results(
+    search_results: list,
+    ref_type_filter: str = "",
+    sort_by: str = "newest"
+) -> list:
+    """Apply filters and sorting to existing search results.
+
+    Args:
+        search_results: Results from search_reference_by_query()
+        ref_type_filter: Filter by reference type
+        sort_by: Sort type - "newest", "oldest", "title", "author", "bib_key"
+
+    Returns:
+        list: Filtered and sorted results
+    """
+    if not search_results:
+        return []
+
+    filtered = search_results.copy()
+
+    if ref_type_filter.strip():
+        filtered = [ref for ref in filtered
+                   if ref.get("reference_type") == ref_type_filter]
+
+    try:
+        if sort_by in ["newest", "oldest"]:
+            sorted_results = sort_references_by_created_at(filtered, sort_by)
+        elif sort_by in ["title", "author"]:
+            sorted_results = sort_references_by_field(filtered, sort_by, "asc")
+        elif sort_by == "bib_key":
+            sorted_results = sort_references_by_bib_key(filtered, "asc")
+        else:
+            sorted_results = sort_references_by_created_at(filtered, "newest")
+
+        return sorted_results
+    except Exception as e:
+        print(f"Warning: Sorting failed, returning filtered: {e}")
+        return filtered
