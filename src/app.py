@@ -18,6 +18,9 @@ from src.utils.references import (
     DatabaseError,
     delete_reference_by_bib_key,
     get_reference_by_bib_key,
+    get_references_filtered_sorted,
+    search_reference_by_query,
+    filter_and_sort_search_results
 )
 
 
@@ -286,16 +289,39 @@ def get_doi_data():
         selected_type=parsed_doi["type"],
     )
 
-
 @app.route("/search", methods=["GET", "POST"])
 def search():
     if request.method == "GET":
-        return render_template("search.html", data=[], query="")
+        return render_template("search.html")
 
-    query = request.form.get("search-query")
-    result = references.search_reference_by_query(query)
-    return render_template("search.html", data=result, query=query)
+    query = request.form.get("search-query", "").strip()
+    filter_type = request.form.get("filter-type", "").strip()
+    sort_by = request.form.get("sort-by", "newest")
 
+    try:
+        if query:
+            results = search_reference_by_query(query)
+            results = filter_and_sort_search_results(
+                results,
+                ref_type_filter=filter_type,
+                sort_by=sort_by
+            )
+        else:
+            results = get_references_filtered_sorted(
+                ref_type_filter=filter_type,
+                sort_by=sort_by
+            )
+
+        return render_template(
+            "search.html",
+            data=results,
+            query=query,
+            filter_type=filter_type,
+            sort_by=sort_by
+        )
+    except DatabaseError as e:
+        flash(f"Virhe haettaessa viitteitä: {e}", "error")
+        return render_template("search.html")
 
 # testausta varten oleva reitti
 if test_env:
