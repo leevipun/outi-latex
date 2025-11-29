@@ -359,8 +359,14 @@ def search():
         flash(f"Error loading tags: {str(e)}", "error")
         tags = []
 
+    try:
+        reference_types = references.get_all_references()
+    except DatabaseError as e:
+        flash(f"Error loading reference types: {str(e)}", "error")
+        reference_types = []
+
     if request.method == "GET":
-        return render_template("search.html", tags=tags)
+        return render_template("search.html", tags=tags, reference_types=reference_types)
 
     query = request.form.get("search-query", "").strip()
     filter_type = request.form.get("filter-type", "").strip()
@@ -390,11 +396,12 @@ def search():
             filter_type=filter_type,
             tag_filter=tag_filter,
             sort_by=sort_by,
-            tags=tags
+            tags=tags,
+            reference_types=reference_types
         )
     except DatabaseError as e:
         flash(f"Virhe haettaessa viitteitä: {e}", "error")
-        return render_template("search.html", tags=tags)
+        return render_template("search.html", tags=tags, reference_types=reference_types)
 
 # testausta varten oleva reitti
 if test_env:

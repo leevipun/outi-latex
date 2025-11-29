@@ -35,10 +35,13 @@
                     <label for="filter-type">Viitetyyppi:</label>
                     <select id="filter-type" name="filter-type">
                         <option value="">Kaikki tyypit</option>
-                        <option value="article" {% if filter_type == 'article' %}selected{% endif %}>Article</option>
-                        <option value="book" {% if filter_type == 'book' %}selected{% endif %}>Book</option>
-                        <option value="inproceedings" {% if filter_type == 'inproceedings' %}selected{% endif %}>Inproceedings</option>
-                        <option value="misc" {% if filter_type == 'misc' %}selected{% endif %}>Misc</option>
+                        {% if reference_types %}
+                            {% for ref_type in reference_types %}
+                            <option value="{{ ref_type.name }}" {% if filter_type == ref_type.name %}selected{% endif %}>
+                                {{ ref_type.name|capitalize }}
+                            </option>
+                            {% endfor %}
+                        {% endif %}
                     </select>
                 </div>
 
