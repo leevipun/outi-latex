@@ -234,3 +234,18 @@ User Can Filter With Type And Tag Together
     Page Should Contain    Brown, Alice
     Page Should Not Contain    Anderson, James
     Page Should Not Contain    Johnson, Mary
+
+All Three Filters Can Be Combined
+    [Documentation]    Search query, type filter and tag filter work together
+    Go To    ${BASE_URL}/search
+    Input Text    id=search-query    Learning
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Label    id=filter-type    Article
+    Select From List By Label    id=tag-filter    machine-learning
+    Select From List By Value    id=sort-by    title
+    Click Button    id=search-button
+    Sleep    2s
+    Page Should Contain    Smith, John
+    Page Should Not Contain    Anderson, James
+    Page Should Not Contain    Johnson, Mary
