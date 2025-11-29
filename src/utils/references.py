@@ -380,13 +380,13 @@ def search_reference_by_query(query: str) -> list:
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
                     "fields": {},
-                    "tag": None
+                    "tag": None,
                 }
 
                 if row["tag_id"] is not None:
                     references[ref_id]["tag"] = {
                         "id": row["tag_id"],
-                        "name": row["tag_name"]
+                        "name": row["tag_name"],
                     }
 
             if row["key_name"] is not None:
@@ -414,11 +414,11 @@ def sort_references_by_created_at(references: list, sort_type: str = "newest") -
 
     def get_created_at(ref):
         created_at = ref.get("created_at")
-        if hasattr(created_at, 'isoformat'):
+        if hasattr(created_at, "isoformat"):
             return created_at.isoformat()
         return created_at or ""
 
-    reverse = (sort_type == "newest")
+    reverse = sort_type == "newest"
     try:
         return sorted(references, key=get_created_at, reverse=reverse)
     except Exception as e:
@@ -426,7 +426,9 @@ def sort_references_by_created_at(references: list, sort_type: str = "newest") -
         return references
 
 
-def sort_references_by_field(references: list, sort_by: str, sort_order: str = "asc") -> list:
+def sort_references_by_field(
+    references: list, sort_by: str, sort_order: str = "asc"
+) -> list:
     """Sort references by a field value (title, author, etc.).
 
     Args:
@@ -437,6 +439,7 @@ def sort_references_by_field(references: list, sort_by: str, sort_order: str = "
     Returns:
         list: Sorted references
     """
+
     def get_sort_value(ref):
         value = ref.get("fields", {}).get(sort_by, "")
 
@@ -444,12 +447,12 @@ def sort_references_by_field(references: list, sort_by: str, sort_order: str = "
 
         for article in ["the ", "a ", "an "]:
             if cleaned.startswith(article):
-                cleaned = cleaned[len(article):].strip()
+                cleaned = cleaned[len(article) :].strip()
                 break
 
         return cleaned
 
-    reverse = (sort_order == "desc")
+    reverse = sort_order == "desc"
     return sorted(references, key=get_sort_value, reverse=reverse)
 
 
@@ -463,21 +466,21 @@ def sort_references_by_bib_key(references: list, sort_order: str = "asc") -> lis
     Returns:
         list: Sorted references
     """
+
     def get_bib_key(ref):
         bib_key = ref.get("bib_key", "")
         return str(bib_key).lower().strip()
 
-    reverse = (sort_order == "desc")
+    reverse = sort_order == "desc"
     try:
         return sorted(references, key=get_bib_key, reverse=reverse)
     except Exception as e:
         print(f"Warning: Bib key sorting failed: {e}")
         return references
 
+
 def get_references_filtered_sorted(
-    ref_type_filter: str = "",
-    tag_filter: str = "",
-    sort_by: str = "newest"
+    ref_type_filter: str = "", tag_filter: str = "", sort_by: str = "newest"
 ) -> list:
     try:
         base_sql = """
@@ -534,13 +537,13 @@ def get_references_filtered_sorted(
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
                     "fields": {},
-                    "tag": None
+                    "tag": None,
                 }
 
             if row["tag_id"] is not None:
                 references[ref_id]["tag"] = {
                     "id": row["tag_id"],
-                    "name": row["tag_name"]
+                    "name": row["tag_name"],
                 }
 
             if row["key_name"] and row["value"]:
@@ -562,7 +565,7 @@ def filter_and_sort_search_results(
     search_results: list,
     ref_type_filter: str = "",
     tag_filter: str = "",
-    sort_by: str = "newest"
+    sort_by: str = "newest",
 ) -> list:
     """Apply filters and sorting to existing search results.
 
@@ -581,15 +584,17 @@ def filter_and_sort_search_results(
     filtered = search_results.copy()
 
     if ref_type_filter.strip():
-        filtered = [ref for ref in filtered
-                   if ref.get("reference_type") == ref_type_filter]
+        filtered = [
+            ref for ref in filtered if ref.get("reference_type") == ref_type_filter
+        ]
 
     if tag_filter.strip():
         filtered = [
-            ref for ref in filtered
-            if ref.get("tag") is not None and
-               isinstance(ref.get("tag"), dict) and
-               ref["tag"].get("name") == tag_filter
+            ref
+            for ref in filtered
+            if ref.get("tag") is not None
+            and isinstance(ref.get("tag"), dict)
+            and ref["tag"].get("name") == tag_filter
         ]
 
     try:

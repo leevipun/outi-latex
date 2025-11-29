@@ -5,8 +5,9 @@ from src.utils.references import (
     sort_references_by_created_at,
     sort_references_by_field,
     sort_references_by_bib_key,
-    filter_and_sort_search_results
+    filter_and_sort_search_results,
 )
+
 
 class TestSortReferences:
     """Test sorting functions."""
@@ -87,15 +88,28 @@ class TestSortReferences:
         assert sort_references_by_field([], "title", "asc") == []
         assert sort_references_by_bib_key([], "asc") == []
 
+
 class TestFilterAndSortSearchResults:
     """Test filtering and sorting search results."""
 
     def test_filter_by_type(self):
         """Test filtering by reference type."""
         refs = [
-            {"bib_key": "ref1", "reference_type": "article", "created_at": datetime(2024, 1, 1)},
-            {"bib_key": "ref2", "reference_type": "book", "created_at": datetime(2024, 1, 2)},
-            {"bib_key": "ref3", "reference_type": "article", "created_at": datetime(2024, 1, 3)},
+            {
+                "bib_key": "ref1",
+                "reference_type": "article",
+                "created_at": datetime(2024, 1, 1),
+            },
+            {
+                "bib_key": "ref2",
+                "reference_type": "book",
+                "created_at": datetime(2024, 1, 2),
+            },
+            {
+                "bib_key": "ref3",
+                "reference_type": "article",
+                "created_at": datetime(2024, 1, 3),
+            },
         ]
 
         filtered = filter_and_sort_search_results(refs, ref_type_filter="article")
@@ -106,9 +120,21 @@ class TestFilterAndSortSearchResults:
     def test_filter_by_tag(self):
         """Test filtering by tag."""
         refs = [
-            {"bib_key": "ref1", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 1, 1)},
-            {"bib_key": "ref2", "tag": {"id": 2, "name": "ML"}, "created_at": datetime(2024, 1, 2)},
-            {"bib_key": "ref3", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 1, 3)},
+            {
+                "bib_key": "ref1",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 1, 1),
+            },
+            {
+                "bib_key": "ref2",
+                "tag": {"id": 2, "name": "ML"},
+                "created_at": datetime(2024, 1, 2),
+            },
+            {
+                "bib_key": "ref3",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 1, 3),
+            },
             {"bib_key": "ref4", "tag": None, "created_at": datetime(2024, 1, 4)},
         ]
 
@@ -120,20 +146,41 @@ class TestFilterAndSortSearchResults:
     def test_filter_by_type_and_tag(self):
         """Test filtering by both type and tag."""
         refs = [
-            {"bib_key": "ref1", "reference_type": "article", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 1, 1)},
-            {"bib_key": "ref2", "reference_type": "book", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 1, 2)},
-            {"bib_key": "ref3", "reference_type": "article", "tag": {"id": 2, "name": "ML"}, "created_at": datetime(2024, 1, 3)},
-            {"bib_key": "ref4", "reference_type": "article", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 1, 4)},
+            {
+                "bib_key": "ref1",
+                "reference_type": "article",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 1, 1),
+            },
+            {
+                "bib_key": "ref2",
+                "reference_type": "book",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 1, 2),
+            },
+            {
+                "bib_key": "ref3",
+                "reference_type": "article",
+                "tag": {"id": 2, "name": "ML"},
+                "created_at": datetime(2024, 1, 3),
+            },
+            {
+                "bib_key": "ref4",
+                "reference_type": "article",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 1, 4),
+            },
         ]
 
         filtered = filter_and_sort_search_results(
-            refs,
-            ref_type_filter="article",
-            tag_filter="AI"
+            refs, ref_type_filter="article", tag_filter="AI"
         )
 
         assert len(filtered) == 2
-        assert all(ref["reference_type"] == "article" and ref["tag"]["name"] == "AI" for ref in filtered)
+        assert all(
+            ref["reference_type"] == "article" and ref["tag"]["name"] == "AI"
+            for ref in filtered
+        )
 
     def test_sort_newest_first(self):
         """Test sorting by newest first."""
@@ -166,8 +213,16 @@ class TestFilterAndSortSearchResults:
     def test_sort_by_title(self):
         """Test sorting by title."""
         refs = [
-            {"bib_key": "ref1", "fields": {"title": "Zebra"}, "created_at": datetime(2024, 1, 1)},
-            {"bib_key": "ref2", "fields": {"title": "Apple"}, "created_at": datetime(2024, 1, 2)},
+            {
+                "bib_key": "ref1",
+                "fields": {"title": "Zebra"},
+                "created_at": datetime(2024, 1, 1),
+            },
+            {
+                "bib_key": "ref2",
+                "fields": {"title": "Apple"},
+                "created_at": datetime(2024, 1, 2),
+            },
         ]
 
         sorted_refs = filter_and_sort_search_results(refs, sort_by="title")
@@ -178,17 +233,34 @@ class TestFilterAndSortSearchResults:
     def test_filter_and_sort_combined(self):
         """Test filtering and sorting combined."""
         refs = [
-            {"bib_key": "ref1", "reference_type": "article", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 1, 1)},
-            {"bib_key": "ref2", "reference_type": "article", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 3, 1)},
-            {"bib_key": "ref3", "reference_type": "book", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 2, 1)},
-            {"bib_key": "ref4", "reference_type": "article", "tag": {"id": 2, "name": "ML"}, "created_at": datetime(2024, 4, 1)},
+            {
+                "bib_key": "ref1",
+                "reference_type": "article",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 1, 1),
+            },
+            {
+                "bib_key": "ref2",
+                "reference_type": "article",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 3, 1),
+            },
+            {
+                "bib_key": "ref3",
+                "reference_type": "book",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 2, 1),
+            },
+            {
+                "bib_key": "ref4",
+                "reference_type": "article",
+                "tag": {"id": 2, "name": "ML"},
+                "created_at": datetime(2024, 4, 1),
+            },
         ]
 
         filtered = filter_and_sort_search_results(
-            refs,
-            ref_type_filter="article",
-            tag_filter="AI",
-            sort_by="oldest"
+            refs, ref_type_filter="article", tag_filter="AI", sort_by="oldest"
         )
 
         assert len(filtered) == 2
@@ -215,7 +287,11 @@ class TestFilterAndSortSearchResults:
     def test_filter_no_matching_type(self):
         """Test filtering with no matching type."""
         refs = [
-            {"bib_key": "ref1", "reference_type": "article", "created_at": datetime(2024, 1, 1)},
+            {
+                "bib_key": "ref1",
+                "reference_type": "article",
+                "created_at": datetime(2024, 1, 1),
+            },
         ]
 
         filtered = filter_and_sort_search_results(refs, ref_type_filter="book")
@@ -225,7 +301,11 @@ class TestFilterAndSortSearchResults:
     def test_filter_no_matching_tag(self):
         """Test filtering with no matching tag."""
         refs = [
-            {"bib_key": "ref1", "tag": {"id": 1, "name": "AI"}, "created_at": datetime(2024, 1, 1)},
+            {
+                "bib_key": "ref1",
+                "tag": {"id": 1, "name": "AI"},
+                "created_at": datetime(2024, 1, 1),
+            },
         ]
 
         filtered = filter_and_sort_search_results(refs, tag_filter="ML")

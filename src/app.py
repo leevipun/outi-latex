@@ -21,7 +21,7 @@ from src.utils.references import (
     get_reference_by_bib_key,
     get_references_filtered_sorted,
     search_reference_by_query,
-    filter_and_sort_search_results
+    filter_and_sort_search_results,
 )
 from src.utils.tags import (
     TagError,
@@ -351,6 +351,7 @@ def get_doi_data():
         selected_type=parsed_doi["type"],
     )
 
+
 @app.route("/search", methods=["GET", "POST"])
 def search():
     try:
@@ -366,7 +367,9 @@ def search():
         reference_types = []
 
     if request.method == "GET":
-        return render_template("search.html", tags=tags, reference_types=reference_types)
+        return render_template(
+            "search.html", tags=tags, reference_types=reference_types
+        )
 
     query = request.form.get("search-query", "").strip()
     filter_type = request.form.get("filter-type", "").strip()
@@ -380,13 +383,11 @@ def search():
                 results,
                 ref_type_filter=filter_type,
                 tag_filter=tag_filter,
-                sort_by=sort_by
+                sort_by=sort_by,
             )
         else:
             results = get_references_filtered_sorted(
-                ref_type_filter=filter_type,
-                tag_filter=tag_filter,
-                sort_by=sort_by
+                ref_type_filter=filter_type, tag_filter=tag_filter, sort_by=sort_by
             )
 
         return render_template(
@@ -397,11 +398,14 @@ def search():
             tag_filter=tag_filter,
             sort_by=sort_by,
             tags=tags,
-            reference_types=reference_types
+            reference_types=reference_types,
         )
     except DatabaseError as e:
         flash(f"Virhe haettaessa viitteitä: {e}", "error")
-        return render_template("search.html", tags=tags, reference_types=reference_types)
+        return render_template(
+            "search.html", tags=tags, reference_types=reference_types
+        )
+
 
 # testausta varten oleva reitti
 if test_env:
