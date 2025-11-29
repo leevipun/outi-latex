@@ -83,6 +83,9 @@
                     <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span
                             id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
                     {% endfor %}
+                    {% if reference.get("tag") %}
+                    <li id="reference-tag-{{ reference['bib_key'] }}"><strong>Tag:</strong> <span id="value-{{ reference['bib_key'] }}-tag">{{ reference["tag"]["name"] }}</span></li>
+                    {% endif %}
                 </ul>
                 <form method="get" action="/edit/{{ reference['bib_key'] }}" style="display:inline;">
                     <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
