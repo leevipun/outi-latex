@@ -336,7 +336,7 @@ def search_reference_by_query(query: str) -> list:
         query: The search query string.
 
     Returns:
-        list: List of dictionaries containing matching references with their fields.
+        list: List of dictionaries containing matching references with their fields and tags.
 
     Raises:
         DatabaseError: If the search query fails.
@@ -345,27 +345,32 @@ def search_reference_by_query(query: str) -> list:
         sql = text(
             """
             SELECT
-            sr.id,
-            sr.bib_key,
-            rt.name AS reference_type,
-            sr.created_at,
-            f.key_name,
-            rv.value
+                sr.id,
+                sr.bib_key,
+                rt.name AS reference_type,
+                sr.created_at,
+                f.key_name,
+                rv.value,
+                t.id AS tag_id,
+                t.name AS tag_name
             FROM single_reference sr
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
+            LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
+            LEFT JOIN tags t ON reftag.tag_id = t.id
             WHERE sr.id IN (
-            SELECT DISTINCT sr2.id
-            FROM single_reference sr2
-            LEFT JOIN reference_values rv2 ON sr2.id = rv2.reference_id
-            WHERE sr2.bib_key LIKE :query
-               OR rv2.value LIKE :query
+                SELECT DISTINCT sr2.id
+                FROM single_reference sr2
+                LEFT JOIN reference_values rv2 ON sr2.id = rv2.reference_id
+                WHERE sr2.bib_key LIKE :query
+                   OR rv2.value LIKE :query
             )
             ORDER BY sr.created_at DESC, sr.id, f.key_name;
             """
         )
         results = db.session.execute(sql, {"query": f"%{query}%"})
+
         references = {}
         for row in results.mappings():
             ref_id = row["id"]
@@ -375,9 +380,15 @@ def search_reference_by_query(query: str) -> list:
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
                     "fields": {},
+                    "tag": None
                 }
 
-            # Add field value if it exists
+                if row["tag_id"] is not None:
+                    references[ref_id]["tag"] = {
+                        "id": row["tag_id"],
+                        "name": row["tag_name"]
+                    }
+
             if row["key_name"] is not None:
                 references[ref_id]["fields"][row["key_name"]] = row["value"]
 
@@ -386,6 +397,7 @@ def search_reference_by_query(query: str) -> list:
         raise DatabaseError(
             f"Failed to search references with query '{query}': {e}"
         ) from e
+
 
 def sort_references_by_created_at(references: list, sort_type: str = "newest") -> list:
     """Sort references by creation date.
