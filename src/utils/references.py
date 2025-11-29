@@ -440,16 +440,6 @@ def sort_references_by_field(references: list, sort_by: str, sort_order: str = "
     def get_sort_value(ref):
         value = ref.get("fields", {}).get(sort_by, "")
 
-        if sort_by == "author" and not value:
-            for alt_key in ["author/editor", "editor", "authors"]:
-                alt_value = ref.get("fields", {}).get(alt_key, "")
-                if alt_value:
-                    value = alt_value
-                    break
-
-        if value is None:
-            return ""
-
         cleaned = str(value).lower().strip()
 
         for article in ["the ", "a ", "an "]:
@@ -460,11 +450,7 @@ def sort_references_by_field(references: list, sort_by: str, sort_order: str = "
         return cleaned
 
     reverse = (sort_order == "desc")
-    try:
-        return sorted(references, key=get_sort_value, reverse=reverse)
-    except Exception as e:
-        print(f"Warning: Field sorting failed: {e}")
-        return references
+    return sorted(references, key=get_sort_value, reverse=reverse)
 
 
 def sort_references_by_bib_key(references: list, sort_order: str = "asc") -> list:
