@@ -478,6 +478,7 @@ def sort_references_by_bib_key(references: list, sort_order: str = "asc") -> lis
 
 def get_references_filtered_sorted(
     ref_type_filter: str = "",
+    tag_filter: str = "",
     sort_by: str = "newest"
 ) -> list:
     try:
@@ -488,11 +489,15 @@ def get_references_filtered_sorted(
                 rt.name AS reference_type,
                 sr.created_at,
                 f.key_name,
-                rv.value
+                rv.value,
+                t.id AS tag_id,
+                t.name AS tag_name
             FROM single_reference sr
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
+            LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
+            LEFT JOIN tags t ON reftag.tag_id = t.id
             WHERE 1=1
         """
 
@@ -502,6 +507,10 @@ def get_references_filtered_sorted(
         if ref_type_filter.strip():
             conditions.append("rt.name = :ref_type")
             params["ref_type"] = ref_type_filter.strip()
+
+        if tag_filter.strip():
+            conditions.append("t.name = :tag_name")
+            params["tag_name"] = tag_filter.strip()
 
         if conditions:
             base_sql += " AND " + " AND ".join(conditions)
@@ -526,7 +535,14 @@ def get_references_filtered_sorted(
                     "bib_key": row["bib_key"],
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
-                    "fields": {}
+                    "fields": {},
+                    "tag": None
+                }
+
+            if row["tag_id"] is not None:
+                references[ref_id]["tag"] = {
+                    "id": row["tag_id"],
+                    "name": row["tag_name"]
                 }
 
             if row["key_name"] and row["value"]:
@@ -547,6 +563,7 @@ def get_references_filtered_sorted(
 def filter_and_sort_search_results(
     search_results: list,
     ref_type_filter: str = "",
+    tag_filter: str = "",
     sort_by: str = "newest"
 ) -> list:
     """Apply filters and sorting to existing search results.
@@ -554,6 +571,7 @@ def filter_and_sort_search_results(
     Args:
         search_results: Results from search_reference_by_query()
         ref_type_filter: Filter by reference type
+        tag_filter: Filter by tag name
         sort_by: Sort type - "newest", "oldest", "title", "author", "bib_key"
 
     Returns:
@@ -567,6 +585,10 @@ def filter_and_sort_search_results(
     if ref_type_filter.strip():
         filtered = [ref for ref in filtered
                    if ref.get("reference_type") == ref_type_filter]
+
+    if tag_filter.strip():
+        filtered = [ref for ref in filtered
+                   if ref.get("tag") and ref["tag"].get("name") == tag_filter]
 
     try:
         if sort_by in ["newest", "oldest"]:
