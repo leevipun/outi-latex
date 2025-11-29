@@ -110,7 +110,7 @@ User Can Filter Search Results By Tag
     Page Should Not Contain    Anderson, James
 
 User Can Sort Search Results By Newest First
-    [Documentation]    User can sort search results by newest first (default)
+    [Documentation]    User can sort search results by newest added first (created_at)
     Go To    ${BASE_URL}/search
     Click Button    id=search-button
     Sleep    2s
@@ -118,12 +118,12 @@ User Can Sort Search Results By Newest First
     Click Button    id=search-button
     Sleep    2s
     ${page_text}=    Get Text    css=body
-    ${pos_2022}=    Evaluate    $page_text.find('2022')
-    ${pos_2019}=    Evaluate    $page_text.find('2019')
-    Should Be True    ${pos_2022} < ${pos_2019}
+    ${pos_brown}=    Evaluate    $page_text.find('Brown2022')
+    ${pos_smith}=    Evaluate    $page_text.find('Smith2020')
+    Should Be True    ${pos_brown} < ${pos_smith}
 
 User Can Sort Search Results By Oldest First
-    [Documentation]    User can sort search results by oldest first
+    [Documentation]    User can sort search results by oldest added first (created_at)
     Go To    ${BASE_URL}/search
     Click Button    id=search-button
     Sleep    2s
@@ -131,9 +131,9 @@ User Can Sort Search Results By Oldest First
     Click Button    id=search-button
     Sleep    2s
     ${page_text}=    Get Text    css=body
-    ${pos_2019}=    Evaluate    $page_text.find('2019')
-    ${pos_2022}=    Evaluate    $page_text.find('2022')
-    Should Be True    ${pos_2019} < ${pos_2022}
+    ${pos_smith}=    Evaluate    $page_text.find('Smith2020')
+    ${pos_brown}=    Evaluate    $page_text.find('Brown2022')
+    Should Be True    ${pos_smith} < ${pos_brown}
 
 User Can Sort Search Results By Author
     [Documentation]    User can sort search results alphabetically by author
