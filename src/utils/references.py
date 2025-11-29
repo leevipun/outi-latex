@@ -587,8 +587,12 @@ def filter_and_sort_search_results(
                    if ref.get("reference_type") == ref_type_filter]
 
     if tag_filter.strip():
-        filtered = [ref for ref in filtered
-                   if ref.get("tag") and ref["tag"].get("name") == tag_filter]
+        filtered = [
+            ref for ref in filtered
+            if ref.get("tag") is not None and
+               isinstance(ref.get("tag"), dict) and
+               ref["tag"].get("name") == tag_filter
+        ]
 
     try:
         if sort_by in ["newest", "oldest"]:
@@ -602,5 +606,5 @@ def filter_and_sort_search_results(
 
         return sorted_results
     except Exception as e:
-        print(f"Warning: Sorting failed, returning filtered: {e}")
+        print(f"Warning: Sorting failed, returning filtered results: {e}")
         return filtered
