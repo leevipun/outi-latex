@@ -173,3 +173,64 @@ User Can Sort Search Results By Bib Key
     ${pos_anderson}=    Evaluate    $page_text.find('Anderson2021')
     ${pos_smith}=    Evaluate    $page_text.find('Smith2020')
     Should Be True    ${pos_anderson} < ${pos_smith}
+
+User Can Combine Type Filter And Sorting
+    [Documentation]    User can filter by type and sort results
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Label    id=filter-type    Article
+    Select From List By Value    id=sort-by    oldest
+    Click Button    id=search-button
+    Sleep    2s
+    Page Should Contain    Smith, John
+    Page Should Contain    Brown, Alice
+    Page Should Not Contain    Anderson, James
+    ${page_text}=    Get Text    css=body
+    ${pos_2020}=    Evaluate    $page_text.find('2020')
+    ${pos_2022}=    Evaluate    $page_text.find('2022')
+    Should Be True    ${pos_2020} < ${pos_2022}
+
+User Can Combine Tag Filter And Sorting
+    [Documentation]    User can filter by tag and sort results
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Label    id=tag-filter    machine-learning
+    Select From List By Value    id=sort-by    title
+    Click Button    id=search-button
+    Sleep    2s
+    Page Should Contain    Smith, John
+    Page Should Contain    Brown, Alice
+    ${page_text}=    Get Text    css=body
+    ${pos_advanced}=    Evaluate    $page_text.find('Advanced')
+    ${pos_cloud}=    Evaluate    $page_text.find('Cloud')
+    Should Be True    ${pos_advanced} < ${pos_cloud}
+
+User Can Combine Search Query With Filter And Sort
+    [Documentation]    User can search, filter and sort together
+    Go To    ${BASE_URL}/search
+    Input Text    id=search-query    Machine
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Label    id=filter-type    Article
+    Select From List By Value    id=sort-by    oldest
+    Click Button    id=search-button
+    Sleep    2s
+    Page Should Contain    Smith, John
+    Page Should Not Contain    Anderson, James
+    Page Should Not Contain    Johnson, Mary
+
+User Can Filter With Type And Tag Together
+    [Documentation]    User can apply both type and tag filters simultaneously
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Label    id=filter-type    Article
+    Select From List By Label    id=tag-filter    machine-learning
+    Click Button    id=search-button
+    Sleep    2s
+    Page Should Contain    Smith, John
+    Page Should Contain    Brown, Alice
+    Page Should Not Contain    Anderson, James
+    Page Should Not Contain    Johnson, Mary
