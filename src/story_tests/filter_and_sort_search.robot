@@ -97,3 +97,79 @@ User Can Filter Search Results By Reference Type
     Page Should Not Contain    Anderson, James
     Page Should Not Contain    Johnson, Mary
 
+User Can Filter Search Results By Tag
+    [Documentation]    User can filter search results by tag
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Label    id=tag-filter    machine-learning
+    Click Button    id=search-button
+    Sleep    2s
+    Page Should Contain    Smith, John
+    Page Should Contain    Brown, Alice
+    Page Should Not Contain    Anderson, James
+
+User Can Sort Search Results By Newest First
+    [Documentation]    User can sort search results by newest first (default)
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Value    id=sort-by    newest
+    Click Button    id=search-button
+    Sleep    2s
+    ${page_text}=    Get Text    css=body
+    ${pos_2022}=    Evaluate    $page_text.find('2022')
+    ${pos_2019}=    Evaluate    $page_text.find('2019')
+    Should Be True    ${pos_2022} < ${pos_2019}
+
+User Can Sort Search Results By Oldest First
+    [Documentation]    User can sort search results by oldest first
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Value    id=sort-by    oldest
+    Click Button    id=search-button
+    Sleep    2s
+    ${page_text}=    Get Text    css=body
+    ${pos_2019}=    Evaluate    $page_text.find('2019')
+    ${pos_2022}=    Evaluate    $page_text.find('2022')
+    Should Be True    ${pos_2019} < ${pos_2022}
+
+User Can Sort Search Results By Author
+    [Documentation]    User can sort search results alphabetically by author
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Value    id=sort-by    author
+    Click Button    id=search-button
+    Sleep    2s
+    ${page_text}=    Get Text    css=body
+    ${pos_anderson}=    Evaluate    $page_text.find('Anderson')
+    ${pos_smith}=    Evaluate    $page_text.find('Smith')
+    Should Be True    ${pos_anderson} < ${pos_smith}
+
+User Can Sort Search Results By Title
+    [Documentation]    User can sort search results alphabetically by title
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Value    id=sort-by    title
+    Click Button    id=search-button
+    Sleep    2s
+    ${page_text}=    Get Text    css=body
+    ${pos_advanced}=    Evaluate    $page_text.find('Advanced')
+    ${pos_data}=    Evaluate    $page_text.find('Data Structures')
+    Should Be True    ${pos_advanced} < ${pos_data}
+
+User Can Sort Search Results By Bib Key
+    [Documentation]    User can sort search results alphabetically by bib_key
+    Go To    ${BASE_URL}/search
+    Click Button    id=search-button
+    Sleep    2s
+    Select From List By Value    id=sort-by    bib_key
+    Click Button    id=search-button
+    Sleep    2s
+    ${page_text}=    Get Text    css=body
+    ${pos_anderson}=    Evaluate    $page_text.find('Anderson2021')
+    ${pos_smith}=    Evaluate    $page_text.find('Smith2020')
+    Should Be True    ${pos_anderson} < ${pos_smith}
