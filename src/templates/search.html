@@ -43,6 +43,18 @@
                 </div>
 
                 <div class="filter-group">
+                    <label for="tag-filter">Avainsana:</label>
+                    <select id="tag-filter" name="tag-filter">
+                        <option value="">Kaikki avainsanat</option>
+                        {% if tags %}
+                            {% for tag in tags %}
+                            <option value="{{ tag.name }}" {% if tag_filter == tag.name %}selected{% endif %}>{{ tag.name }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+
+                <div class="filter-group">
                     <label for="sort-by">Järjestys:</label>
                     <select id="sort-by" name="sort-by">
                         <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Uusin ensin</option>
