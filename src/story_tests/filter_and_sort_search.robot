@@ -24,6 +24,7 @@ Add Test References With Tags
 Add Sample Article Reference
     [Documentation]    Add a sample article reference for testing
     Go To    ${BASE_URL}
+    Wait Until Element Is Visible    id:form    timeout=10s
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
     Wait Until Element Is Visible    id:author    timeout=15s
@@ -35,11 +36,12 @@ Add Sample Article Reference
     Input Text       id:cite_key      Smith2020
     Input Text       id:new_tag       machine-learning
     Click Button     id:save-reference-button
-    Wait Until Page Contains    Smith2020    timeout=10s
+    Wait Until Location Contains    /all    timeout=10s
 
 Add Sample Book Reference
     [Documentation]    Add a sample book reference for testing
     Go To    ${BASE_URL}
+    Wait Until Element Is Visible    id:form    timeout=10s
     Select From List By Value    id:form    book
     Click Button    id:add_new-button
     Wait Until Element Is Visible    id:author/editor    timeout=15s
@@ -50,11 +52,12 @@ Add Sample Book Reference
     Input Text       id:cite_key        Anderson2021
     Input Text       id:new_tag         algorithms
     Click Button     id:save-reference-button
-    Wait Until Page Contains    Anderson2021    timeout=10s
+    Wait Until Location Contains    /all    timeout=10s
 
 Add Sample Inproceedings Reference
     [Documentation]    Add a sample Inproceedings reference for testing
     Go To    ${BASE_URL}
+    Wait Until Element Is Visible    id:form    timeout=10s
     Select From List By Value    id:form    inproceedings
     Click Button    id:add_new-button
     Wait Until Element Is Visible    id:author    timeout=15s
@@ -65,11 +68,12 @@ Add Sample Inproceedings Reference
     Input Text       id:cite_key      Johnson2019
     Input Text       id:new_tag       data-science
     Click Button     id:save-reference-button
-    Wait Until Page Contains    Johnson2019    timeout=10s
+    Wait Until Location Contains    /all    timeout=10s
 
 Add Another Article Reference
     [Documentation]    Add another article reference for testing
     Go To    ${BASE_URL}
+    Wait Until Element Is Visible    id:form    timeout=10s
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
     Wait Until Element Is Visible    id:author    timeout=15s
@@ -81,7 +85,7 @@ Add Another Article Reference
     Input Text       id:cite_key      Brown2022
     Input Text       id:new_tag       machine-learning
     Click Button     id:save-reference-button
-    Wait Until Page Contains    Brown2022    timeout=10s
+    Wait Until Location Contains    /all    timeout=10s
 
 *** Test Cases ***
 User Can Filter Search Results By Reference Type
@@ -89,7 +93,8 @@ User Can Filter Search Results By Reference Type
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=filter-type    timeout=10s
+    Wait Until Element Is Visible    id=filter-type    timeout=10s
+    Wait Until Element Is Enabled    id=filter-type    timeout=5s
     Select From List By Label    id=filter-type    Article
     Click Button    id=search-button
     Wait Until Page Contains    Smith, John    timeout=10s
@@ -102,10 +107,12 @@ User Can Filter Search Results By Tag
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=tag-filter    timeout=10s
+    Wait Until Element Is Visible    id=tag-filter    timeout=10s
+    Wait Until Element Is Enabled    id=tag-filter    timeout=5s
     Select From List By Label    id=tag-filter    machine-learning
     Click Button    id=search-button
     Wait Until Page Contains    Smith, John    timeout=10s
+    Wait Until Page Contains    Brown, Alice    timeout=10s
     Page Should Contain    Brown, Alice
     Page Should Not Contain    Anderson, James
 
@@ -114,10 +121,12 @@ User Can Sort Search Results By Newest First
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=sort-by    timeout=10s
+    Wait Until Element Is Visible    id=sort-by    timeout=10s
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    newest
     Click Button    id=search-button
     Wait Until Page Contains    Brown2022    timeout=10s
+    Wait Until Element Is Visible    css=body    timeout=5s
     ${page_text}=    Get Text    css=body
     ${pos_brown}=    Evaluate    $page_text.find('Brown2022')
     ${pos_smith}=    Evaluate    $page_text.find('Smith2020')
@@ -128,10 +137,12 @@ User Can Sort Search Results By Oldest First
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=sort-by    timeout=10s
+    Wait Until Element Is Visible    id=sort-by    timeout=10s
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    oldest
     Click Button    id=search-button
     Wait Until Page Contains    Smith2020    timeout=10s
+    Wait Until Element Is Visible    css=body    timeout=5s
     ${page_text}=    Get Text    css=body
     ${pos_smith}=    Evaluate    $page_text.find('Smith2020')
     ${pos_brown}=    Evaluate    $page_text.find('Brown2022')
@@ -142,10 +153,12 @@ User Can Sort Search Results By Author
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=sort-by    timeout=10s
+    Wait Until Element Is Visible    id=sort-by    timeout=10s
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    author
     Click Button    id=search-button
     Wait Until Page Contains    Anderson    timeout=10s
+    Wait Until Element Is Visible    css=body    timeout=5s
     ${page_text}=    Get Text    css=body
     ${pos_anderson}=    Evaluate    $page_text.find('Anderson')
     ${pos_smith}=    Evaluate    $page_text.find('Smith')
@@ -156,10 +169,12 @@ User Can Sort Search Results By Title
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=sort-by    timeout=10s
+    Wait Until Element Is Visible    id=sort-by    timeout=10s
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    title
     Click Button    id=search-button
     Wait Until Page Contains    Advanced    timeout=10s
+    Wait Until Element Is Visible    css=body    timeout=5s
     ${page_text}=    Get Text    css=body
     ${pos_advanced}=    Evaluate    $page_text.find('Advanced')
     ${pos_data}=    Evaluate    $page_text.find('Data Structures')
@@ -170,10 +185,12 @@ User Can Sort Search Results By Bib Key
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=sort-by    timeout=10s
+    Wait Until Element Is Visible    id=sort-by    timeout=10s
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    bib_key
     Click Button    id=search-button
     Wait Until Page Contains    Anderson2021    timeout=10s
+    Wait Until Element Is Visible    css=body    timeout=5s
     ${page_text}=    Get Text    css=body
     ${pos_anderson}=    Evaluate    $page_text.find('Anderson2021')
     ${pos_smith}=    Evaluate    $page_text.find('Smith2020')
@@ -184,13 +201,17 @@ User Can Combine Type Filter And Sorting
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=filter-type    timeout=10s
+    Wait Until Element Is Visible    id=filter-type    timeout=10s
+    Wait Until Element Is Enabled    id=filter-type    timeout=5s
     Select From List By Label    id=filter-type    Article
+    Wait Until Element Is Visible    id=sort-by    timeout=10s
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    oldest
     Click Button    id=search-button
     Wait Until Page Contains    Smith, John    timeout=10s
     Page Should Contain    Brown, Alice
     Page Should Not Contain    Anderson, James
+    Wait Until Element Is Visible    css=body    timeout=5s
     ${page_text}=    Get Text    css=body
     ${pos_smith}=    Evaluate    $page_text.find('Smith2020')
     ${pos_brown}=    Evaluate    $page_text.find('Brown2022')
@@ -201,12 +222,16 @@ User Can Combine Tag Filter And Sorting
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=tag-filter    timeout=10s
+    Wait Until Element Is Visible    id=tag-filter    timeout=10s
+    Wait Until Element Is Enabled    id=tag-filter    timeout=5s
     Select From List By Label    id=tag-filter    machine-learning
+    Wait Until Element Is Visible    id=sort-by    timeout=10s
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    title
     Click Button    id=search-button
     Wait Until Page Contains    Smith, John    timeout=10s
     Page Should Contain    Brown, Alice
+    Wait Until Element Is Visible    css=body    timeout=5s
     ${page_text}=    Get Text    css=body
     ${pos_advanced}=    Evaluate    $page_text.find('Advanced')
     ${pos_cloud}=    Evaluate    $page_text.find('Cloud')
@@ -218,8 +243,10 @@ User Can Combine Search Query With Filter And Sort
     Wait Until Element Is Visible    id=search-query    timeout=10s
     Input Text    id=search-query    Machine
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=filter-type    timeout=10s
+    Wait Until Element Is Visible    id=filter-type    timeout=10s
+    Wait Until Element Is Enabled    id=filter-type    timeout=5s
     Select From List By Label    id=filter-type    Article
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    oldest
     Click Button    id=search-button
     Wait Until Page Contains    Smith, John    timeout=10s
@@ -231,8 +258,11 @@ User Can Filter With Type And Tag Together
     Go To    ${BASE_URL}/search
     Wait Until Element Is Visible    id=search-button    timeout=10s
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=filter-type    timeout=10s
+    Wait Until Element Is Visible    id=filter-type    timeout=10s
+    Wait Until Element Is Enabled    id=filter-type    timeout=5s
     Select From List By Label    id=filter-type    Article
+    Wait Until Element Is Visible    id=tag-filter    timeout=10s
+    Wait Until Element Is Enabled    id=tag-filter    timeout=5s
     Select From List By Label    id=tag-filter    machine-learning
     Click Button    id=search-button
     Wait Until Page Contains    Smith, John    timeout=10s
@@ -246,9 +276,12 @@ All Three Filters Can Be Combined
     Wait Until Element Is Visible    id=search-query    timeout=10s
     Input Text    id=search-query    Learning
     Click Button    id=search-button
-    Wait Until Page Contains Element    id=filter-type    timeout=10s
+    Wait Until Element Is Visible    id=filter-type    timeout=10s
+    Wait Until Element Is Enabled    id=filter-type    timeout=5s
     Select From List By Label    id=filter-type    Article
+    Wait Until Element Is Enabled    id=tag-filter    timeout=5s
     Select From List By Label    id=tag-filter    machine-learning
+    Wait Until Element Is Enabled    id=sort-by    timeout=5s
     Select From List By Value    id=sort-by    title
     Click Button    id=search-button
     Wait Until Page Contains    Smith, John    timeout=10s
