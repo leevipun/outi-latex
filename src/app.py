@@ -27,6 +27,9 @@ from src.utils.references import (
     DatabaseError,
     delete_reference_by_bib_key,
     get_reference_by_bib_key,
+    get_references_filtered_sorted,
+    search_reference_by_query,
+    filter_and_sort_search_results,
 )
 from src.utils.tags import (
     TagError,
@@ -359,12 +362,57 @@ def get_doi_data():
 
 @app.route("/search", methods=["GET", "POST"])
 def search():
-    if request.method == "GET":
-        return render_template("search.html", data=[], query="")
+    try:
+        tags = get_tags()
+    except TagError as e:
+        flash(f"Error loading tags: {str(e)}", "error")
+        tags = []
 
-    query = request.form.get("search-query")
-    result = references.search_reference_by_query(query)
-    return render_template("search.html", data=result, query=query)
+    try:
+        reference_types = references.get_all_references()
+    except DatabaseError as e:
+        flash(f"Error loading reference types: {str(e)}", "error")
+        reference_types = []
+
+    if request.method == "GET":
+        return render_template(
+            "search.html", tags=tags, reference_types=reference_types
+        )
+
+    query = request.form.get("search-query", "").strip()
+    filter_type = request.form.get("filter-type", "").strip()
+    tag_filter = request.form.get("tag-filter", "").strip()
+    sort_by = request.form.get("sort-by", "newest")
+
+    try:
+        if query:
+            results = search_reference_by_query(query)
+            results = filter_and_sort_search_results(
+                results,
+                ref_type_filter=filter_type,
+                tag_filter=tag_filter,
+                sort_by=sort_by,
+            )
+        else:
+            results = get_references_filtered_sorted(
+                ref_type_filter=filter_type, tag_filter=tag_filter, sort_by=sort_by
+            )
+
+        return render_template(
+            "search.html",
+            data=results,
+            query=query,
+            filter_type=filter_type,
+            tag_filter=tag_filter,
+            sort_by=sort_by,
+            tags=tags,
+            reference_types=reference_types,
+        )
+    except DatabaseError as e:
+        flash(f"Virhe haettaessa viitteitä: {e}", "error")
+        return render_template(
+            "search.html", tags=tags, reference_types=reference_types
+        )
 
 
 @app.context_processor
