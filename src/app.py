@@ -2,7 +2,15 @@
 
 import re
 
-from flask import flash, jsonify, redirect, render_template, request, make_response, url_for
+from flask import (
+    flash,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from src.config import app, test_env
 from src.db_helper import reset_db
@@ -358,11 +366,13 @@ def search():
     result = references.search_reference_by_query(query)
     return render_template("search.html", data=result, query=query)
 
+
 @app.context_processor
 def inject_theme():
     """Käytetty teema saataville kaikkiin reitteihin (light/dark) ja sitä kautta kaikkiin temploihin."""
-    theme = request.cookies.get("theme", "light") # defaultti
+    theme = request.cookies.get("theme", "light")  # defaultti
     return {"theme": theme}
+
 
 @app.route("/toggle-theme")
 def toggle_theme():
@@ -377,6 +387,7 @@ def toggle_theme():
     # 1 vuoden cookie:D
     resp.set_cookie("theme", new, max_age=60 * 60 * 24 * 365)
     return resp
+
 
 # testausta varten oleva reitti
 if test_env:
