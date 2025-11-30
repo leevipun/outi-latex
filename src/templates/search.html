@@ -1,66 +1,49 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <title>Outi LaTeX - Viiteenhallinta</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
+{% block title %}Outi LaTeX - Viiteenhallinta{% endblock %}
+{% block body_class %}search-page{% endblock %}
 
-<body class="search-page">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash-messages">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" id="alert-{{ category }}">
-                {{ message }}
-            </div>
-            {% endfor %}
+{% block content %}
+    <h1 id="page-title">Outi LaTeX</h1>
+    <p class="subtitle" id="page-subtitle">Hallitse viitteesi helposti</p>
+
+    <form method="POST" action="/search" class="form-group" id="search-form">
+        <label for="search-query" id="search-label">Etsi viitteitä</label>
+        <div class="search-input-group">
+            <input id="search-query" name="search-query" type="text" placeholder="Kirjoita hakusana..." value="{% if query %}{{query}}{% endif %}"/>
+            <button type="submit" id="search-button">Hae viitteitä</button>
         </div>
-        {% endif %}
-    {% endwith %}
+    </form>
+    {% if data %}
+    <h2 id="search-results-heading">Hakutulokset:</h2>
+        {% for reference in data %}
+        <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
+            <h3 id="reference-key-{{ reference['bib_key'] }}">{{ reference["bib_key"] }}</h3>
+            <ul id="reference-meta-{{ reference['bib_key'] }}">
+                <li id="reference-type-{{ reference['bib_key'] }}">{{ reference["reference_type"] }}</li>
+                <li id="reference-date-{{ reference['bib_key'] }}">{{ reference["created_at"] }}</li>
+            </ul>
+            <ul class="fields-list" id="reference-fields-{{ reference['bib_key'] }}">
+                {% for key, value in reference["fields"].items() %}
+                <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span
+                        id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
+                {% endfor %}
+            </ul>
+            <form method="get" action="/edit/{{ reference['bib_key'] }}" style="display:inline;">
+                <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
+            </form>
+            <form method="post" action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}" style="display:inline;"
+                onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');">
+                <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
+                <button type="submit">Poista</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="no-results" id="no-results-div">
+            <p id="no-results-message">Ei hakutuloksia.</p>
+        </div>
+    {% endif %}
 
-    <div class="container">
-        <h1 id="page-title">Outi LaTeX</h1>
-        <p class="subtitle" id="page-subtitle">Hallitse viitteesi helposti</p>
-
-        <form method="POST" action="/search" class="form-group" id="search-form">
-            <label for="search-query" id="search-label">Etsi viitteitä</label>
-            <div class="search-input-group">
-                <input id="search-query" name="search-query" type="text" placeholder="Kirjoita hakusana..." value="{% if query %}{{query}}{% endif %}"/>
-                <button type="submit" id="search-button">Hae viitteitä</button>
-            </div>
-        </form>
-        {% if data %}
-        <h2 id="search-results-heading">Hakutulokset:</h2>
-            {% for reference in data %}
-            <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
-                <h3 id="reference-key-{{ reference['bib_key'] }}">{{ reference["bib_key"] }}</h3>
-                <ul id="reference-meta-{{ reference['bib_key'] }}">
-                    <li id="reference-type-{{ reference['bib_key'] }}">{{ reference["reference_type"] }}</li>
-                    <li id="reference-date-{{ reference['bib_key'] }}">{{ reference["created_at"] }}</li>
-                </ul>
-                <ul class="fields-list" id="reference-fields-{{ reference['bib_key'] }}">
-                    {% for key, value in reference["fields"].items() %}
-                    <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span
-                            id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
-                    {% endfor %}
-                </ul>
-                <form method="get" action="/edit/{{ reference['bib_key'] }}" style="display:inline;">
-                    <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
-                </form>
-                <form method="post" action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}" style="display:inline;"
-                    onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');">
-                    <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
-                    <button type="submit">Poista</button>
-                </form>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="no-results" id="no-results-div">
-                <p id="no-results-message">Ei hakutuloksia.</p>
-            </div>
-        {% endif %}
-
-        <a href="/" class="btn" id="back-to-home-button">Takaisin etusivulle</a>
-    </div>
-</body>
+    <a href="/" class="btn" id="back-to-home-button">Takaisin etusivulle</a>
+{% endblock %}
