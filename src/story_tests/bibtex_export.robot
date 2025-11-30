@@ -32,18 +32,18 @@ Delete Test Reference
     [Documentation]    Delete a test reference by its cite key
     [Arguments]    ${cite_key}
     Go To    ${BASE_URL}/all
-    Run Keyword And Continue On Failure    Page Should Contain Element    id:reference-key-${cite_key}
+    Wait Until Page Contains Element    id:reference-key-${cite_key}    timeout=10s
     Run Keyword And Continue On Failure    Click Button    id:delete-button-${cite_key}
     Handle Alert    ACCEPT
-    Sleep    1s
+    Wait Until Page Does Not Contain Element    id:reference-key-${cite_key}    timeout=5s
 
 Add Sample Article Reference
     [Documentation]    Add a sample article reference for testing
     Go To    ${BASE_URL}
-
+    Wait Until Element Is Visible    id:form    timeout=10s
     Select From List By Value    id:form    article
     Click Button    id:add_new-button
-    Sleep    2s
+    Wait Until Element Is Visible    id:author    timeout=15s
 
     Input Text       id:author        Test Author
     Input Text       id:title         Test Article Title
@@ -53,17 +53,16 @@ Add Sample Article Reference
     Input Text       id:cite_key      TestArticle_${TEST_TIMESTAMP}
 
     Click Button     id:save-reference-button
-    Sleep    3s
+    Wait Until Location Contains    /all    timeout=10s
 
 Add Sample Book Reference
     [Documentation]    Add a sample book reference for testing
     Go To    ${BASE_URL}
-
+    Wait Until Element Is Visible    id:form    timeout=10s
     Select From List By Value    id:form    book
     Click Button    id:add_new-button
-    Sleep    3s
-
     Wait Until Element Is Visible    id:author/editor    timeout=15s
+
     Input Text       id:author/editor    Book Author
     Input Text       id:title           Book Title
     Input Text       id:publisher       Test Publisher
@@ -71,7 +70,7 @@ Add Sample Book Reference
     Input Text       id:cite_key        TestBook_${TEST_TIMESTAMP}
 
     Click Button     id:save-reference-button
-    Sleep    3s
+    Wait Until Location Contains    /all    timeout=10s
 
 *** Test Cases ***
 User Can Access BibTeX Export Route
@@ -93,10 +92,10 @@ User Can See And Click Export Button When References Exist
     [Teardown]    Delete Test Reference    TestArticle_${TEST_TIMESTAMP}
 
     Go To    ${BASE_URL}/all
-    Page Should Contain Element    id:all-references-title
+    Wait Until Page Contains Element    id:all-references-title    timeout=10s
+    Wait Until Page Contains Element    id:export-bibtex-button    timeout=10s
 
-    Page Should Contain Element    id:export-bibtex-button
-    Click Element                  id:export-bibtex-button
+    Click Element    id:export-bibtex-button
 
     Page Should Not Contain    Database error
     Page Should Not Contain    Export error
@@ -108,12 +107,10 @@ Export Works With Multiple References
     [Teardown]    Run Keywords    Delete Test Reference    TestArticle_${TEST_TIMESTAMP}    AND    Delete Test Reference    TestBook_${TEST_TIMESTAMP}
 
     Go To    ${BASE_URL}/all
-    Sleep    2s
-
     Wait Until Page Contains Element    id:reference-item-TestArticle_${TEST_TIMESTAMP}    timeout=15s
     Wait Until Page Contains Element    id:reference-item-TestBook_${TEST_TIMESTAMP}    timeout=15s
-
     Wait Until Page Contains Element    id:export-bibtex-button    timeout=10s
+
     Click Element    id:export-bibtex-button
 
     Page Should Not Contain    error
