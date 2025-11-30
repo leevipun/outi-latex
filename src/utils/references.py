@@ -28,8 +28,8 @@ def get_all_references() -> list:
         DatabaseError: If database query fails.
     """
     sql = text(
-        """SELECT id, name 
-             FROM reference_types 
+        """SELECT id, name
+             FROM reference_types
              ORDER BY id;"""
     )
     try:
@@ -50,7 +50,7 @@ def get_all_added_references() -> list:
         DatabaseError: If database query fails.
     """
     sql = text(
-        """ SELECT 
+        """ SELECT
                 sr.id,
                 sr.bib_key,
                 rt.name AS reference_type,
@@ -114,7 +114,7 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
         DatabaseError: If database query fails.
     """
     sql = text(
-        """ SELECT 
+        """ SELECT
                 sr.id,
                 sr.bib_key,
                 rt.name AS reference_type,
@@ -336,7 +336,7 @@ def search_reference_by_query(query: str) -> list:
         query: The search query string.
 
     Returns:
-        list: List of dictionaries containing matching references with their fields.
+        list: List of dictionaries containing matching references with their fields and tags.
 
     Raises:
         DatabaseError: If the search query fails.
@@ -344,28 +344,33 @@ def search_reference_by_query(query: str) -> list:
     try:
         sql = text(
             """
-            SELECT 
-            sr.id,
-            sr.bib_key,
-            rt.name AS reference_type,
-            sr.created_at,
-            f.key_name,
-            rv.value
+            SELECT
+                sr.id,
+                sr.bib_key,
+                rt.name AS reference_type,
+                sr.created_at,
+                f.key_name,
+                rv.value,
+                t.id AS tag_id,
+                t.name AS tag_name
             FROM single_reference sr
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
+            LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
+            LEFT JOIN tags t ON reftag.tag_id = t.id
             WHERE sr.id IN (
-            SELECT DISTINCT sr2.id
-            FROM single_reference sr2
-            LEFT JOIN reference_values rv2 ON sr2.id = rv2.reference_id
-            WHERE sr2.bib_key LIKE :query
-               OR rv2.value LIKE :query
+                SELECT DISTINCT sr2.id
+                FROM single_reference sr2
+                LEFT JOIN reference_values rv2 ON sr2.id = rv2.reference_id
+                WHERE sr2.bib_key LIKE :query
+                   OR rv2.value LIKE :query
             )
             ORDER BY sr.created_at DESC, sr.id, f.key_name;
             """
         )
         results = db.session.execute(sql, {"query": f"%{query}%"})
+
         references = {}
         for row in results.mappings():
             ref_id = row["id"]
@@ -375,9 +380,15 @@ def search_reference_by_query(query: str) -> list:
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
                     "fields": {},
+                    "tag": None,
                 }
 
-            # Add field value if it exists
+                if row["tag_id"] is not None:
+                    references[ref_id]["tag"] = {
+                        "id": row["tag_id"],
+                        "name": row["tag_name"],
+                    }
+
             if row["key_name"] is not None:
                 references[ref_id]["fields"][row["key_name"]] = row["value"]
 
@@ -386,3 +397,217 @@ def search_reference_by_query(query: str) -> list:
         raise DatabaseError(
             f"Failed to search references with query '{query}': {e}"
         ) from e
+
+
+def sort_references_by_created_at(references: list, sort_type: str = "newest") -> list:
+    """Sort references by creation date.
+
+    Args:
+        references: List of reference dictionaries
+        sort_type: "newest" (desc) or "oldest" (asc)
+
+    Returns:
+        list: Sorted references
+    """
+    if not references:
+        return []
+
+    def get_created_at(ref):
+        created_at = ref.get("created_at")
+        if hasattr(created_at, "isoformat"):
+            return created_at.isoformat()
+        return created_at or ""
+
+    reverse = sort_type == "newest"
+    try:
+        return sorted(references, key=get_created_at, reverse=reverse)
+    except Exception as e:
+        print(f"Warning: Date sorting failed: {e}")
+        return references
+
+
+def sort_references_by_field(
+    references: list, sort_by: str, sort_order: str = "asc"
+) -> list:
+    """Sort references by a field value (title, author, etc.).
+
+    Args:
+        references: List of reference dictionaries
+        sort_by: Field name to sort by ("title", "author")
+        sort_order: "asc" or "desc"
+
+    Returns:
+        list: Sorted references
+    """
+
+    def get_sort_value(ref):
+        value = ref.get("fields", {}).get(sort_by, "")
+
+        cleaned = str(value).lower().strip()
+
+        for article in ["the ", "a ", "an "]:
+            if cleaned.startswith(article):
+                cleaned = cleaned[len(article) :].strip()
+                break
+
+        return cleaned
+
+    reverse = sort_order == "desc"
+    return sorted(references, key=get_sort_value, reverse=reverse)
+
+
+def sort_references_by_bib_key(references: list, sort_order: str = "asc") -> list:
+    """Sort references by bib_key alphabetically.
+
+    Args:
+        references: List of reference dictionaries
+        sort_order: "asc" or "desc"
+
+    Returns:
+        list: Sorted references
+    """
+
+    def get_bib_key(ref):
+        bib_key = ref.get("bib_key", "")
+        return str(bib_key).lower().strip()
+
+    reverse = sort_order == "desc"
+    try:
+        return sorted(references, key=get_bib_key, reverse=reverse)
+    except Exception as e:
+        print(f"Warning: Bib key sorting failed: {e}")
+        return references
+
+
+def get_references_filtered_sorted(
+    ref_type_filter: str = "", tag_filter: str = "", sort_by: str = "newest"
+) -> list:
+    try:
+        base_sql = """
+            SELECT DISTINCT
+                sr.id,
+                sr.bib_key,
+                rt.name AS reference_type,
+                sr.created_at,
+                f.key_name,
+                rv.value,
+                t.id AS tag_id,
+                t.name AS tag_name
+            FROM single_reference sr
+            JOIN reference_types rt ON sr.reference_type_id = rt.id
+            LEFT JOIN reference_values rv ON sr.id = rv.reference_id
+            LEFT JOIN fields f ON rv.field_id = f.id
+            LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
+            LEFT JOIN tags t ON reftag.tag_id = t.id
+            WHERE 1=1
+        """
+
+        params = {}
+        conditions = []
+
+        if ref_type_filter.strip():
+            conditions.append("rt.name = :ref_type")
+            params["ref_type"] = ref_type_filter.strip()
+
+        if tag_filter.strip():
+            conditions.append("t.name = :tag_name")
+            params["tag_name"] = tag_filter.strip()
+
+        if conditions:
+            base_sql += " AND " + " AND ".join(conditions)
+
+        if sort_by == "oldest":
+            order_clause = "ORDER BY sr.created_at ASC, sr.id, f.key_name"
+        elif sort_by == "bib_key":
+            order_clause = "ORDER BY sr.bib_key ASC, sr.id, f.key_name"
+        else:
+            order_clause = "ORDER BY sr.created_at DESC, sr.id, f.key_name"
+
+        base_sql += " " + order_clause
+
+        results = db.session.execute(text(base_sql), params)
+
+        references = {}
+        for row in results.mappings():
+            ref_id = row["id"]
+            if ref_id not in references:
+                references[ref_id] = {
+                    "id": ref_id,
+                    "bib_key": row["bib_key"],
+                    "reference_type": row["reference_type"],
+                    "created_at": row["created_at"],
+                    "fields": {},
+                    "tag": None,
+                }
+
+            if row["tag_id"] is not None:
+                references[ref_id]["tag"] = {
+                    "id": row["tag_id"],
+                    "name": row["tag_name"],
+                }
+
+            if row["key_name"] and row["value"]:
+                references[ref_id]["fields"][row["key_name"]] = row["value"]
+
+        reference_list = list(references.values())
+
+        if sort_by == "title":
+            reference_list = sort_references_by_field(reference_list, "title", "asc")
+        elif sort_by == "author":
+            reference_list = sort_references_by_field(reference_list, "author", "asc")
+        return reference_list
+
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch filtered references: {e}") from e
+
+
+def filter_and_sort_search_results(
+    search_results: list,
+    ref_type_filter: str = "",
+    tag_filter: str = "",
+    sort_by: str = "newest",
+) -> list:
+    """Apply filters and sorting to existing search results.
+
+    Args:
+        search_results: Results from search_reference_by_query()
+        ref_type_filter: Filter by reference type
+        tag_filter: Filter by tag name
+        sort_by: Sort type - "newest", "oldest", "title", "author", "bib_key"
+
+    Returns:
+        list: Filtered and sorted results
+    """
+    if not search_results:
+        return []
+
+    filtered = search_results.copy()
+
+    if ref_type_filter.strip():
+        filtered = [
+            ref for ref in filtered if ref.get("reference_type") == ref_type_filter
+        ]
+
+    if tag_filter.strip():
+        filtered = [
+            ref
+            for ref in filtered
+            if ref.get("tag") is not None
+            and isinstance(ref.get("tag"), dict)
+            and ref["tag"].get("name") == tag_filter
+        ]
+
+    try:
+        if sort_by in ["newest", "oldest"]:
+            sorted_results = sort_references_by_created_at(filtered, sort_by)
+        elif sort_by in ["title", "author"]:
+            sorted_results = sort_references_by_field(filtered, sort_by, "asc")
+        elif sort_by == "bib_key":
+            sorted_results = sort_references_by_bib_key(filtered, "asc")
+        else:
+            sorted_results = sort_references_by_created_at(filtered, "newest")
+
+        return sorted_results
+    except Exception as e:
+        print(f"Warning: Sorting failed, returning filtered results: {e}")
+        return filtered

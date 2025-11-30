@@ -468,11 +468,29 @@ a:hover {
     font-size: 15px;
 }
 
+.filter-controls {
+    display: flex;
+    gap: 5px;
+    padding-top: 10px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 668px) {
+    .filter-controls {
+        gap: 8px;
+        flex-direction: column;
+    }
+}
+
+body.dark-mode .filter-controls {
+    color: #e5e7eb;
+}
+
 
 /* Dark mode & navbar stuff */
 
 body.dark-mode {
-    background: radial-gradient(circle at top, #1f2937 0%, #020617 55%, #000 100%);
+    background: radial-gradient(#1f2937 0%, #020617 55%, #000 100%);
     color: #e5e7eb;
 }
 
