@@ -2,7 +2,15 @@
 
 import re
 
-from flask import flash, jsonify, redirect, render_template, request
+from flask import (
+    flash,
+    jsonify,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+)
 
 from src.config import app, test_env
 from src.db_helper import reset_db
@@ -405,6 +413,28 @@ def search():
         return render_template(
             "search.html", tags=tags, reference_types=reference_types
         )
+
+
+@app.context_processor
+def inject_theme():
+    """Käytetty teema saataville kaikkiin reitteihin (light/dark) ja sitä kautta kaikkiin temploihin."""
+    theme = request.cookies.get("theme", "light")  # defaultti
+    return {"theme": theme}
+
+
+@app.route("/toggle-theme")
+def toggle_theme():
+    """Voi vaihdella teemaa (redirectaa takaisin)."""
+    current = request.cookies.get("theme", "light")
+    new = "dark" if current == "light" else "light"
+
+    # Redirect tai etusivu error tilanteessa
+    next_url = request.referrer or url_for("index")
+
+    resp = make_response(redirect(next_url))
+    # 1 vuoden cookie:D
+    resp.set_cookie("theme", new, max_age=60 * 60 * 24 * 365)
+    return resp
 
 
 # testausta varten oleva reitti

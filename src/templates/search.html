@@ -1,24 +1,9 @@
-<!DOCTYPE html>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <title>Outi LaTeX - Viiteenhallinta</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
+{% block title %}Outi LaTeX - Viiteenhallinta{% endblock %}
+{% block body_class %}search-page{% endblock %}
 
-<body class="search-page">
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash-messages">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" id="alert-{{ category }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    {% endwith %}
-
+{% block content %}
     <div class="container">
         <h1 id="page-title">Outi LaTeX</h1>
         <p class="subtitle" id="page-subtitle">Hallitse viitteesi helposti</p>
@@ -69,6 +54,7 @@
                 </div>
             </div>
         </form>
+
         {% if data %}
         <h2 id="search-results-heading">Hakutulokset:</h2>
             {% for reference in data %}
@@ -105,5 +91,4 @@
 
         <a href="/" class="btn" id="back-to-home-button">Takaisin etusivulle</a>
     </div>
-</body>
-</html>
+{% endblock %}
