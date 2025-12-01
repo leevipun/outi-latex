@@ -6,6 +6,8 @@ A Flask-based web application for managing reference collections with LaTeX supp
 
 Backlog + Sprint Backlog: [https://docs.google.com/spreadsheets/d/1c9JaIyMWyLqpMv7I3L1M4DubtTQdr-XJTI_NyptITVM/edit?gid=1430592900#gid=1430592900]
 
+CI: https://github.com/leevipun/outi-latex/actions
+
 ## 📋 Table of Contents
 
 - [Features](#features)
