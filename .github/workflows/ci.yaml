@@ -106,6 +106,12 @@ jobs:
           echo "Code coverage is below 80% ($coverage%)"
           exit 1
         fi
+    - name: Run test to codecov
+      run: poetry install pytest pytest-cov | pytest --cov --cov-branch --cov-report=xml
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
     - name: Start Flask server
       run: |
         export FLASK_APP=src.app
