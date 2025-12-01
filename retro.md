@@ -24,3 +24,15 @@ Hyvillä mielillä suuntaamme kohti seuraavan sprintin storyjä ja haasteita.
 Kehitysideaoita:
 - Enemmän robotti testejä seuraavassa sprintissä.
 - Valmistautuminen asiakaspalaveriin on parempi ja tietokanta on varmistettu toimivaksi.
+
+Retro 3.0 - 1.12.2025
+
+Tässä sprintissä robotti testejä saatiin tehty enemmän ja asiakaspalaveriin valmistauduttiin niin, että tapaaminen sujui hyvin. Tiimillä nousi tämän sprintin tiimoilta positiivisina puolina filtteröinnin toteuttaminen, jossa sorttauksen toteutus oli hauskaa. Myös nav barin ja UI:n toteuttaminen sujui hyvin. Yllättäen myös tietokannan muokkaus avainsanojen osalta sujui ilman suurempia vaivoja.
+
+Tiimissä nousi myös harmitusta, ettei kuutta tuntia saa oikein ylittää. Negatiivinen puoli oli myös robotti testien kirjottamisen vaikeus dark moden testaukseen ja muut siinä ilmenneet ongelmat. Myös liian yksinkertainen homma aiheutti murhetta.
+
+Kovin suuria tunteita ei tämä sprintti aiheuttanut, mutta yhtä tiimiläistä harmitti, ettei päässyt asiakastapaamiseen edellisellä kerralla. Myös robotti testit aiheuttivat hiukan murhetta, mutta kaikesta selvittiin.
+
+Kehitysideoita:
+* UI:sta tehdään yhtenäisempi
+* Lisenssiin kaikkien nimet
