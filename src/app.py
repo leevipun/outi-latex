@@ -207,6 +207,21 @@ def delete_reference(bib_key):
 @app.route("/save_reference", methods=["POST"])
 def save_reference():
     """Tallenna uusi viite lomakkeelta tietokantaan."""
+    return _save_or_edit_reference(editing=False)
+
+
+@app.route("/edit_reference", methods=["POST"])
+def edit_reference_db():
+    """Tallenna muokattu viite lomakkeelta tietokantaan."""
+    return _save_or_edit_reference(editing=True)
+
+
+def _save_or_edit_reference(editing: bool):
+    """Shared logic for saving and editing references.
+    
+    Args:
+        editing: If True, update existing reference; if False, create new reference.
+    """
     # reference_type tulee piilokentästä <input type="hidden" name="reference_type">
     reference_type = request.form.get("reference_type")
 
@@ -272,7 +287,7 @@ def save_reference():
 
     # Tallennus tietokantaan
     try:
-        ref_id = references.add_reference(reference_type, form_data)
+        ref_id = references.add_reference(reference_type, form_data, editing=editing)
         if selected_tag_id:
             try:
                 add_tag_to_reference(int(selected_tag_id), ref_id)

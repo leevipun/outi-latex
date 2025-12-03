@@ -70,4 +70,14 @@ User Can Add Reference To A Group
     Page Should Contain Element    id:add-group-TestArticle2024
     Click Button    id:add-group-TestArticle2024
     Wait Until Element Is Visible    id:alert-message
-    Page Should Contain Element    id:view-group-button-1  
+    Page Should Contain Element    id:view-group-button-1
+
+User Can Not Add One Reference Two Times. User Is Given Error Message
+    [Documentation]    Verify that user can not add twice the same ref into a group
+    Go To    ${BASE_URL}/all
+    Wait Until Element Is Visible    id:all-group
+    Page Should Contain Element    id:add-group-TestArticle2024
+    Click Button    id:add-group-TestArticle2024
+    Wait Until Element Is Visible    id:alert-info
+    Page Should Contain Element    id:alert-info
+    Page Should Contain Element    id:view-group-button-1

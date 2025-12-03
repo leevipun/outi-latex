@@ -153,10 +153,11 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
         raise DatabaseError(f"Failed to fetch reference by bib_key '{bib_key}': {e}")
 
 
-def add_reference(reference_type_name: str, data: dict) -> int:
+def add_reference(reference_type_name: str, data: dict, editing: bool = False) -> int:
     """Lisää uusi viite tietokantaan tai päivitä olemassa oleva.
 
-    Jos bib_key on jo olemassa, päivitetään sen kentät.
+    Jos editing=True ja bib_key on jo olemassa, päivitetään sen kentät.
+    Jos editing=False ja bib_key on jo olemassa, heitetään virhe.
     Oletus: Viitetyyppi ei muutu, mutta kentät voivat muuttua.
 
     Args:
@@ -169,6 +170,7 @@ def add_reference(reference_type_name: str, data: dict) -> int:
                   "year": "2009",
                   ...
               }
+        editing: True jos muokataan olemassa olevaa viitettä, False jos lisätään uusi
 
     Returns:
         int: Lisätyn tai päivitetyn viitteen id.
@@ -198,7 +200,8 @@ def add_reference(reference_type_name: str, data: dict) -> int:
             if isinstance(data.get("old_bib_key"), str)
             else None
         )
-        bib_key_to_check = old_bib_key if old_bib_key else data["bib_key"]
+        # Kun muokataan, käytetään vanhaa avainta löytämiseen
+        bib_key_to_check = old_bib_key if editing and old_bib_key else data["bib_key"]
 
         existing_ref = (
             db.session.execute(
@@ -210,7 +213,14 @@ def add_reference(reference_type_name: str, data: dict) -> int:
         )
 
         if existing_ref:
-            # Viite on jo olemassa, päivitetään kentät
+            if not editing:
+                # Yritettiin lisätä uusi viite, mutta se on jo olemassa
+                raise DatabaseError(
+                    f"Reference with bib_key '{bib_key_to_check}' already exists. "
+                    "Use edit mode to update it."
+                )
+            
+            # Muokataan olemassa olevaa viitettä
             ref_id = existing_ref["id"]
 
             # Poistetaan vanhat kentät
@@ -220,12 +230,14 @@ def add_reference(reference_type_name: str, data: dict) -> int:
             )
             db.session.flush()
 
-            db.session.execute(
-                text(
-                    "UPDATE single_reference SET bib_key = :new_bib_key WHERE id = :id"
-                ),
-                {"new_bib_key": data["bib_key"], "id": ref_id},
-            )
+            # Päivitä bib_key jos se muuttui
+            if old_bib_key and data["bib_key"] != old_bib_key:
+                db.session.execute(
+                    text(
+                        "UPDATE single_reference SET bib_key = :new_bib_key WHERE id = :id"
+                    ),
+                    {"new_bib_key": data["bib_key"], "id": ref_id},
+                )
         else:
             # Luodaan uusi viite
             insert_ref = db.session.execute(
@@ -251,7 +263,6 @@ def add_reference(reference_type_name: str, data: dict) -> int:
 
         # 3) Jokaiselle kentälle (paitsi bib_key ja old_bib_key) lisätään rivi reference_values-tauluun
         for key, value in data.items():
-            print(key, value)  # --- DEBUG ---
             if key in ("bib_key", "old_bib_key"):
                 continue
             if value in (None, ""):
@@ -304,7 +315,7 @@ def add_reference(reference_type_name: str, data: dict) -> int:
 
     except Exception as exc:  # voit tiukentaa myöhemmin
         db.session.rollback()
-        raise DatabaseError(f"Failed to insert reference: {exc}") from exc
+        raise DatabaseError(f"Failed to insert/update reference: {exc}") from exc
 
 
 def delete_reference_by_bib_key(bib_key: str) -> None:
