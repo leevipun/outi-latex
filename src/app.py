@@ -145,17 +145,17 @@ def edit_reference(bib_key):
         reference = get_reference_by_bib_key(bib_key)
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
-        return redirect("/all", group=None)
+        return redirect("/all")
 
     if not reference:
         flash(f"Reference with bib_key '{bib_key}' not found", "error")
-        return redirect("/all", group=None)
+        return redirect("/all")
 
     try:
         fields = get_fields_for_type(reference["reference_type"])
     except FormFieldsError as e:
         flash(f"Error loading form fields: {str(e)}", "error")
-        return redirect("/all", group=None)
+        return redirect("/all")
 
     try:
         tag = get_tag_by_reference(reference["id"])
@@ -192,16 +192,16 @@ def delete_reference(bib_key):
         reference = get_reference_by_bib_key(bib_key)
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
-        return redirect("/all", group=None)
+        return redirect("/all")
     if not reference:
         flash(f"Reference with bib_key '{bib_key}' not found", "error")
-        return redirect("/all", group=None)
+        return redirect("/all")
     try:
         delete_reference_by_bib_key(bib_key)
         flash(f"Viite '{bib_key}' poistettu", "success")
     except DatabaseError as e:
         flash(f"Database error while deleting: {str(e)}", "error")
-    return redirect("/all", group=None)
+    return redirect("/all")
 
 
 @app.route("/save_reference", methods=["POST"])
@@ -287,7 +287,7 @@ def save_reference():
         return redirect(f"/add?form={reference_type}")
 
     flash("Viite tallennettu!", "success")
-    return redirect("/all", group=None)
+    return redirect("/all")
 
 
 @app.route("/export/bibtex")
@@ -321,13 +321,13 @@ def export_bibtex():
 
     except DatabaseError as e:
         flash(f"Database error during BibTeX export: {str(e)}", "error")
-        return redirect("/all", group=None)
+        return redirect("/all")
     except FormFieldsError as e:
         flash(f"Form fields error during BibTeX export: {str(e)}", "error")
-        return redirect("/all", group=None)
+        return redirect("/all")
     except Exception as e:
         flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
-        return redirect("/all", group=None)
+        return redirect("/all")
 
 
 @app.route("/get-doi", methods=["POST"])
@@ -452,8 +452,10 @@ def add_group(bib_key):
     """Add a reference to a group."""
     if bib_key in session["group"]["references"]:
         flash("Tämä viite on jo lisätty ryhmään", "info")
+        return redirect("/all")
     session["group"]["references"].append(bib_key)
     session.modified = True
+    flash("Viite lisätty onnistuneesti ryhmään", "message")
     return redirect("/all")
 
 # testausta varten oleva reitti

@@ -7,7 +7,7 @@
     <div style="display: flex; justify-content: space-between; align-items: center;" id="all-group">
         <h1 id="all-references-title">Kaikki viitteet</h1>
         <form method="get" action="/group">
-                <button type="submit" id="view-group-button">
+                <button type="submit" id="view-group-button-{{ session["group"]["references"]|length }}">
                     Näytä ryhmä 
                     {% if session["group"]["references"]|length > 0 %}
                         {{ session["group"]["references"]|length }}

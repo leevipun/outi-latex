@@ -54,7 +54,7 @@ User Can See The Group Button In All -Page
     [Documentation]    Verify that the search page is accessible and the user can get there
     Go To    ${BASE_URL}/all
     Wait Until Element Is Visible    id:all-group
-    Page Should Contain Element    id:view-group-button
+    Page Should Contain Element    id:view-group-button-0
 
 User Can See The Add Group Button In All -Page
     [Documentation]    Verify that the search page is accessible and the user can get there
@@ -62,3 +62,12 @@ User Can See The Add Group Button In All -Page
     Go To    ${BASE_URL}/all
     Wait Until Element Is Visible    id:all-group
     Page Should Contain Element    id:add-group-TestArticle2024
+
+User Can Add Reference To A Group
+    [Documentation]    Verify that user can add references to the group and the counter is increased
+    Go To    ${BASE_URL}/all
+    Wait Until Element Is Visible    id:all-group
+    Page Should Contain Element    id:add-group-TestArticle2024
+    Click Button    id:add-group-TestArticle2024
+    Wait Until Element Is Visible    id:alert-message
+    Page Should Contain Element    id:view-group-button-1  
