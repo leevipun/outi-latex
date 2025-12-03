@@ -332,7 +332,15 @@ def _save_or_edit_reference(editing: bool):
 def export_bibtex():
     """Export all references as BibTeX format"""
     try:
-        data = references.get_all_added_references()
+        type_param = request.args.get("type", "all").strip()
+        if type_param == "group" and len(session["group"]["references"]) > 0:
+            data = []
+            for bib_key in session["group"]["references"]:
+                ref = get_reference_by_bib_key(bib_key)
+                if ref:
+                    data.append(ref)
+        else:
+            data = references.get_all_added_references()
 
         if not data:
             return (

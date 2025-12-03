@@ -58,9 +58,9 @@
 <a href="/" id="back-to-home-button" class="btn">Etusivu</a>
 <a href="/search" class="btn" id="view-all-references-button">Hae viitteitä</a>
 {% if data %}
-<a href="/export/bibtex" id="export-bibtex-button" class="button button-primary" download="references.bib"
+<a href="/export/bibtex?type=group" id="export-bibtex-button" class="button button-primary" download="references.bib"
     style="margin-left: 10px; background: #28a745; padding: 15px; border-radius: 10px; text-decoration: none;">
-    📄 Lataa BibTeX (.bib)
+    📄 Lataa ryhmän BibTeX (.bib)
 </a>
 {% endif %}
 {% endblock %}
