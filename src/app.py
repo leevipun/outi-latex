@@ -123,7 +123,7 @@ def all_references():
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         data = []
-        return render_template("all.html", data=data, session=session["group"])
+        return render_template("all.html", data=data, session=session)
 
     for reference in data:
         timestamp = reference["created_at"]
