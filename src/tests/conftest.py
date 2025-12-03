@@ -7,7 +7,7 @@ import sys
 # Add the src directory to the path BEFORE any test imports
 # This must run at module import time, not in fixtures
 src_path = os.path.join(os.path.dirname(__file__), "..")
-if src_path not in sys.path:
+if (src_path not in sys.path):
     sys.path.insert(0, src_path)
 
 import pytest
@@ -121,8 +121,10 @@ def db_session(app):
 
         yield db
 
-        # Cleanup after test
-        db.session.rollback()
+        # Cleanup after test: remove all user-created references and their values
+        db.session.execute(text("DELETE FROM reference_values"))
+        db.session.execute(text("DELETE FROM single_reference"))
+        db.session.commit()
 
 
 @pytest.fixture

@@ -81,3 +81,31 @@ User Can Not Add One Reference Two Times. User Is Given Error Message
     Wait Until Element Is Visible    id:alert-info
     Page Should Contain Element    id:alert-info
     Page Should Contain Element    id:view-group-button-1
+
+After Editing Already Added Reference, User Can Not Add It Agen
+    [Documentation]    Verify that after editing an already added reference, user can not add it again to the group
+    Go To    ${BASE_URL}/all
+    Wait Until Element Is Visible    id:all-group
+    Page Should Contain Element    id:edit-button-TestArticle2024
+    Click Button    id:edit-button-TestArticle2024
+    Wait Until Element Is Visible   id:cite_key
+    Input Text    id:cite_key       TestArticle20
+    Click Button    id:save-reference-button
+    Wait Until Element Is Visible    id:all-group
+    Page Should Contain Element    id:add-group-TestArticle20
+    Click Button    id:add-group-TestArticle20
+    Wait Until Element Is Visible    id:alert-info
+    Page Should Contain Element    id:alert-info
+    Page Should Contain Element    id:view-group-button-1
+
+If User Deletes A Reference, It Is Removed From The Group
+    [Documentation]    Verify that when a user deletes a reference, it is also removed from the group
+    Go To    ${BASE_URL}/all
+    Wait Until Element Is Visible    id:all-group
+    Page Should Contain Element    id:delete-button-TestArticle20
+    Click Button    id:delete-button-TestArticle20
+    Handle Alert    ACCEPT
+    Wait Until Page Does Not Contain Element    id:reference-key-TestArticle2024    timeout=5s
+    Go To    ${BASE_URL}/all
+    Wait Until Element Is Visible    id:all-group
+    Page Should Contain Element    id:view-group-button-0

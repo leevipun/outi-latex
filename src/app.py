@@ -21,7 +21,6 @@ from src.util import (
     format_bibtex_entry,
     get_doi_data_from_api,
     get_fields_for_type,
-    get_reference_type_by_id,
 )
 from src.utils import references
 from src.utils.references import (
@@ -201,12 +200,16 @@ def delete_reference(bib_key):
         flash(f"Viite '{bib_key}' poistettu", "success")
     except DatabaseError as e:
         flash(f"Database error while deleting: {str(e)}", "error")
+    if bib_key in session["group"]["references"]:
+        session["group"]["references"].remove(bib_key)
+        session.modified = True
     return redirect("/all")
 
 
 @app.route("/save_reference", methods=["POST"])
 def save_reference():
     """Tallenna uusi viite lomakkeelta tietokantaan."""
+
     return _save_or_edit_reference(editing=False)
 
 
@@ -300,6 +303,26 @@ def _save_or_edit_reference(editing: bool):
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         return redirect(f"/add?form={reference_type}")
+
+    old_bib_key = (
+        form_data.get("old_bib_key", "").strip()
+        if isinstance(form_data.get("old_bib_key"), str)
+        else None
+    )
+    
+    # Päivitä ryhmässä oleva viite, jos se on lisätty ryhmään
+    if editing and old_bib_key:
+        # Jos muokataan, tarkista vanha avain ryhmässä
+        if old_bib_key in session["group"]["references"]:
+            # Poista vanha avain
+            session["group"]["references"].remove(old_bib_key)
+            # Lisää uusi avain jos se eroaa vanhasta
+            if form_data["bib_key"] != old_bib_key:
+                session["group"]["references"].append(form_data["bib_key"])
+            session.modified = True
+    elif not editing:
+        # Uutta viitettä lisätessä ei tarvitse päivittää, koska sitä ei ole vielä ryhmässä
+        pass
 
     flash("Viite tallennettu!", "success")
     return redirect("/all")

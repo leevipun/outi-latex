@@ -19,7 +19,7 @@
         <h2 id="reference-type-heading">{{ selected_type }} -viite</h2>
 
         <!-- Lomake tallennuksella -->
-        <form action="{% if '/edit' in request.path %}/edit_reference{% else %}/save_reference{% endif %}" method="post" id="add-reference-form"></form>
+        <form action="{% if '/edit' in request.path %}/edit_reference{% else %}/save_reference{% endif %}" method="post" id="add-reference-form">
             <input type="hidden" name="reference_type" id="reference_type" value="{{ selected_type }}">
             <input type="hidden" name="old_bib_key" id="old_bib_key" value="{% if pre_filled_values and pre_filled_values.get('bib_key') %}{{ pre_filled_values['bib_key'] }}{% endif %}"/>
 
@@ -91,8 +91,6 @@
                     {% if pre_filled_values %}Hyväksy muutokset{% else %}Tallenna viite{% endif %}
                 </button>
             </div>
-
-            <div class="info-text" id="info-text">
             </div>
         </form>
 
