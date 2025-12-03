@@ -34,7 +34,7 @@
                 <div style="display: flex; justify-content: space-between;">
                     {% if reference['bib_key'] in session["group"]["references"] %}
                     <form method="POST" action="/remove-group/{{ reference['bib_key'] }}" style="display:inline;">
-                        <button id="remove-group-{{ reference['bib_key'] }}" type="submit">Poista ryhmään</button>
+                        <button id="remove-group-{{ reference['bib_key'] }}" type="submit">Poista ryhmästä</button>
                     </form>
                     {% else %}
                     <form method="POST" action="/add-group/{{ reference['bib_key'] }}" style="display:inline;">
