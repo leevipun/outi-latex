@@ -25,7 +25,7 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
     padding: 20px;
-    color: var(--text-dark);
+    color: #2c3e50;
 }
 
 .search-input-group {
@@ -580,6 +580,18 @@ body.dark-mode .reference-item:hover {
     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.15);
 }
 
+body.dark-mode .reference-item ul {
+    color: #cbd5e0;
+}
+
+body.dark-mode .reference-item ul li {
+    color: #cbd5e0;
+}
+
+body.dark-mode .reference-item h3 {
+    color: #f0f4f8;
+}
+
 body.dark-mode .no-references,
 body.dark-mode .no-results,
 body.dark-mode .info-text {
@@ -597,6 +609,10 @@ body.dark-mode h2,
 body.dark-mode h3,
 body.dark-mode label {
     color: #e5e7eb;
+}
+
+body.dark-mode .all-page h1 {
+    color: #f0f4f8;
 }
 
 body.dark-mode .subtitle {
@@ -649,6 +665,14 @@ body.dark-mode a.btn:hover {
     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
 }
 
+body.dark-mode #export-bibtex-button {
+    background-color: #059669 !important;
+}
+
+body.dark-mode #export-bibtex-button:hover {
+    background-color: #047857 !important;
+}
+
 body.dark-mode .button-secondary {
     background: #4b5563;
 }
@@ -660,6 +684,10 @@ body.dark-mode .button-secondary:hover {
 
 body.dark-mode .fields-list li strong {
     color: #a5b4fc;
+}
+
+body.dark-mode .fields-list li span {
+    color: #e5e7eb;
 }
 
 body.dark-mode .fields-list li {

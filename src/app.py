@@ -10,6 +10,7 @@ from flask import (
     render_template,
     request,
     url_for,
+    session,
 )
 
 from src.config import app, test_env
@@ -20,7 +21,6 @@ from src.util import (
     format_bibtex_entry,
     get_doi_data_from_api,
     get_fields_for_type,
-    get_reference_type_by_id,
 )
 from src.utils import references
 from src.utils.references import (
@@ -41,6 +41,13 @@ from src.utils.tags import (
     get_tag_id_by_name,
     get_tags,
 )
+
+
+@app.before_request
+def initialize_session():
+    """Initialize session group data if not already set."""
+    if "group" not in session:
+        session["group"] = {"userId": None, "references": []}
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -116,12 +123,12 @@ def all_references():
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         data = []
-        return render_template("all.html", data=data)
+        return render_template("all.html", data=data, session=session)
 
     for reference in data:
         timestamp = reference["created_at"]
         reference["created_at"] = timestamp.strftime("%H:%M, %m.%d.%y")
-    return render_template("all.html", data=data)
+    return render_template("all.html", data=data, session=session)
 
 
 @app.route("/edit/<bib_key>")
@@ -191,12 +198,31 @@ def delete_reference(bib_key):
         flash(f"Viite '{bib_key}' poistettu", "success")
     except DatabaseError as e:
         flash(f"Database error while deleting: {str(e)}", "error")
+    if bib_key in session["group"]["references"]:
+        session["group"]["references"].remove(bib_key)
+        session.modified = True
     return redirect("/all")
 
 
 @app.route("/save_reference", methods=["POST"])
 def save_reference():
     """Tallenna uusi viite lomakkeelta tietokantaan."""
+
+    return _save_or_edit_reference(editing=False)
+
+
+@app.route("/edit_reference", methods=["POST"])
+def edit_reference_db():
+    """Tallenna muokattu viite lomakkeelta tietokantaan."""
+    return _save_or_edit_reference(editing=True)
+
+
+def _save_or_edit_reference(editing: bool):
+    """Shared logic for saving and editing references.
+
+    Args:
+        editing: If True, update existing reference; if False, create new reference.
+    """
     # reference_type tulee piilokentästä <input type="hidden" name="reference_type">
     reference_type = request.form.get("reference_type")
 
@@ -262,7 +288,7 @@ def save_reference():
 
     # Tallennus tietokantaan
     try:
-        ref_id = references.add_reference(reference_type, form_data)
+        ref_id = references.add_reference(reference_type, form_data, editing=editing)
         if selected_tag_id:
             try:
                 add_tag_to_reference(int(selected_tag_id), ref_id)
@@ -276,6 +302,26 @@ def save_reference():
         flash(f"Database error: {str(e)}", "error")
         return redirect(f"/add?form={reference_type}")
 
+    old_bib_key = (
+        form_data.get("old_bib_key", "").strip()
+        if isinstance(form_data.get("old_bib_key"), str)
+        else None
+    )
+
+    # Päivitä ryhmässä oleva viite, jos se on lisätty ryhmään
+    if editing and old_bib_key:
+        # Jos muokataan, tarkista vanha avain ryhmässä
+        if old_bib_key in session["group"]["references"]:
+            # Poista vanha avain
+            session["group"]["references"].remove(old_bib_key)
+            # Lisää uusi avain jos se eroaa vanhasta
+            if form_data["bib_key"] != old_bib_key:
+                session["group"]["references"].append(form_data["bib_key"])
+            session.modified = True
+    elif not editing:
+        # Uutta viitettä lisätessä ei tarvitse päivittää, koska sitä ei ole vielä ryhmässä
+        pass
+
     flash("Viite tallennettu!", "success")
     return redirect("/all")
 
@@ -284,7 +330,15 @@ def save_reference():
 def export_bibtex():
     """Export all references as BibTeX format"""
     try:
-        data = references.get_all_added_references()
+        type_param = request.args.get("type", "all").strip()
+        if type_param == "group" and len(session["group"]["references"]) > 0:
+            data = []
+            for bib_key in session["group"]["references"]:
+                ref = get_reference_by_bib_key(bib_key)
+                if ref:
+                    data.append(ref)
+        else:
+            data = references.get_all_added_references()
 
         if not data:
             return (
@@ -435,6 +489,45 @@ def toggle_theme():
     # 1 vuoden cookie:D
     resp.set_cookie("theme", new, max_age=60 * 60 * 24 * 365)
     return resp
+
+
+@app.route("/add-group/<bib_key>", methods=["POST"])
+def add_group(bib_key):
+    """Add a reference to a group."""
+    if bib_key in session["group"]["references"]:
+        flash("Tämä viite on jo lisätty ryhmään", "info")
+        return redirect("/all")
+    session["group"]["references"].append(bib_key)
+    session.modified = True
+    flash("Viite lisätty onnistuneesti ryhmään", "message")
+    return redirect("/all")
+
+
+@app.route("/remove-group/<bib_key>", methods=["POST"])
+def remove_group(bib_key):
+    """Remove a reference from the group."""
+    if bib_key not in session["group"]["references"]:
+        flash("Tätä viitettä ei ole ryhmässä", "info")
+        return redirect("/all")
+    session["group"]["references"].remove(bib_key)
+    session.modified = True
+    flash("Viite poistettu onnistuneesti ryhmästä", "message")
+    return redirect(request.referrer or "/all")
+
+
+@app.route("/group", methods=["GET"])
+def view_group():
+    """View references in the group."""
+    try:
+        data = []
+        for bib_key in session["group"]["references"]:
+            ref = get_reference_by_bib_key(bib_key)
+            if ref:
+                data.append(ref)
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        data = []
+    return render_template("group.html", data=data, session=session)
 
 
 # testausta varten oleva reitti

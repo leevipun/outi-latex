@@ -8,6 +8,18 @@
 </head>
 <body class="{% if theme == 'dark' %}dark-mode {% endif %}{% block body_class %}{% endblock %}">
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" id="alert-{{ category }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
     <nav class="navbar">
     <a href="{{ url_for('index') }}" class="nav-logo" id="nav-logo">Outi LaTeX</a>
 
@@ -22,7 +34,7 @@
                id="theme-toggle"
                data-testid="theme-toggle"
                aria-label="Vaihda vaaleaan tilaan">
-                ☀️ <span>Vaalea tila</span>
+               <span>☀️ Vaalea tila</span>
             </a>
         {% else %}
             <a href="{{ url_for('toggle_theme') }}"
@@ -30,23 +42,12 @@
                id="theme-toggle"
                data-testid="theme-toggle"
                aria-label="Vaihda tummaan tilaan">
-                🌙 <span>Tumma tila</span>
+               <span>🌙 Tumma tila</span>
             </a>
         {% endif %}
     </div>
 </nav>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash-messages">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" id="alert-{{ category }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    {% endwith %}
 
     <div class="container">
         {% block content %}{% endblock %}
