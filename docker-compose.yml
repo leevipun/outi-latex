@@ -18,5 +18,20 @@ services:
       timeout: 5s
       retries: 5
 
+  app:
+    build: .
+    container_name: outi-latex-app
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/outi_latex
+      FLASK_ENV: development
+    ports:
+      - "5001:5001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/app
+    command: sh -c "python seed_database.py && python src/index.py"
+
 volumes:
   postgres_data:
