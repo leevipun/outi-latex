@@ -10,6 +10,7 @@ from flask import (
     render_template,
     request,
     url_for,
+    session
 )
 
 from src.config import app, test_env
@@ -42,6 +43,14 @@ from src.utils.tags import (
     get_tags,
 )
 
+@app.before_request
+def initialize_session():
+    """Initialize session group data if not already set."""
+    if "group" not in session:
+        session["group"] = {
+            "userId": None,
+            "references": []
+        }
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -111,17 +120,18 @@ def add():
 @app.route("/all")
 def all_references():
     """See all added references listed on one page."""
+    print(session)
     try:
         data = references.get_all_added_references()
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         data = []
-        return render_template("all.html", data=data)
+        return render_template("all.html", data=data, session=session["group"])
 
     for reference in data:
         timestamp = reference["created_at"]
         reference["created_at"] = timestamp.strftime("%H:%M, %m.%d.%y")
-    return render_template("all.html", data=data)
+    return render_template("all.html", data=data, session=session)
 
 
 @app.route("/edit/<bib_key>")
@@ -436,6 +446,15 @@ def toggle_theme():
     resp.set_cookie("theme", new, max_age=60 * 60 * 24 * 365)
     return resp
 
+
+@app.route("/add-group/<bib_key>", methods=["POST"])
+def add_group(bib_key):
+    """Add a reference to a group."""
+    if bib_key in session["group"]["references"]:
+        flash("Tämä viite on jo lisätty ryhmään", "info")
+    session["group"]["references"].append(bib_key)
+    session.modified = True
+    return redirect("/all")
 
 # testausta varten oleva reitti
 if test_env:
