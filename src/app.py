@@ -118,7 +118,6 @@ def add():
 @app.route("/all")
 def all_references():
     """See all added references listed on one page."""
-    print(session)
     try:
         data = references.get_all_added_references()
     except DatabaseError as e:
