@@ -496,6 +496,31 @@ def add_group(bib_key):
     flash("Viite lisätty onnistuneesti ryhmään", "message")
     return redirect("/all")
 
+@app.route("/remove-group/<bib_key>", methods=["POST"])
+def remove_group(bib_key):
+    """Remove a reference from the group."""
+    if bib_key not in session["group"]["references"]:
+        flash("Tätä viitettä ei ole ryhmässä", "info")
+        return redirect("/all")
+    session["group"]["references"].remove(bib_key)
+    session.modified = True
+    flash("Viite poistettu onnistuneesti ryhmästä", "message")
+    return redirect(request.referrer or "/all")
+
+@app.route("/group", methods=["GET"])
+def view_group():
+    """View references in the group."""
+    try:
+        data = []
+        for bib_key in session["group"]["references"]:
+            ref = get_reference_by_bib_key(bib_key)
+            if ref:
+                data.append(ref)
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        data = []
+    return render_template("group.html", data=data, session=session)
+
 # testausta varten oleva reitti
 if test_env:
 
