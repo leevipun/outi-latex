@@ -10,7 +10,7 @@ from flask import (
     render_template,
     request,
     url_for,
-    session
+    session,
 )
 
 from src.config import app, test_env
@@ -42,14 +42,13 @@ from src.utils.tags import (
     get_tags,
 )
 
+
 @app.before_request
 def initialize_session():
     """Initialize session group data if not already set."""
     if "group" not in session:
-        session["group"] = {
-            "userId": None,
-            "references": []
-        }
+        session["group"] = {"userId": None, "references": []}
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -221,7 +220,7 @@ def edit_reference_db():
 
 def _save_or_edit_reference(editing: bool):
     """Shared logic for saving and editing references.
-    
+
     Args:
         editing: If True, update existing reference; if False, create new reference.
     """
@@ -309,7 +308,7 @@ def _save_or_edit_reference(editing: bool):
         if isinstance(form_data.get("old_bib_key"), str)
         else None
     )
-    
+
     # Päivitä ryhmässä oleva viite, jos se on lisätty ryhmään
     if editing and old_bib_key:
         # Jos muokataan, tarkista vanha avain ryhmässä
@@ -504,6 +503,7 @@ def add_group(bib_key):
     flash("Viite lisätty onnistuneesti ryhmään", "message")
     return redirect("/all")
 
+
 @app.route("/remove-group/<bib_key>", methods=["POST"])
 def remove_group(bib_key):
     """Remove a reference from the group."""
@@ -514,6 +514,7 @@ def remove_group(bib_key):
     session.modified = True
     flash("Viite poistettu onnistuneesti ryhmästä", "message")
     return redirect(request.referrer or "/all")
+
 
 @app.route("/group", methods=["GET"])
 def view_group():
@@ -528,6 +529,7 @@ def view_group():
         flash(f"Database error: {str(e)}", "error")
         data = []
     return render_template("group.html", data=data, session=session)
+
 
 # testausta varten oleva reitti
 if test_env:

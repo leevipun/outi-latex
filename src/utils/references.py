@@ -219,7 +219,7 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
                     f"Reference with bib_key '{bib_key_to_check}' already exists. "
                     "Use edit mode to update it."
                 )
-            
+
             # Muokataan olemassa olevaa viitettä
             ref_id = existing_ref["id"]
 
