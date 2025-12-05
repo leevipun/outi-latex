@@ -10,8 +10,8 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for,
     session,
+    url_for,
 )
 
 from src.config import app, test_env
@@ -27,10 +27,10 @@ from src.utils import references
 from src.utils.references import (
     DatabaseError,
     delete_reference_by_bib_key,
+    filter_and_sort_search_results,
     get_reference_by_bib_key,
     get_references_filtered_sorted,
     search_reference_by_query,
-    filter_and_sort_search_results,
 )
 from src.utils.tags import (
     TagError,
@@ -42,10 +42,8 @@ from src.utils.tags import (
     get_tag_id_by_name,
     get_tags,
 )
-from src.utils.users import (
-    UserError,
-    get_user_by_username
-)
+from src.utils.users import UserError, get_user_by_username
+
 
 @app.before_request
 def initialize_session():
