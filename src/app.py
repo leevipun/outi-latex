@@ -282,6 +282,9 @@ def _save_or_edit_reference(editing: bool):
 
         form_data[name] = value or None
 
+    visibility = request.form.get("visibility")
+    form_data["is_public"] = (visibility == "public")
+
     if errors:
         for msg in errors:
             flash(msg, "error")
