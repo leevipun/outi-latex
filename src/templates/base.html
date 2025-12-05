@@ -8,18 +8,6 @@
 </head>
 <body class="{% if theme == 'dark' %}dark-mode {% endif %}{% block body_class %}{% endblock %}">
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        <div class="flash-messages">
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }}" id="alert-{{ category }}">
-                {{ message }}
-            </div>
-            {% endfor %}
-        </div>
-        {% endif %}
-    {% endwith %}
-
     <nav class="navbar">
     <a href="{{ url_for('index') }}" class="nav-logo" id="nav-logo">Outi LaTeX</a>
 
@@ -47,11 +35,35 @@
         {% endif %}
     </div>
 </nav>
-
-
-    <div class="container">
-        {% block content %}{% endblock %}
+    <div style="display: flex; flex-direction: column; align-items: center; margin-top: 20px;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" id="alert-{{ category }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        {% endwith %}
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
     </div>
         <script src="{{ url_for('static', filename='navbar.js') }}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                    const alerts = document.querySelectorAll('.alert');
+
+                    alerts.forEach(alert => {
+                        alert.addEventListener('animationend', function (e) {
+                            if (e.animationName === 'slideOut') {
+                                alert.remove();
+                            }
+                        });
+                    });
+                });
+        </script>
     </body>
 </html>
