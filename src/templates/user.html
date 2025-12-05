@@ -4,5 +4,106 @@
 {% block body_class %}user-page{% endblock %}
 
 {% block content %}
+{% if user %}
+    <div id="user-settings-container">
+        <h1 id="user-settings-title">Käyttäjäasetukset</h1>
+        <hr/>
 
+        <!-- Email Change Form -->
+        <div class="settings-section">
+            <h2 id="email-section-title">Vaihda sähköpostiosoite</h2>
+            <form action="/update_email" method="post" id="email-form">
+                <div class="form-group">
+                    <label for="current_email" id="current-email-label">
+                        Nykyinen sähköpostiosoite
+                    </label>
+                    {{ user.email }}
+                    <small class="helper-text">Tämä on nykyinen sähköpostiosoitteesi</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_email" id="new-email-label">
+                        Uusi sähköpostiosoite <span class="required">*</span>
+                    </label>
+                    <input type="email"
+                           id="new_email"
+                           name="new_email"
+                           placeholder="uusi@email.com"
+                           required>
+                    <small class="helper-text">Syötä uusi sähköpostiosoitteesi</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_email" id="confirm-email-label">
+                        Vahvista uusi sähköpostiosoite <span class="required">*</span>
+                    </label>
+                    <input type="email"
+                           id="confirm_email"
+                           name="confirm_email"
+                           placeholder="uusi@email.com"
+                           required>
+                    <small class="helper-text">Syötä uusi sähköpostiosoite uudelleen</small>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="button-primary" id="update-email-button">
+                        Päivitä sähköpostiosoite
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Password Change Form -->
+        <div class="settings-section">
+            <h2 id="password-section-title">Vaihda salasana</h2>
+            <form action="/update_password" method="post" id="password-form">
+                <div class="form-group">
+                    <label for="current_password" id="current-password-label">
+                        Nykyinen salasana <span class="required">*</span>
+                    </label>
+                    <input type="password"
+                           id="current_password"
+                           name="current_password"
+                           required>
+                    <small class="helper-text">Syötä nykyinen salasanasi vahvistusta varten</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password" id="new-password-label">
+                        Uusi salasana <span class="required">*</span>
+                    </label>
+                    <input type="password"
+                           id="new_password"
+                           name="new_password"
+                           required
+                           minlength="8">
+                    <small class="helper-text">Salasanan tulee olla vähintään 8 merkkiä pitkä</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password" id="confirm-password-label">
+                        Vahvista uusi salasana <span class="required">*</span>
+                    </label>
+                    <input type="password"
+                           id="confirm_password"
+                           name="confirm_password"
+                           required
+                           minlength="8">
+                    <small class="helper-text">Syötä uusi salasana uudelleen</small>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="button-primary" id="update-password-button">
+                        Päivitä salasana
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Back to Home Link -->
+        <div class="navigation-links">
+            <a href="/" id="back-to-home" class="btn">← Takaisin etusivulle</a>
+        </div>
+    </div>
+{% endif %}
 {% endblock %}
