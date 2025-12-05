@@ -40,11 +40,12 @@ def get_all_references() -> list:
 
 
 def get_all_added_references() -> list:
-    """Fetch all added reference from the database with all their field values and tags.
+    """Fetch all PUBLIC added references from the database with all their field values and tags.
 
     Returns:
         list: List of dictionaries containing bib-key, reference type,
               timestamp, all field values, and associated tag, sorted by timestamp.
+              Only returns references where is_public = TRUE.
 
     Raises:
         DatabaseError: If database query fails.
@@ -65,6 +66,7 @@ def get_all_added_references() -> list:
             LEFT JOIN fields f ON rv.field_id = f.id
             LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
             LEFT JOIN tags t ON reftag.tag_id = t.id
+            WHERE sr.is_public = TRUE
             ORDER BY sr.created_at DESC, sr.id, f.key_name;"""
     )
     try:
