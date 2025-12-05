@@ -3,6 +3,7 @@
 import re
 
 from flask import (
+    abort,
     flash,
     jsonify,
     make_response,
@@ -540,6 +541,9 @@ def user(username):
     user = None
     try:
         user = get_user_by_username(username)
+        if not user:
+            abort(404)
+
     except Exception as e:
         flash(f"Error: {str(e)}", "error")
 
