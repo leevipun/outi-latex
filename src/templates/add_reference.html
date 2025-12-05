@@ -80,10 +80,24 @@
                 <p><small>Ei vielä avainsanoja. Lisää uusi avainsana alla.</small></p>
                 {% endif %}
             </div>
-    
+
             <div class="form-group">
                 <label for="new_tag">Lisää uusi avainsana</label>
                 <input type="text" id="new_tag" name="new_tag" placeholder="Uuden avainsanan nimi" />
+            </div>
+
+            <div class="form-group">
+                <label>Näkyvyys</label>
+                <div class="toggle-container">
+                    <span class="toggle-label">🔒 Yksityinen</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="visibility-toggle" name="visibility" value="public"
+                               {% if not pre_filled_values or pre_filled_values.get('is_public', True) %}checked{% endif %}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="toggle-label">📢 Julkinen</span>
+                </div>
+                <small class="helper-text">Yksityiset viitteet eivät näy muille käyttäjille</small>
             </div>
 
             <div class="button-group">
