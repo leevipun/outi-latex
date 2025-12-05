@@ -77,7 +77,7 @@
                     {% endfor %}
                 </select>
                 {% else %}
-                <p><small>Ei vielä avainsanoja. Lisää uusi avainsana alla.</small></p>
+                <p><small>Ei vielä avainsanoja. Lisää uusi avainsana alla.</small>></p>
                 {% endif %}
             </div>
 
@@ -87,17 +87,13 @@
             </div>
 
             <div class="form-group">
-                <label>Näkyvyys</label>
-                <div class="toggle-container">
-                    <span class="toggle-label">🔒 Yksityinen</span>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="visibility-toggle" name="visibility" value="public" checked>
-                               {% if not pre_filled_values or pre_filled_values.get('is_public', True) %}checked{% endif %}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <span class="toggle-label">📢 Julkinen</span>
-                </div>
-                <small class="helper-text">Yksityiset viitteet eivät näy muille käyttäjille</small>
+                <label>📢 Julkinen</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="visibility-toggle" name="visibility" value="public"
+                           {% if not pre_filled_values or pre_filled_values.get('is_public', True) %}checked{% endif %}>
+                    <span class="toggle-slider"></span>
+                </label>
+                <small class="helper-text">Yksityiset viitteet eivät näy muille käyttäjille.</small>
             </div>
 
             <div class="button-group">
