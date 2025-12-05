@@ -341,15 +341,16 @@ def delete_reference_by_bib_key(bib_key: str) -> None:
 
 
 def search_reference_by_query(query: str) -> list:
-    """Search for references matching the given query string.
+    """Search for PUBLIC references matching the given query string.
 
     Searches across bib_key, author, title, and other field values.
+    Only returns public references.
 
     Args:
         query: The search query string.
 
     Returns:
-        list: List of dictionaries containing matching references with their fields and tags.
+        list: List of dictionaries containing matching public references with their fields and tags.
 
     Raises:
         DatabaseError: If the search query fails.
@@ -372,7 +373,8 @@ def search_reference_by_query(query: str) -> list:
             LEFT JOIN fields f ON rv.field_id = f.id
             LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
             LEFT JOIN tags t ON reftag.tag_id = t.id
-            WHERE sr.id IN (
+            WHERE sr.is_public = TRUE
+              AND sr.id IN (
                 SELECT DISTINCT sr2.id
                 FROM single_reference sr2
                 LEFT JOIN reference_values rv2 ON sr2.id = rv2.reference_id
@@ -512,7 +514,7 @@ def get_references_filtered_sorted(
             LEFT JOIN fields f ON rv.field_id = f.id
             LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
             LEFT JOIN tags t ON reftag.tag_id = t.id
-            WHERE 1=1
+            WHERE sr.is_public = TRUE
         """
 
         params = {}
