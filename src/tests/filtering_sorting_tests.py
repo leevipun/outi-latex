@@ -1,11 +1,12 @@
 """Unit tests for filtering and sorting references."""
 
 from datetime import datetime
+
 from src.utils.references import (
+    filter_and_sort_search_results,
+    sort_references_by_bib_key,
     sort_references_by_created_at,
     sort_references_by_field,
-    sort_references_by_bib_key,
-    filter_and_sort_search_results,
 )
 
 
