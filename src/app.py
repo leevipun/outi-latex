@@ -530,6 +530,12 @@ def view_group():
     return render_template("group.html", data=data, session=session)
 
 
+@app.route("/user<user_id>", methods=["GET"])
+def user(user_id):
+    """User page."""
+    return render_template("user.html")
+
+
 # testausta varten oleva reitti
 if test_env:
 
