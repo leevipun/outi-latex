@@ -41,7 +41,10 @@ from src.utils.tags import (
     get_tag_id_by_name,
     get_tags,
 )
-
+from src.utils.users import (
+    UserError,
+    get_user_by_username
+)
 
 @app.before_request
 def initialize_session():
@@ -530,10 +533,17 @@ def view_group():
     return render_template("group.html", data=data, session=session)
 
 
-@app.route("/user<user_id>", methods=["GET"])
-def user(user_id):
+@app.route("/user/<username>", methods=["GET"])
+def user(username):
     """User page."""
-    return render_template("user.html")
+
+    user = None
+    try:
+        user = get_user_by_username(username)
+    except Exception as e:
+        flash(f"Error: {str(e)}", "error")
+
+    return render_template("user.html", user=user)
 
 
 # testausta varten oleva reitti
