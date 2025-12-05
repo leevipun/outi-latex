@@ -26,7 +26,8 @@ CREATE TABLE single_reference (
     id SERIAL PRIMARY KEY,
     reference_type_id INT NOT NULL REFERENCES reference_types(id),
     bib_key VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_public BOOLEAN DEFAULT TRUE
 );
 
 -- Kenttäarvot
