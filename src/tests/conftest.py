@@ -121,8 +121,10 @@ def db_session(app):
 
         yield db
 
-        # Cleanup after test
-        db.session.rollback()
+        # Cleanup after test: remove all user-created references and their values
+        db.session.execute(text("DELETE FROM reference_values"))
+        db.session.execute(text("DELETE FROM single_reference"))
+        db.session.commit()
 
 
 @pytest.fixture

@@ -4,7 +4,17 @@
 {% block body_class %}all-page{% endblock %}
 
 {% block content %}
-    <h1 id="all-references-title">Kaikki viitteet</h1>
+    <div style="display: flex; justify-content: space-between; align-items: center;" id="all-group">
+        <h1 id="all-references-title">Kaikki viitteet</h1>
+        <form method="get" action="/group">
+                <button type="submit" id="view-group-button-{{ session["group"]["references"]|length }}">
+                    Näytä ryhmä 
+                    {% if session["group"]["references"]|length > 0 %}
+                        {{ session["group"]["references"]|length }}
+                    {% endif %}
+                </button>
+        </form>
+    </div>
     {% if data %}
         {% for reference in data %}
             <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
@@ -21,21 +31,27 @@
                         <li id="reference-tag-{{ reference['bib_key'] }}"><strong>Tag:</strong> <span id="value-{{ reference['bib_key'] }}-tag">{{ reference["tag"]["name"] }}</span></li>
                     {% endif %}
                 </ul>
-                <form 
-                    method="get"
-                    action="/edit/{{ reference['bib_key'] }}" 
-                    style="display:inline;">
-                    <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
-                </form>
-                <form 
-                    method="post" 
-                    action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}" 
-                    style="display:inline;"
-                    onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');"
-                >
-                    <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
-                    <button type="submit" id="delete-button-{{reference['bib_key']}}">Poista</button>
-                </form>
+                <div style="display: flex; justify-content: space-between;">
+                    {% if reference['bib_key'] in session["group"]["references"] %}
+                    <form method="POST" action="/remove-group/{{ reference['bib_key'] }}" style="display:inline;">
+                        <button id="remove-group-{{ reference['bib_key'] }}" type="submit">Poista ryhmästä</button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="/add-group/{{ reference['bib_key'] }}" style="display:inline;">
+                        <button id="add-group-{{ reference['bib_key'] }}" type="submit">Lisää ryhmään</button>
+                    </form>
+                    {% endif %}
+                    <div>
+                        <form method="get" action="/edit/{{ reference['bib_key'] }}" style="display:inline;">
+                            <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
+                        </form>
+                        <form method="post" action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}"
+                            style="display:inline;" onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');">
+                            <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
+                            <button type="submit" id="delete-button-{{reference['bib_key']}}">Poista</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         {% endfor %}
     {% else %}
@@ -48,11 +64,11 @@
     <a href="/" id="back-to-home-button" class="btn">Etusivu</a>
     <a href="/search" class="btn" id="view-all-references-button">Hae viitteitä</a>
     {% if data %}
-        <a href="/export/bibtex"
+        <a href="/export/bibtex?type=all"
         id="export-bibtex-button"
         class="button button-primary"
         download="references.bib"
-        style="margin-left: 10px; background: #28a745;">
+        style="margin-left: 10px; background: #28a745; padding: 15px; border-radius: 10px; text-decoration: none;">
         📄 Lataa BibTeX (.bib)
         </a>
     {% endif %}

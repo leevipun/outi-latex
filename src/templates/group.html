@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Kaikki viitteet - Outi LaTeX{% endblock %}
+{% block body_class %}all-page{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center;" id="all-group">
+    <h1 id="group-references-title">Kaikki ryhmään valitut viitteet</h1>
+</div>
+{% if data %}
+{% for reference in data %}
+<div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
+    <h3 id="reference-key-{{ reference['bib_key'] }}">{{ reference["bib_key"] }}</h3>
+    <ul id="reference-meta-{{ reference['bib_key'] }}">
+        <li id="reference-type-{{ reference['bib_key'] }}">{{ reference["reference_type"] }}</li>
+        <li id="reference-date-{{ reference['bib_key'] }}">{{ reference["created_at"] }}</li>
+    </ul>
+    <ul class="fields-list" id="reference-fields-{{ reference['bib_key'] }}">
+        {% for key, value in reference["fields"].items() %}
+        <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span
+                id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
+        {% endfor %}
+        {% if reference["tag"] %}
+        <li id="reference-tag-{{ reference['bib_key'] }}"><strong>Tag:</strong> <span
+                id="value-{{ reference['bib_key'] }}-tag">{{ reference["tag"]["name"] }}</span></li>
+        {% endif %}
+    </ul>
+    <div style="display: flex; justify-content: space-between;">
+        {% if reference['bib_key'] in session["group"]["references"] %} 
+        <form method="POST" action="/remove-group/{{ reference['bib_key'] }}" style="display:inline;">
+            <button id="remove-group-{{ reference['bib_key'] }}" type="submit">Poista ryhmään</button>
+        </form>
+        {% else %}
+        <form method="POST" action="/add-group/{{ reference['bib_key'] }}" style="display:inline;">
+            <button id="add-group-{{ reference['bib_key'] }}" type="submit">Lisää ryhmään</button>
+        </form>
+        {% endif %}
+        <div>
+            <form method="get" action="/edit/{{ reference['bib_key'] }}" style="display:inline;">
+                <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
+            </form>
+            <form method="post" action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}"
+                style="display:inline;" onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');">
+                <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
+                <button type="submit" id="delete-button-{{reference['bib_key']}}">Poista</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="no-references" id="no-references-div">
+    <h2 id="no-references-title">Ei viitteitä lisättynä ryhmään</h2>
+    <p id="no-references-message">Et ole vielä lisännyt viitteitä ryhmään. Voit lisätä viitteitä <a href="/all">täältä</a>.</p>
+</div>
+{% endif %}
+<br />
+<a href="/" id="back-to-home-button" class="btn">Etusivu</a>
+<a href="/search" class="btn" id="view-all-references-button">Hae viitteitä</a>
+{% if data %}
+<a href="/export/bibtex?type=group" id="export-bibtex-button" class="button button-primary" download="references.bib"
+    style="margin-left: 10px; background: #28a745; padding: 15px; border-radius: 10px; text-decoration: none;">
+    📄 Lataa ryhmän BibTeX (.bib)
+</a>
+{% endif %}
+{% endblock %}

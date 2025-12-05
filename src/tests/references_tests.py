@@ -338,7 +338,7 @@ class TestGetReferenceByBibKey:
             ref = get_reference_by_bib_key("NonExistentKey")
             assert ref is None
 
-    def test_get_reference_after_deletion(self, app, sample_reference_data):
+    def test_get_reference_after_deletion(self, app, db_session, sample_reference_data):
         """Test that a reference cannot be retrieved after deletion."""
         with app.app_context():
             add_reference("article", sample_reference_data)
