@@ -188,7 +188,7 @@ def edit_reference(bib_key):
     )
 
 
-@app.route("/delete/<bib_key>", methods=["POST"])
+@app.route("/delete/<bib_key>", methods=["POST", "DELETE"])
 def delete_reference(bib_key):
     """Poista haluttu reference
     Args:
@@ -197,20 +197,34 @@ def delete_reference(bib_key):
     try:
         reference = get_reference_by_bib_key(bib_key)
     except DatabaseError as e:
+        if request.method == "DELETE":
+            return jsonify({"success": False, "error": str(e)}), 500
         flash(f"Database error: {str(e)}", "error")
         return redirect("/all")
+
     if not reference:
+        if request.method == "DELETE":
+            return jsonify({"success": False, "error": f"Reference '{bib_key}' not found"}), 404
         flash(f"Reference with bib_key '{bib_key}' not found", "error")
         return redirect("/all")
+
     try:
         delete_reference_by_bib_key(bib_key)
+        if bib_key in session["group"]["references"]:
+            session["group"]["references"].remove(bib_key)
+            session.modified = True
+
+        if request.method == "DELETE":
+            return jsonify({"success": True, "message": f"Reference '{bib_key}' deleted"}), 200
+
         flash(f"Viite '{bib_key}' poistettu", "success")
+        return redirect("/all")
+
     except DatabaseError as e:
+        if request.method == "DELETE":
+            return jsonify({"success": False, "error": str(e)}), 500
         flash(f"Database error while deleting: {str(e)}", "error")
-    if bib_key in session["group"]["references"]:
-        session["group"]["references"].remove(bib_key)
-        session.modified = True
-    return redirect("/all")
+        return redirect("/all")
 
 
 @app.route("/save_reference", methods=["POST"])
