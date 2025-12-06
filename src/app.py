@@ -31,6 +31,7 @@ from src.utils.references import (
     get_reference_by_bib_key,
     get_references_filtered_sorted,
     search_reference_by_query,
+    get_reference_visibility,
 )
 from src.utils.tags import (
     TagError,
@@ -164,6 +165,12 @@ def edit_reference(bib_key):
     pre_filled = {"bib_key": reference["bib_key"], **reference["fields"]}
     if tag:
         pre_filled["tag"] = tag
+
+    try:
+        pre_filled["is_public"] = get_reference_visibility(bib_key)
+    except DatabaseError as e:
+        flash(f"Error loading visibility status: {str(e)}", "error")
+        pre_filled["is_public"] = True
 
     # Hae tagit
     try:
