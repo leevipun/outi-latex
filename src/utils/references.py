@@ -170,6 +170,7 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
                   "author": "Martin, O.",
                   "title": "Nice paper",
                   "year": "2009",
+                  "is_public": True,
                   ...
               }
         editing: True jos muokataan olemassa olevaa viitettä, False jos lisätään uusi
@@ -195,6 +196,9 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
             raise DatabaseError(f"Unknown reference type: {reference_type_name}")
 
         reference_type_id = result["id"]
+
+        # Poimi is_public ennen muuta käsittelyä (oletuksena True)
+        is_public = data.pop("is_public", True)
 
         # 2) Tarkista onko viite jo olemassa
         old_bib_key = (
@@ -232,27 +236,40 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
             )
             db.session.flush()
 
-            # Päivitä bib_key jos se muuttui
+            # Päivitä bib_key JA is_public jos ne muuttuivat
             if old_bib_key and data["bib_key"] != old_bib_key:
                 db.session.execute(
                     text(
-                        "UPDATE single_reference SET bib_key = :new_bib_key WHERE id = :id"
+                        """UPDATE single_reference
+                           SET bib_key = :new_bib_key, is_public = :is_public
+                           WHERE id = :id"""
                     ),
-                    {"new_bib_key": data["bib_key"], "id": ref_id},
+                    {"new_bib_key": data["bib_key"], "is_public": is_public, "id": ref_id},
+                )
+            else:
+                # Päivitä vain is_public (bib_key pysyy samana)
+                db.session.execute(
+                    text(
+                        """UPDATE single_reference
+                           SET is_public = :is_public
+                           WHERE id = :id"""
+                    ),
+                    {"is_public": is_public, "id": ref_id},
                 )
         else:
             # Luodaan uusi viite
             insert_ref = db.session.execute(
                 text(
                     """
-                    INSERT INTO single_reference (bib_key, reference_type_id)
-                    VALUES (:bib_key, :reference_type_id)
+                    INSERT INTO single_reference (bib_key, reference_type_id, is_public)
+                    VALUES (:bib_key, :reference_type_id, :is_public)
                     RETURNING id;
                     """
                 ),
                 {
                     "bib_key": data["bib_key"],
                     "reference_type_id": reference_type_id,
+                    "is_public": is_public,
                 },
             )
             db.session.flush()
