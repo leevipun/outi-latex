@@ -50,12 +50,52 @@ CI: https://github.com/leevipun/outi-latex/actions
 
 ## 🚀 Installation
 
-### 1. Clone the Repository
+### Option A: Using Docker (Recommended)
+
+The easiest way to run the entire application with Docker:
+
+#### 1. Clone the Repository
 
 ```bash
 git clone <repository-url>
 cd outi-latex
 ```
+
+#### 2. Run with Docker Compose
+
+```bash
+docker-compose up
+```
+
+This will:
+
+- Start a PostgreSQL database
+- Build and run the Flask application
+- Automatically seed the database
+- Make the app available at `http://localhost:5001`
+
+To stop the containers:
+
+```bash
+docker-compose down
+```
+
+To remove all data:
+
+```bash
+docker-compose down -v
+```
+
+### Option B: Local Installation
+
+#### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd outi-latex
+```
+
+#### 2. Install Poetry
 
 ### 2. Install Poetry
 
