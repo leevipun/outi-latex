@@ -643,3 +643,18 @@ def filter_and_sort_search_results(
     except Exception as e:
         print(f"Warning: Sorting failed, returning filtered results: {e}")
         return filtered
+
+
+def get_reference_visibility(bib_key: str) -> bool:
+    """Get the is_public status of a reference."""
+    try:
+        sql = text("SELECT is_public FROM single_reference WHERE bib_key = :bib_key")
+        result = db.session.execute(sql, {"bib_key": bib_key}).mappings().first()
+
+        if result:
+            return result["is_public"]
+
+        return True
+
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch visibility for '{bib_key}': {e}") from e
