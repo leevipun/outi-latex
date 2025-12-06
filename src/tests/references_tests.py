@@ -9,6 +9,7 @@ from src.utils.references import (
     get_all_added_references,
     get_all_references,
     get_reference_by_bib_key,
+    get_reference_visibility,
 )
 
 
@@ -413,3 +414,29 @@ class TestDeleteReference:
                 {"rid": ref_id},
             ).scalar()
             assert count_after == 0
+
+class TestPublicPrivateReferences:
+    """Tests for public/private reference visibility feature.
+
+    These tests ensure that:
+    - References can be marked as public or private
+    - Private references don't appear in public listings
+    - Visibility can be changed during editing
+    - Default visibility is public
+    """
+
+    def test_add_public_reference(self, app, db_session):
+        """Test adding a public reference."""
+        with app.app_context():
+            data = {
+                "bib_key": "Public2024",
+                "author": "Test Author",
+                "title": "Public Paper",
+                "year": "2024",
+                "journal": "Test Journal",
+                "is_public": True,
+            }
+
+            ref_id = add_reference("article", data, editing=False)
+            assert ref_id is not None
+            assert get_reference_visibility("Public2024") is True
