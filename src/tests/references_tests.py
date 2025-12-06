@@ -440,3 +440,78 @@ class TestPublicPrivateReferences:
             ref_id = add_reference("article", data, editing=False)
             assert ref_id is not None
             assert get_reference_visibility("Public2024") is True
+
+    def test_add_private_reference(self, app, db_session):
+        """Test adding a private reference."""
+        with app.app_context():
+            data = {
+                "bib_key": "Private2024",
+                "author": "Test Author",
+                "title": "Private Paper",
+                "year": "2024",
+                "journal": "Test Journal",
+                "is_public": False,
+            }
+
+            ref_id = add_reference("article", data, editing=False)
+            assert ref_id is not None
+            assert get_reference_visibility("Private2024") is False
+
+    def test_private_references_not_in_public_listing(self, app, db_session):
+        """Test that private references don't appear in get_all_added_references."""
+        with app.app_context():
+            # Add public reference
+            public_data = {
+                "bib_key": "Public2024",
+                "author": "Public Author",
+                "title": "Public Paper",
+                "year": "2024",
+                "journal": "Public Journal",
+                "is_public": True,
+            }
+            add_reference("article", public_data, editing=False)
+
+            # Add private reference
+            private_data = {
+                "bib_key": "Private2024",
+                "author": "Private Author",
+                "title": "Private Paper",
+                "year": "2024",
+                "journal": "Private Journal",
+                "is_public": False,
+            }
+            add_reference("article", private_data, editing=False)
+
+            # Get all public references
+            all_refs = get_all_added_references()
+            bib_keys = [ref["bib_key"] for ref in all_refs]
+
+            assert "Public2024" in bib_keys
+            assert "Private2024" not in bib_keys
+
+    def test_change_visibility_from_public_to_private(self, app, db_session):
+        """Test changing reference visibility from public to private."""
+        with app.app_context():
+            # Add public reference
+            data = {
+                "bib_key": "EditTest2024",
+                "author": "Test Author",
+                "title": "Test Paper",
+                "year": "2024",
+                "journal": "Test Journal",
+                "is_public": True,
+            }
+            add_reference("article", data, editing=False)
+            assert get_reference_visibility("EditTest2024") is True
+
+            # Change to private
+            data["is_public"] = False
+            data["old_bib_key"] = "EditTest2024"
+            add_reference("article", data, editing=True)
+
+            assert get_reference_visibility("EditTest2024") is False
+
+            # Verify it's not in public listing
+            all_refs = get_all_added_references()
+            bib_keys = [ref["bib_key"] for ref in all_refs]
+            assert "EditTest2024" not in bib_keys
