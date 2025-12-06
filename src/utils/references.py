@@ -156,33 +156,9 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
 
 
 def add_reference(reference_type_name: str, data: dict, editing: bool = False) -> int:
-    """Lisää uusi viite tietokantaan tai päivitä olemassa oleva.
-
-    Jos editing=True ja bib_key on jo olemassa, päivitetään sen kentät.
-    Jos editing=False ja bib_key on jo olemassa, heitetään virhe.
-    Oletus: Viitetyyppi ei muutu, mutta kentät voivat muuttua.
-
-    Args:
-        reference_type_name: viitetyypin nimi, esim. "article" (tulee lomakkeelta / URL:sta)
-        data: lomakedata dictinä, esim:
-              {
-                  "bib_key": "Martin2009",
-                  "author": "Martin, O.",
-                  "title": "Nice paper",
-                  "year": "2009",
-                  "is_public": True,
-                  ...
-              }
-        editing: True jos muokataan olemassa olevaa viitettä, False jos lisätään uusi
-
-    Returns:
-        int: Lisätyn tai päivitetyn viitteen id.
-
-    Raises:
-        DatabaseError: jos tietokantaoperaatio epäonnistuu.
-    """
+    """Lisää uusi viite tietokantaan tai päivitä olemassa oleva."""
     try:
-        # 1) Hae viitetyypin id reference_types-taulusta
+        # 1) Hae viitetyypin id
         result = (
             db.session.execute(
                 text("SELECT id FROM reference_types WHERE name = :name"),
@@ -197,16 +173,12 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
 
         reference_type_id = result["id"]
 
-        # Poimi is_public ennen muuta käsittelyä (oletuksena True)
-        is_public = data.pop("is_public", True)
-
         # 2) Tarkista onko viite jo olemassa
         old_bib_key = (
             data.get("old_bib_key", "").strip()
             if isinstance(data.get("old_bib_key"), str)
             else None
         )
-        # Kun muokataan, käytetään vanhaa avainta löytämiseen
         bib_key_to_check = old_bib_key if editing and old_bib_key else data["bib_key"]
 
         existing_ref = (
@@ -218,9 +190,21 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
             .first()
         )
 
+        if "is_public" in data:
+            is_public = data.pop("is_public")
+        elif editing and existing_ref:
+            # Muokataan olemassa olevaa viitettä, säilytetään nykyinen arvo
+            current_visibility = db.session.execute(
+                text("SELECT is_public FROM single_reference WHERE id = :ref_id"),
+                {"ref_id": existing_ref["id"]},
+            ).scalar()
+            is_public = current_visibility if current_visibility is not None else True
+        else:
+            # Uusi viite, oletus on True (julkinen)
+            is_public = True
+
         if existing_ref:
             if not editing:
-                # Yritettiin lisätä uusi viite, mutta se on jo olemassa
                 raise DatabaseError(
                     f"Reference with bib_key '{bib_key_to_check}' already exists. "
                     "Use edit mode to update it."
@@ -274,20 +258,18 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
             )
             db.session.flush()
 
-            # .scalar() toimii useimmissa, mutta jos ei, käytetään mappings().first()
             ref_id = insert_ref.scalar()
             if ref_id is None:
                 row = insert_ref.mappings().first()
                 ref_id = row["id"]
 
-        # 3) Jokaiselle kentälle (paitsi bib_key ja old_bib_key) lisätään rivi reference_values-tauluun
+        # 3) Lisää kentät reference_values-tauluun
         for key, value in data.items():
             if key in ("bib_key", "old_bib_key"):
                 continue
             if value in (None, ""):
-                continue  # ei tallenneta tyhjiä
+                continue
 
-            # Hae field_id fields-taulusta (key_name + reference_type_id)
             field_row = (
                 db.session.execute(
                     text(
@@ -308,13 +290,11 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
                 .first()
             )
 
-            # Jos kenttää ei löydy skeemasta, skippaa (voi myös nostaa virheen jos haluat)
             if field_row is None:
                 continue
 
             field_id = field_row["id"]
 
-            # Lisää arvo reference_values-tauluun
             db.session.execute(
                 text(
                     """
@@ -332,7 +312,7 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
         db.session.commit()
         return ref_id
 
-    except Exception as exc:  # voit tiukentaa myöhemmin
+    except Exception as exc:
         db.session.rollback()
         raise DatabaseError(f"Failed to insert/update reference: {exc}") from exc
 
