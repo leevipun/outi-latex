@@ -24,6 +24,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/outi_latex
       FLASK_ENV: development
+      TEST_ENV: "true"
     ports:
       - "5001:5001"
     depends_on:

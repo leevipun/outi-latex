@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Kirjaudu{% endblock %}
+{% block content %}
+<h1>Kirjaudu</h1>
+<form method="post" class="auth-form">
+    <div class="form-group">
+        <label for="username">Kayttajanimi</label>
+        <input type="text" id="username" name="username" value="{{ username or '' }}" required>
+    </div>
+    <div class="form-group">
+        <label for="password">Salasana</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit">Kirjaudu</button>
+</form>
+<p class="auth-switch">Ei tunnusta? <a href="{{ url_for('signup') }}">Luo uusi kayttaja</a></p>
+{% endblock %}
