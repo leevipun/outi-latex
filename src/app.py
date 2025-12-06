@@ -1,6 +1,7 @@
 """Flask application routes and initialization."""
 
 import re
+from functools import wraps
 
 from flask import (
     abort,
@@ -42,7 +43,29 @@ from src.utils.tags import (
     get_tag_id_by_name,
     get_tags,
 )
-from src.utils.users import UserError, get_user_by_username
+from src.utils.users import (
+    AuthenticationError,
+    UserError,
+    UserExistsError,
+    create_user,
+    get_user_by_username,
+    link_reference_to_user,
+    verify_user_credentials,
+)
+
+
+def login_required(view_func):
+    """Ensure the user is authenticated before accessing the route."""
+
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        if not session.get("user_id"):
+            flash("Please log in to continue.", "error")
+            next_url = request.path
+            return redirect(url_for("login", next=next_url))
+        return view_func(*args, **kwargs)
+
+    return wrapper
 
 
 @app.before_request
@@ -50,6 +73,87 @@ def initialize_session():
     """Initialize session group data if not already set."""
     if "group" not in session:
         session["group"] = {"userId": None, "references": []}
+
+
+@app.before_request
+def require_login():
+    """Redirect to login for protected endpoints."""
+    if test_env:
+        return None
+
+    public_endpoints = {"login", "signup", "static", "toggle_theme"}
+    if test_env:
+        public_endpoints.add("reset_database")
+
+    if request.endpoint in public_endpoints or request.endpoint is None:
+        return None
+
+    if not session.get("user_id"):
+        return redirect(url_for("login", next=request.path))
+
+
+def login_user(user: dict):
+    """Persist user info into the session."""
+    session["user_id"] = user["id"]
+    session["username"] = user["username"]
+
+
+def logout_user():
+    """Clear user info from the session."""
+    session.pop("user_id", None)
+    session.pop("username", None)
+
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    """Simple signup route."""
+    if request.method == "GET":
+        return render_template("signup.html")
+
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+    try:
+        user = create_user(username, password)
+        login_user(user)
+        flash("Account created. You are now logged in.", "success")
+        return redirect(url_for("index"))
+    except UserExistsError:
+        flash("Username already exists.", "error")
+    except UserError as e:
+        flash(str(e), "error")
+    except Exception as e:
+        flash(f"Unexpected error creating user: {e}", "error")
+    return render_template("signup.html", username=username)
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    """Simple login route."""
+    if request.method == "GET":
+        return render_template("login.html")
+
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "")
+    try:
+        user = verify_user_credentials(username, password)
+        login_user(user)
+        flash("Logged in successfully.", "success")
+        next_url = request.args.get("next") or url_for("index")
+        return redirect(next_url)
+    except AuthenticationError as e:
+        flash(str(e), "error")
+    except Exception as e:
+        flash(f"Unexpected error logging in: {e}", "error")
+    return render_template("login.html", username=username)
+
+
+@app.route("/logout")
+def logout():
+    """Log the user out and clear session."""
+    logout_user()
+    session["group"] = {"userId": None, "references": []}
+    flash("Logged out.", "success")
+    return redirect(url_for("login"))
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -121,7 +225,7 @@ def add():
 def all_references():
     """See all added references listed on one page."""
     try:
-        data = references.get_all_added_references()
+        data = references.get_all_added_references(session.get("user_id"))
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         data = []
@@ -141,7 +245,7 @@ def edit_reference(bib_key):
         bib_key: Name of the reference that is to be edited.
     """
     try:
-        reference = get_reference_by_bib_key(bib_key)
+        reference = get_reference_by_bib_key(bib_key, session.get("user_id"))
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         return redirect("/all")
@@ -188,7 +292,7 @@ def delete_reference(bib_key):
         bib_key: refen tunniste mikä halutaan poistaa
     """
     try:
-        reference = get_reference_by_bib_key(bib_key)
+        reference = get_reference_by_bib_key(bib_key, session.get("user_id"))
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         return redirect("/all")
@@ -196,7 +300,7 @@ def delete_reference(bib_key):
         flash(f"Reference with bib_key '{bib_key}' not found", "error")
         return redirect("/all")
     try:
-        delete_reference_by_bib_key(bib_key)
+        delete_reference_by_bib_key(bib_key, session.get("user_id"))
         flash(f"Viite '{bib_key}' poistettu", "success")
     except DatabaseError as e:
         flash(f"Database error while deleting: {str(e)}", "error")
@@ -226,6 +330,7 @@ def _save_or_edit_reference(editing: bool):
         editing: If True, update existing reference; if False, create new reference.
     """
     # reference_type tulee piilokentästä <input type="hidden" name="reference_type">
+    user_id = session.get("user_id")
     reference_type = request.form.get("reference_type")
 
     if not reference_type:
@@ -238,6 +343,18 @@ def _save_or_edit_reference(editing: bool):
     if not cite_key:
         flash("Viiteavain (bib_key) on pakollinen.", "error")
         return redirect(f"/add?form={reference_type}")
+
+    # Varmista, että muokattava viite kuuluu käyttäjälle
+    if editing:
+        owned_reference = get_reference_by_bib_key(
+            old_cite_key or cite_key, session.get("user_id")
+        )
+        if not owned_reference:
+            flash(
+                "Viitettä ei löytynyt tai sinulla ei ole oikeuksia muokata sitä.",
+                "error",
+            )
+            return redirect("/all")
 
     # Oletus: tietokantataulussa sarake on nimeltä 'bib_key'
     form_data = {"bib_key": cite_key, "old_bib_key": old_cite_key}
@@ -291,6 +408,8 @@ def _save_or_edit_reference(editing: bool):
     # Tallennus tietokantaan
     try:
         ref_id = references.add_reference(reference_type, form_data, editing=editing)
+        if user_id:
+            link_reference_to_user(user_id, ref_id)
         if selected_tag_id:
             try:
                 add_tag_to_reference(int(selected_tag_id), ref_id)
@@ -336,11 +455,11 @@ def export_bibtex():
         if type_param == "group" and len(session["group"]["references"]) > 0:
             data = []
             for bib_key in session["group"]["references"]:
-                ref = get_reference_by_bib_key(bib_key)
+                ref = get_reference_by_bib_key(bib_key, session.get("user_id"))
                 if ref:
                     data.append(ref)
         else:
-            data = references.get_all_added_references()
+            data = references.get_all_added_references(session.get("user_id"))
 
         if not data:
             return (
@@ -442,7 +561,7 @@ def search():
 
     try:
         if query:
-            results = search_reference_by_query(query)
+            results = search_reference_by_query(query, session.get("user_id"))
             results = filter_and_sort_search_results(
                 results,
                 ref_type_filter=filter_type,
@@ -451,7 +570,10 @@ def search():
             )
         else:
             results = get_references_filtered_sorted(
-                ref_type_filter=filter_type, tag_filter=tag_filter, sort_by=sort_by
+                ref_type_filter=filter_type,
+                tag_filter=tag_filter,
+                sort_by=sort_by,
+                user_id=session.get("user_id"),
             )
 
         return render_template(
@@ -496,12 +618,18 @@ def toggle_theme():
 @app.route("/add-group/<bib_key>", methods=["POST"])
 def add_group(bib_key):
     """Add a reference to a group."""
-    if bib_key in session["group"]["references"]:
-        flash("Tämä viite on jo lisätty ryhmään", "info")
+    owned_ref = get_reference_by_bib_key(bib_key, session.get("user_id"))
+    if not owned_ref:
+        flash("Reference not found or not yours.", "error")
         return redirect("/all")
+
+    if bib_key in session["group"]["references"]:
+        flash("This reference is already in the group", "info")
+        return redirect("/all")
+
     session["group"]["references"].append(bib_key)
     session.modified = True
-    flash("Viite lisätty onnistuneesti ryhmään", "message")
+    flash("Reference added to group", "message")
     return redirect("/all")
 
 
@@ -523,7 +651,7 @@ def view_group():
     try:
         data = []
         for bib_key in session["group"]["references"]:
-            ref = get_reference_by_bib_key(bib_key)
+            ref = get_reference_by_bib_key(bib_key, session.get("user_id"))
             if ref:
                 data.append(ref)
     except DatabaseError as e:
