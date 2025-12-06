@@ -515,3 +515,154 @@ class TestPublicPrivateReferences:
             all_refs = get_all_added_references()
             bib_keys = [ref["bib_key"] for ref in all_refs]
             assert "EditTest2024" not in bib_keys
+
+    def test_change_visibility_from_private_to_public(self, app, db_session):
+        """Test changing reference visibility from private to public."""
+        with app.app_context():
+            # Add private reference
+            data = {
+                "bib_key": "EditTest2025",
+                "author": "Test Author",
+                "title": "Test Paper",
+                "year": "2025",
+                "journal": "Test Journal",
+                "is_public": False,
+            }
+            add_reference("article", data, editing=False)
+            assert get_reference_visibility("EditTest2025") is False
+
+            # Change to public
+            data["is_public"] = True
+            data["old_bib_key"] = "EditTest2025"
+            add_reference("article", data, editing=True)
+
+            assert get_reference_visibility("EditTest2025") is True
+
+            # Verify it's now in public listing
+            all_refs = get_all_added_references()
+            bib_keys = [ref["bib_key"] for ref in all_refs]
+            assert "EditTest2025" in bib_keys
+
+    def test_default_visibility_is_public(self, app, db_session):
+        """Test that default visibility is public when not specified."""
+        with app.app_context():
+            data = {
+                "bib_key": "Default2024",
+                "author": "Test Author",
+                "title": "Test Paper",
+                "year": "2024",
+                "journal": "Test Journal",
+                # is_public not specified
+            }
+
+            ref_id = add_reference("article", data, editing=False)
+            assert ref_id is not None
+            assert get_reference_visibility("Default2024") is True
+
+    def test_get_visibility_nonexistent_reference(self, app, db_session):
+        """Test getting visibility of a reference that doesn't exist."""
+        with app.app_context():
+            # Should return True (default)
+            visibility = get_reference_visibility("NonExistent2024")
+            assert visibility is True
+
+    def test_private_reference_can_be_retrieved_by_bib_key(self, app, db_session):
+        """Test that private references can still be retrieved by bib_key (for editing)."""
+        with app.app_context():
+            data = {
+                "bib_key": "PrivateEdit2024",
+                "author": "Private Author",
+                "title": "Private Paper",
+                "year": "2024",
+                "journal": "Private Journal",
+                "is_public": False,
+            }
+            add_reference("article", data, editing=False)
+
+            # Should be retrievable by bib_key
+            reference = get_reference_by_bib_key("PrivateEdit2024")
+            assert reference is not None
+            assert reference["bib_key"] == "PrivateEdit2024"
+
+            # But not in public listing
+            all_refs = get_all_added_references()
+            bib_keys = [ref["bib_key"] for ref in all_refs]
+            assert "PrivateEdit2024" not in bib_keys
+
+    def test_editing_preserves_visibility_when_not_changed(self, app, db_session):
+        """Test that editing other fields preserves visibility setting."""
+        with app.app_context():
+            # Add private reference
+            data = {
+                "bib_key": "Preserve2024",
+                "author": "Original Author",
+                "title": "Original Title",
+                "year": "2024",
+                "journal": "Original Journal",
+                "is_public": False,
+            }
+            add_reference("article", data, editing=False)
+
+            # Edit other fields without changing is_public
+            data["author"] = "Updated Author"
+            data["title"] = "Updated Title"
+            data["old_bib_key"] = "Preserve2024"
+            # is_public remains False
+            add_reference("article", data, editing=True)
+
+            # Should still be private
+            assert get_reference_visibility("Preserve2024") is False
+
+            # Verify edits were saved
+            reference = get_reference_by_bib_key("Preserve2024")
+            assert reference["fields"]["author"] == "Updated Author"
+            assert reference["fields"]["title"] == "Updated Title"
+
+    def test_multiple_references_mixed_visibility(self, app, db_session):
+        """Test multiple references with different visibility settings."""
+        with app.app_context():
+            references_data = [
+                {"bib_key": "Ref1", "author": "A1", "title": "T1", "year": "2024",
+                 "journal": "J1", "is_public": True},
+                {"bib_key": "Ref2", "author": "A2", "title": "T2", "year": "2024",
+                 "journal": "J2", "is_public": False},
+                {"bib_key": "Ref3", "author": "A3", "title": "T3", "year": "2024",
+                 "journal": "J3", "is_public": True},
+                {"bib_key": "Ref4", "author": "A4", "title": "T4", "year": "2024",
+                 "journal": "J4", "is_public": False},
+            ]
+
+            for data in references_data:
+                add_reference("article", data, editing=False)
+
+            # Only public references should appear
+            all_refs = get_all_added_references()
+            bib_keys = [ref["bib_key"] for ref in all_refs]
+
+            assert "Ref1" in bib_keys
+            assert "Ref2" not in bib_keys
+            assert "Ref3" in bib_keys
+            assert "Ref4" not in bib_keys
+            assert len([k for k in bib_keys if k.startswith("Ref")]) == 2
+
+    def test_delete_private_reference(self, app, db_session):
+        """Test that private references can be deleted."""
+        with app.app_context():
+            data = {
+                "bib_key": "DeletePrivate2024",
+                "author": "Test Author",
+                "title": "Test Paper",
+                "year": "2024",
+                "journal": "Test Journal",
+                "is_public": False,
+            }
+            add_reference("article", data, editing=False)
+
+            # Verify it exists
+            assert get_reference_by_bib_key("DeletePrivate2024") is not None
+
+            # Delete it
+            delete_reference_by_bib_key("DeletePrivate2024")
+
+            # Verify it's gone
+            assert get_reference_by_bib_key("DeletePrivate2024") is None
