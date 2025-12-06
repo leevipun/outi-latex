@@ -228,7 +228,11 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
                            SET bib_key = :new_bib_key, is_public = :is_public
                            WHERE id = :id"""
                     ),
-                    {"new_bib_key": data["bib_key"], "is_public": is_public, "id": ref_id},
+                    {
+                        "new_bib_key": data["bib_key"],
+                        "is_public": is_public,
+                        "id": ref_id,
+                    },
                 )
             else:
                 # Päivitä vain is_public (bib_key pysyy samana)

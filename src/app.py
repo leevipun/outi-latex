@@ -204,7 +204,12 @@ def delete_reference(bib_key):
 
     if not reference:
         if request.method == "DELETE":
-            return jsonify({"success": False, "error": f"Reference '{bib_key}' not found"}), 404
+            return (
+                jsonify(
+                    {"success": False, "error": f"Reference '{bib_key}' not found"}
+                ),
+                404,
+            )
         flash(f"Reference with bib_key '{bib_key}' not found", "error")
         return redirect("/all")
 
@@ -215,7 +220,10 @@ def delete_reference(bib_key):
             session.modified = True
 
         if request.method == "DELETE":
-            return jsonify({"success": True, "message": f"Reference '{bib_key}' deleted"}), 200
+            return (
+                jsonify({"success": True, "message": f"Reference '{bib_key}' deleted"}),
+                200,
+            )
 
         flash(f"Viite '{bib_key}' poistettu", "success")
         return redirect("/all")
@@ -304,7 +312,7 @@ def _save_or_edit_reference(editing: bool):
         form_data[name] = value or None
 
     visibility = request.form.get("visibility")
-    form_data["is_public"] = (visibility == "public")
+    form_data["is_public"] = visibility == "public"
 
     if errors:
         for msg in errors:

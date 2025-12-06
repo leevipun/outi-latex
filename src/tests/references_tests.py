@@ -415,6 +415,7 @@ class TestDeleteReference:
             ).scalar()
             assert count_after == 0
 
+
 class TestPublicPrivateReferences:
     """Tests for public/private reference visibility feature.
 
@@ -622,14 +623,38 @@ class TestPublicPrivateReferences:
         """Test multiple references with different visibility settings."""
         with app.app_context():
             references_data = [
-                {"bib_key": "Ref1", "author": "A1", "title": "T1", "year": "2024",
-                 "journal": "J1", "is_public": True},
-                {"bib_key": "Ref2", "author": "A2", "title": "T2", "year": "2024",
-                 "journal": "J2", "is_public": False},
-                {"bib_key": "Ref3", "author": "A3", "title": "T3", "year": "2024",
-                 "journal": "J3", "is_public": True},
-                {"bib_key": "Ref4", "author": "A4", "title": "T4", "year": "2024",
-                 "journal": "J4", "is_public": False},
+                {
+                    "bib_key": "Ref1",
+                    "author": "A1",
+                    "title": "T1",
+                    "year": "2024",
+                    "journal": "J1",
+                    "is_public": True,
+                },
+                {
+                    "bib_key": "Ref2",
+                    "author": "A2",
+                    "title": "T2",
+                    "year": "2024",
+                    "journal": "J2",
+                    "is_public": False,
+                },
+                {
+                    "bib_key": "Ref3",
+                    "author": "A3",
+                    "title": "T3",
+                    "year": "2024",
+                    "journal": "J3",
+                    "is_public": True,
+                },
+                {
+                    "bib_key": "Ref4",
+                    "author": "A4",
+                    "title": "T4",
+                    "year": "2024",
+                    "journal": "J4",
+                    "is_public": False,
+                },
             ]
 
             for data in references_data:
