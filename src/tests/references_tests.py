@@ -13,15 +13,14 @@ from src.utils.references import (
 )
 from src.utils.users import create_user, link_reference_to_user
 
+from sqlalchemy import text
+from src.config import db
 
 @pytest.fixture
-def test_user(app, db_session):  # ← Lisää db_session dependency
+def test_user(app, db_session):
     """Create a test user for reference tests."""
     with app.app_context():
         # Tarkista onko käyttäjä jo olemassa
-        from sqlalchemy import text
-        from src.config import db
-
         existing = db.session.execute(
             text("SELECT id, username FROM users WHERE username = :username"),
             {"username": "testuser"}
