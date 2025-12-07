@@ -11,6 +11,8 @@ Library           DateTime
 *** Variables ***
 ${BASE_URL}       http://localhost:5001
 ${TEST_TIMESTAMP}    ${EMPTY}
+${USER}           robotuser
+${PASS}           robotpass
 
 *** Keywords ***
 Initialize Test Environment
@@ -23,6 +25,26 @@ Initialize Test Environment
     Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
     Set Selenium Speed    0.2s
     Set Selenium Timeout    10s
+
+    # Luo käyttäjä jos puuttuu ja kirjaudu sisään
+    Create User If Missing
+    Login As Test User
+
+Create User If Missing
+    [Documentation]    Best-effort signup; ignore duplicate user errors
+    Go To    ${BASE_URL}/signup
+    Input Text    id:username    ${USER}
+    Input Text    id:password    ${PASS}
+    Click Button    css:button[type="submit"]
+    Sleep    0.5s
+
+Login As Test User
+    [Documentation]    Login with test credentials
+    Go To    ${BASE_URL}/login
+    Input Text    id:username    ${USER}
+    Input Text    id:password    ${PASS}
+    Click Button    css:button[type="submit"]
+    Wait Until Page Contains Element    id:form    timeout=5s
 
 Cleanup Test Environment
     [Documentation]    Clean up test environment
