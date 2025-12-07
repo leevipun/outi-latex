@@ -134,3 +134,15 @@ jobs:
       run: poetry run robot --variable BASE_URL:http://localhost:5001 src/story_tests/
     - name: seed database
       run: poetry run python seed_database.py
+
+  deploy:
+    name: Deploy to Render
+    needs: [test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - uses: actions/checkout@v4
+    - name: Deploy to Render
+      run: |
+        curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }} -X POST
