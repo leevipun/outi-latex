@@ -431,7 +431,8 @@ def _save_or_edit_reference(editing: bool):
         return redirect(f"/add?form={reference_type}")
 
     # Julkisuus-asetus
-    form_data["is_public"] = request.form.get("is_public") == "on"
+    visibility = request.form.get("visibility", "public")
+    form_data["is_public"] = visibility == "public"
 
     # Tallenna tietokantaan
     try:
