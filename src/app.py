@@ -353,6 +353,117 @@ def delete_reference(bib_key):
         return redirect("/all")
 
 
+def _save_or_edit_reference(editing: bool):
+    """Shared logic for saving and editing references.
+
+    Args:
+        editing: If True, update existing reference; if False, create new reference.
+    """
+    user_id = session.get("user_id")
+    reference_type = request.form.get("reference_type")
+
+    if not reference_type:
+        flash("Viitetyyppi puuttuu.", "error")
+        return redirect("/")
+
+    # Viiteavain (pakollinen)
+    cite_key = request.form.get("cite_key", "").strip()
+    old_cite_key = request.form.get("old_bib_key", "").strip()
+    if not cite_key:
+        flash("Viiteavain (bib_key) on pakollinen.", "error")
+        return redirect(f"/add?form={reference_type}")
+
+    # Varmista että muokattava viite kuuluu käyttäjälle
+    if editing:
+        owned_reference = get_reference_by_bib_key(
+            old_cite_key or cite_key, session.get("user_id")
+        )
+        if not owned_reference:
+            flash(
+                "Viitettä ei löytynyt tai sinulla ei ole oikeuksia muokata sitä.",
+                "error",
+            )
+            return redirect("/all")
+
+    form_data = {"bib_key": cite_key, "old_bib_key": old_cite_key}
+
+    # Hae dynaamiset kentät
+    try:
+        fields = get_fields_for_type(reference_type)
+    except FormFieldsError as e:
+        flash(f"Error loading form fields: {str(e)}", "error")
+        return redirect(f"/add?form={reference_type}")
+
+    # Käsittele tagit
+    new_tag_name = request.form.get("new_tag", "").strip()
+    selected_tag_id = request.form.get("tag", "").strip()
+
+    if new_tag_name:
+        try:
+            selected_tag_id = add_tag(new_tag_name)
+            flash(f"Uusi avainsana '{new_tag_name}' lisätty", "success")
+        except TagExistsError:
+            try:
+                selected_tag_id = get_tag_id_by_name(new_tag_name)
+            except TagError as e:
+                flash(f"Error fetching existing tag: {str(e)}", "error")
+                return redirect(f"/add?form={reference_type}")
+        except TagError as e:
+            flash(f"Error adding tag: {str(e)}", "error")
+            return redirect(f"/add?form={reference_type}")
+
+    # Validoi kentät
+    errors = []
+    for field in fields:
+        name = field["key"]
+        label = field.get("label", name)
+        required = field.get("required", False)
+        value = request.form.get(name, "").strip()
+
+        if required and not value:
+            errors.append(f"Field '{label}' is required")
+
+        form_data[name] = value or None
+
+    if errors:
+        for msg in errors:
+            flash(msg, "error")
+        return redirect(f"/add?form={reference_type}")
+
+    # Julkisuus-asetus
+    form_data["is_public"] = request.form.get("is_public") == "on"
+
+    # Tallenna tietokantaan
+    try:
+        ref_id = references.add_reference(reference_type, form_data, editing=editing)
+        if user_id and not editing:
+            link_reference_to_user(user_id, ref_id)
+
+        if selected_tag_id:
+            try:
+                add_tag_to_reference(int(selected_tag_id), ref_id)
+            except (TagExistsError, TagError) as e:
+                flash(f"Error associating tag to reference: {str(e)}", "error")
+        else:
+            delete_tag_from_reference(ref_id)
+
+    except DatabaseError as e:
+        flash(f"Database error: {str(e)}", "error")
+        return redirect(f"/add?form={reference_type}")
+
+    # Päivitä ryhmä jos tarpeen
+    old_bib_key = form_data.get("old_bib_key", "").strip() if isinstance(form_data.get("old_bib_key"), str) else None
+
+    if editing and old_bib_key and old_bib_key in session["group"]["references"]:
+        session["group"]["references"].remove(old_bib_key)
+        if form_data["bib_key"] != old_bib_key:
+            session["group"]["references"].append(form_data["bib_key"])
+        session.modified = True
+
+    flash("Viite tallennettu!", "success")
+    return redirect("/all")
+
+
 @app.route("/save_reference", methods=["POST"])
 @login_required
 def save_reference():
