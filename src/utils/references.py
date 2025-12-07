@@ -141,38 +141,45 @@ def get_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> dict:
 
     Args:
         bib_key: The unique bib_key identifier for the reference.
+        user_id: Optional user ID to filter by ownership (None = public only)
 
     Returns:
         dict: Dictionary containing bib_key, reference_type, created_at,
-              and fields dictionary with all field values.
+              username, is_public, and fields dictionary with all field values.
               Returns None if reference is not found.
 
     Raises:
         DatabaseError: If database query fails.
     """
-    user_join = ""
-    params = {"bib_key": bib_key}
     if user_id is not None:
-        user_join = (
-            "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
-        )
-        params["user_id"] = user_id
+        # Hae käyttäjän oma viite
+        user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+        where_clause = "WHERE sr.bib_key = :bib_key AND ur.user_id = :user_id"
+        params = {"bib_key": bib_key, "user_id": user_id}
+    else:
+        # Hae julkinen viite
+        user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+        where_clause = "WHERE sr.bib_key = :bib_key AND sr.is_public = TRUE"
+        params = {"bib_key": bib_key}
 
     sql = text(
-        f""" SELECT
+        f"""SELECT
                 sr.id,
                 sr.bib_key,
+                sr.is_public,
                 rt.name AS reference_type,
-                sr.reference_type_id,
+                rt.id AS reference_type_id,
                 sr.created_at,
+                u.username,
                 f.key_name,
                 rv.value
             FROM single_reference sr
             {user_join}
+            LEFT JOIN users u ON u.id = ur.user_id
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
-            WHERE sr.bib_key = :bib_key
+            {where_clause}
             ORDER BY f.key_name;"""
     )
     try:
@@ -184,6 +191,8 @@ def get_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> dict:
                 reference = {
                     "id": row["id"],
                     "bib_key": row["bib_key"],
+                    "is_public": row["is_public"],
+                    "username": row["username"],
                     "reference_type": row["reference_type"],
                     "reference_type_id": row["reference_type_id"],
                     "created_at": row["created_at"],
