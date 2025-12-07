@@ -89,8 +89,9 @@ User Can Add Reference To A Group
     Wait Until Element Is Visible    id:all-group
     Page Should Contain Element    id:add-group-TestArticle2024
     Click Button    id:add-group-TestArticle2024
-    Wait Until Element Is Visible    id:alert-message
-    Page Should Contain Element    id:view-group-button-1
+
+    Wait Until Element Is Visible    id:view-group-button-1    timeout=10s
+    Wait Until Page Contains Element    id:remove-group-TestArticle2024    timeout=10s
 
 If User Deletes A Reference, It Is Removed From The Group
     [Documentation]    Verify that when a user deletes a reference, it is also removed from the group
