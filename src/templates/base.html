@@ -11,9 +11,6 @@
     <nav class="navbar">
     <div class="nav-left">
         <a href="{{ url_for('index') }}" class="nav-logo" id="nav-logo">Outi LaTeX</a>
-        {% if session.get("user_id") %}
-            <span class="nav-user" id="nav-user">Kirjautunut: {{ session.get("username") }}</span>
-        {% endif %}
     </div>
 
     <div class="nav-links">
@@ -22,6 +19,7 @@
         <a href="{{ url_for('all_references') }}" id="nav-all-link">Kaikki viitteet</a>
 
         {% if session.get("user_id") %}
+            <a href="{{ url_for('user_page') }}" id="nav-user">Kirjautunut: {{ session.get("username") }}</a>
             <a href="{{ url_for('logout') }}" id="nav-logout-link">Kirjaudu ulos</a>
         {% else %}
             <a href="{{ url_for('login') }}" id="nav-auth-link">Kirjaudu / Luo tunnus</a>
