@@ -43,7 +43,8 @@ def get_all_added_references(user_id: int | None = None) -> list:
     """Fetch all references added by a specific user or all public references."""
     try:
         if user_id is not None:
-            sql_refs = text("""
+            sql_refs = text(
+                """
                 SELECT
                     sr.id,
                     sr.bib_key,
@@ -56,10 +57,12 @@ def get_all_added_references(user_id: int | None = None) -> list:
                 LEFT JOIN users u ON u.id = ur.user_id
                 JOIN reference_types rt ON sr.reference_type_id = rt.id
                 ORDER BY sr.created_at DESC
-            """)
+            """
+            )
             params = {"user_id": user_id}
         else:
-            sql_refs = text("""
+            sql_refs = text(
+                """
                 SELECT DISTINCT
                     sr.id,
                     sr.bib_key,
@@ -73,7 +76,8 @@ def get_all_added_references(user_id: int | None = None) -> list:
                 JOIN reference_types rt ON sr.reference_type_id = rt.id
                 WHERE sr.is_public = TRUE
                 ORDER BY sr.created_at DESC
-            """)
+            """
+            )
             params = {}
 
         results = db.session.execute(sql_refs, params)
@@ -97,13 +101,15 @@ def get_all_added_references(user_id: int | None = None) -> list:
             return []
 
         # 2. Hae kaikki field values yhdellä kyselyllä
-        sql_fields = text("""
+        sql_fields = text(
+            """
             SELECT rv.reference_id, f.key_name, rv.value
             FROM reference_values rv
             JOIN fields f ON rv.field_id = f.id
             WHERE rv.reference_id IN :ref_ids
             ORDER BY rv.reference_id, f.key_name
-        """)
+        """
+        )
 
         field_results = db.session.execute(sql_fields, {"ref_ids": tuple(ref_ids)})
         for row in field_results.mappings():
@@ -112,12 +118,14 @@ def get_all_added_references(user_id: int | None = None) -> list:
                 references[ref_id]["fields"][row["key_name"]] = row["value"]
 
         # 3. Hae tagit yhdellä kyselyllä
-        sql_tags = text("""
+        sql_tags = text(
+            """
             SELECT reftag.reference_id, t.id AS tag_id, t.name AS tag_name
             FROM reference_tags reftag
             JOIN tags t ON reftag.tag_id = t.id
             WHERE reftag.reference_id IN :ref_ids
-        """)
+        """
+        )
 
         tag_results = db.session.execute(sql_tags, {"ref_ids": tuple(ref_ids)})
         for row in tag_results.mappings():

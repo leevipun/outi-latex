@@ -16,6 +16,7 @@ from src.utils.users import create_user, link_reference_to_user
 from sqlalchemy import text
 from src.config import db
 
+
 @pytest.fixture
 def test_user(app, db_session):
     """Create a test user for reference tests."""
@@ -23,7 +24,7 @@ def test_user(app, db_session):
         # Tarkista onko käyttäjä jo olemassa
         existing = db.session.execute(
             text("SELECT id, username FROM users WHERE username = :username"),
-            {"username": "testuser"}
+            {"username": "testuser"},
         ).fetchone()
 
         if existing:
@@ -66,7 +67,9 @@ class TestGetAllReferences:
 class TestAddReference:
     """Tests for add_reference function."""
 
-    def test_add_reference_successfully(self, app, db_session, sample_reference_data, test_user):
+    def test_add_reference_successfully(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Test adding a reference successfully."""
         with app.app_context():
             ref_id = add_reference("article", sample_reference_data)
@@ -77,7 +80,9 @@ class TestAddReference:
             assert result[0]["bib_key"] == "Smith2020"
             assert result[0]["reference_type"] == "article"
 
-    def test_add_reference_with_all_fields(self, app, db_session, sample_reference_data, test_user):
+    def test_add_reference_with_all_fields(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Test that all fields are stored correctly."""
         with app.app_context():
             ref_id = add_reference("article", sample_reference_data)
@@ -126,7 +131,9 @@ class TestAddReference:
 
             assert "Unknown reference type" in str(exc_info.value)
 
-    def test_add_multiple_references(self, app, db_session, sample_reference_data, test_user):
+    def test_add_multiple_references(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Test adding multiple references."""
         with app.app_context():
             ref_id1 = add_reference("article", sample_reference_data)
@@ -207,7 +214,9 @@ class TestGetAllAddedReferences:
             result = get_all_added_references(user_id=test_user["id"])
             assert result == []
 
-    def test_returns_added_reference(self, app, db_session, sample_reference_data, test_user):
+    def test_returns_added_reference(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Test retrieving added reference."""
         with app.app_context():
             ref_id = add_reference("article", sample_reference_data)
@@ -220,7 +229,9 @@ class TestGetAllAddedReferences:
             assert "fields" in result[0]
             assert "created_at" in result[0]
 
-    def test_returns_fields_correctly_grouped(self, app, db_session, sample_reference_data, test_user):
+    def test_returns_fields_correctly_grouped(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Test that fields are grouped correctly per reference."""
         with app.app_context():
             ref_id = add_reference("article", sample_reference_data)
@@ -265,7 +276,9 @@ class TestGetAllAddedReferences:
             assert result[0]["bib_key"] == "Second2020"
             assert result[1]["bib_key"] == "First2020"
 
-    def test_contains_all_required_fields(self, app, db_session, sample_reference_data, test_user):
+    def test_contains_all_required_fields(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Test that returned reference has all required fields."""
         with app.app_context():
             ref_id = add_reference("article", sample_reference_data)
@@ -279,7 +292,9 @@ class TestGetAllAddedReferences:
             assert "created_at" in ref
             assert "fields" in ref
 
-    def test_created_at_is_datetime(self, app, db_session, sample_reference_data, test_user):
+    def test_created_at_is_datetime(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Test that created_at is a datetime object."""
         from datetime import datetime
 
@@ -366,7 +381,9 @@ class TestGetReferenceByBibKey:
             ref = get_reference_by_bib_key("NonExistentKey", user_id=test_user["id"])
             assert ref is None
 
-    def test_get_reference_after_deletion(self, app, db_session, sample_reference_data, test_user):
+    def test_get_reference_after_deletion(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Test that a reference cannot be retrieved after deletion."""
         with app.app_context():
             ref_id = add_reference("article", sample_reference_data)
@@ -384,7 +401,9 @@ class TestGetReferenceByBibKey:
 class TestDeleteReference:
     """Tests for delete_reference_by_bib_key function."""
 
-    def test_delete_reference_removes_from_db(self, app, db_session, sample_reference_data, test_user):
+    def test_delete_reference_removes_from_db(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Adding then deleting a reference removes it from DB."""
         with app.app_context():
             ref_id = add_reference("article", sample_reference_data)
@@ -401,7 +420,9 @@ class TestDeleteReference:
             all_refs = get_all_added_references(user_id=test_user["id"])
             assert all_refs == []
 
-    def test_delete_reference_also_deletes_values_via_cascade(self, app, db_session, sample_reference_data, test_user):
+    def test_delete_reference_also_deletes_values_via_cascade(
+        self, app, db_session, sample_reference_data, test_user
+    ):
         """Deleting from single_reference removes related reference_values (ON DELETE CASCADE)."""
         from sqlalchemy import text
         from src.config import db
@@ -523,7 +544,9 @@ class TestPublicPrivateReferences:
 
             data["is_public"] = False
             data["old_bib_key"] = "EditTest2024"
-            add_reference("article", data, editing=True)  # ← EI link_reference_to_user (jo linkitetty)
+            add_reference(
+                "article", data, editing=True
+            )  # ← EI link_reference_to_user (jo linkitetty)
 
             assert get_reference_visibility("EditTest2024") is False
 
@@ -574,7 +597,9 @@ class TestPublicPrivateReferences:
             assert ref_id is not None
             assert get_reference_visibility("Default2024") is True
 
-    def test_private_reference_can_be_retrieved_by_bib_key(self, app, db_session, test_user):
+    def test_private_reference_can_be_retrieved_by_bib_key(
+        self, app, db_session, test_user
+    ):
         """Test that private references can still be retrieved by bib_key (for editing)."""
         with app.app_context():
             data = {
@@ -588,7 +613,9 @@ class TestPublicPrivateReferences:
             ref_id = add_reference("article", data, editing=False)
             link_reference_to_user(test_user["id"], ref_id)
 
-            reference = get_reference_by_bib_key("PrivateEdit2024", user_id=test_user["id"])
+            reference = get_reference_by_bib_key(
+                "PrivateEdit2024", user_id=test_user["id"]
+            )
             assert reference is not None
             assert reference["bib_key"] == "PrivateEdit2024"
 
@@ -596,7 +623,9 @@ class TestPublicPrivateReferences:
             bib_keys = [ref["bib_key"] for ref in all_refs]
             assert "PrivateEdit2024" not in bib_keys
 
-    def test_editing_preserves_visibility_when_not_changed(self, app, db_session, test_user):
+    def test_editing_preserves_visibility_when_not_changed(
+        self, app, db_session, test_user
+    ):
         """Test that editing other fields preserves visibility setting."""
         with app.app_context():
             data = {
@@ -617,7 +646,9 @@ class TestPublicPrivateReferences:
 
             assert get_reference_visibility("Preserve2024") is False
 
-            reference = get_reference_by_bib_key("Preserve2024", user_id=test_user["id"])
+            reference = get_reference_by_bib_key(
+                "Preserve2024", user_id=test_user["id"]
+            )
             assert reference["fields"]["author"] == "Updated Author"
             assert reference["fields"]["title"] == "Updated Title"
 
@@ -686,8 +717,14 @@ class TestPublicPrivateReferences:
             ref_id = add_reference("article", data, editing=False)
             link_reference_to_user(test_user["id"], ref_id)
 
-            assert get_reference_by_bib_key("DeletePrivate2024", user_id=test_user["id"]) is not None
+            assert (
+                get_reference_by_bib_key("DeletePrivate2024", user_id=test_user["id"])
+                is not None
+            )
 
             delete_reference_by_bib_key("DeletePrivate2024", user_id=test_user["id"])
 
-            assert get_reference_by_bib_key("DeletePrivate2024", user_id=test_user["id"]) is None
+            assert (
+                get_reference_by_bib_key("DeletePrivate2024", user_id=test_user["id"])
+                is None
+            )

@@ -261,7 +261,10 @@ def edit_reference(bib_key):
         return redirect("/all")
 
     if not reference:
-        flash(f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia muokata sitä", "error")
+        flash(
+            f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia muokata sitä",
+            "error",
+        )
         return redirect("/all")
 
     try:
@@ -320,11 +323,17 @@ def delete_reference(bib_key):
         if request.method == "DELETE":
             return (
                 jsonify(
-                    {"success": False, "error": f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia poistaa sitä"}
+                    {
+                        "success": False,
+                        "error": f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia poistaa sitä",
+                    }
                 ),
                 403,
             )
-        flash(f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia poistaa sitä", "error")
+        flash(
+            f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia poistaa sitä",
+            "error",
+        )
         return redirect("/all")
 
     try:
@@ -454,7 +463,11 @@ def _save_or_edit_reference(editing: bool):
         return redirect(f"/add?form={reference_type}")
 
     # Päivitä ryhmä jos tarpeen
-    old_bib_key = form_data.get("old_bib_key", "").strip() if isinstance(form_data.get("old_bib_key"), str) else None
+    old_bib_key = (
+        form_data.get("old_bib_key", "").strip()
+        if isinstance(form_data.get("old_bib_key"), str)
+        else None
+    )
 
     if editing and old_bib_key and old_bib_key in session["group"]["references"]:
         session["group"]["references"].remove(old_bib_key)
@@ -478,6 +491,7 @@ def save_reference():
 def edit_reference_db():
     """Tallenna muokattu viite lomakkeelta tietokantaan."""
     return _save_or_edit_reference(editing=True)
+
 
 @app.route("/export/bibtex")
 def export_bibtex():
@@ -720,11 +734,7 @@ def user_page():
         # Hae kaikki käyttäjän viitteet (julkiset + yksityiset)
         references = get_all_added_references(user_id=user_id)
 
-        return render_template(
-            "user.html",
-            user=user,
-            references=references
-        )
+        return render_template("user.html", user=user, references=references)
     except DatabaseError as e:
         flash(f"Virhe haettaessa tietoja: {str(e)}", "error")
         return redirect("/")
