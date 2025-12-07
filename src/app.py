@@ -4,6 +4,7 @@ import re
 from functools import wraps
 
 from flask import (
+    Response,
     abort,
     flash,
     jsonify,
@@ -477,6 +478,55 @@ def save_reference():
 def edit_reference_db():
     """Tallenna muokattu viite lomakkeelta tietokantaan."""
     return _save_or_edit_reference(editing=True)
+
+@app.route("/export/bibtex")
+def export_bibtex():
+    """Export all references as BibTeX format"""
+    try:
+        type_param = request.args.get("type", "all").strip()
+        if type_param == "group" and len(session["group"]["references"]) > 0:
+            data = []
+            for bib_key in session["group"]["references"]:
+                # ⬅️ MUUTETTU: Hae julkiset viitteet (user_id=None)
+                ref = get_reference_by_bib_key(bib_key, user_id=None)
+                if ref:
+                    data.append(ref)
+        else:
+            # ⬅️ MUUTETTU: Hae vain julkiset viitteet (user_id=None)
+            data = get_all_added_references(user_id=None)
+
+        if not data:
+            return (
+                "% No references found\n",
+                200,
+                {"Content-Type": "text/plain; charset=utf-8"},
+            )
+        # Muodosta BibTeX-sisältö
+        bibtex_content = ""
+        for ref in data:
+            bibtex_entry = format_bibtex_entry(ref)
+            bibtex_content += bibtex_entry + "\n\n"
+
+        # Palauta BibTeX-tiedosto ladattavaksi
+        response = app.response_class(
+            bibtex_content,
+            mimetype="application/x-bibtex",
+            headers={
+                "Content-Disposition": "attachment; filename=references.bib",
+                "Content-Type": "application/x-bibtex; charset=utf-8",
+            },
+        )
+        return response
+
+    except DatabaseError as e:
+        flash(f"Database error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
+    except FormFieldsError as e:
+        flash(f"Form fields error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
+    except Exception as e:
+        flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
+        return redirect("/all")
 
 
 @app.route("/get-doi", methods=["POST"])
