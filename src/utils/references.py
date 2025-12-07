@@ -39,21 +39,34 @@ def get_all_references() -> list:
         raise DatabaseError(f"Failed to fetch reference types: {e}")
 
 
-def get_all_added_references() -> list:
-    """Fetch all PUBLIC added references from the database with all their field values and tags.
+def get_all_added_references(user_id: int | None = None) -> list:
+    """Fetch all added references for a user with their field values and tags.
+
+    Args:
+        user_id: Optional user ID. If provided, returns only that user's references.
+                If None, returns all public references.
 
     Returns:
         list: List of dictionaries containing bib-key, reference type,
               timestamp, all field values, and associated tag, sorted by timestamp.
-              Only returns references where is_public = TRUE.
 
     Raises:
         DatabaseError: If database query fails.
     """
+    user_join = ""
+    where_clause = "WHERE sr.is_public = TRUE"
+    params = {}
+
+    if user_id is not None:
+        user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+        where_clause = "WHERE ur.user_id = :user_id"
+        params["user_id"] = user_id
+
     sql = text(
-        """ SELECT
+        f""" SELECT
                 sr.id,
                 sr.bib_key,
+                sr.is_public,
                 rt.name AS reference_type,
                 sr.created_at,
                 f.key_name,
@@ -61,16 +74,17 @@ def get_all_added_references() -> list:
                 t.id AS tag_id,
                 t.name AS tag_name
             FROM single_reference sr
+            {user_join}
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
             LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
             LEFT JOIN tags t ON reftag.tag_id = t.id
-            WHERE sr.is_public = TRUE
+            {where_clause}
             ORDER BY sr.created_at DESC, sr.id, f.key_name;"""
     )
     try:
-        results = db.session.execute(sql)
+        results = db.session.execute(sql, params)
 
         # Group results by reference
         references = {}
@@ -79,6 +93,7 @@ def get_all_added_references() -> list:
             if ref_id not in references:
                 references[ref_id] = {
                     "bib_key": row["bib_key"],
+                    "is_public": row["is_public"],
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
                     "fields": {},
@@ -101,8 +116,8 @@ def get_all_added_references() -> list:
         raise DatabaseError(f"Failed to fetch added references: {e}")
 
 
-def get_reference_by_bib_key(bib_key: str) -> dict:
-    """Fetch a single reference by its bib_key.
+def get_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> dict:
+    """Fetch a single reference by its bib_key for a specific user (if provided).
 
     Args:
         bib_key: The unique bib_key identifier for the reference.
@@ -115,8 +130,16 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
     Raises:
         DatabaseError: If database query fails.
     """
+    user_join = ""
+    params = {"bib_key": bib_key}
+    if user_id is not None:
+        user_join = (
+            "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
+        )
+        params["user_id"] = user_id
+
     sql = text(
-        """ SELECT
+        f""" SELECT
                 sr.id,
                 sr.bib_key,
                 rt.name AS reference_type,
@@ -125,6 +148,7 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
                 f.key_name,
                 rv.value
             FROM single_reference sr
+            {user_join}
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
@@ -132,7 +156,7 @@ def get_reference_by_bib_key(bib_key: str) -> dict:
             ORDER BY f.key_name;"""
     )
     try:
-        results = db.session.execute(sql, {"bib_key": bib_key})
+        results = db.session.execute(sql, params)
 
         reference = None
         for row in results.mappings():
@@ -321,47 +345,74 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
         raise DatabaseError(f"Failed to insert/update reference: {exc}") from exc
 
 
-def delete_reference_by_bib_key(bib_key: str) -> None:
+def delete_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> None:
     """Delete a reference (and its values via cascade) by bib_key.
 
     Args:
         bib_key: The BibTeX key of the reference to delete.
+        user_id: Optional user id to enforce ownership.
 
     Raises:
         DatabaseError: If the delete operation fails.
     """
     try:
-        db.session.execute(
-            text("DELETE FROM single_reference WHERE bib_key = :bib_key"),
-            {"bib_key": bib_key},
-        )
+        if user_id is None:
+            db.session.execute(
+                text("DELETE FROM single_reference WHERE bib_key = :bib_key"),
+                {"bib_key": bib_key},
+            )
+        else:
+            db.session.execute(
+                text(
+                    """
+                    DELETE FROM single_reference sr
+                    USING user_ref ur
+                    WHERE sr.bib_key = :bib_key
+                      AND ur.reference_id = sr.id
+                      AND ur.user_id = :user_id
+                    """
+                ),
+                {"bib_key": bib_key, "user_id": user_id},
+            )
         db.session.commit()
     except Exception as e:
         db.session.rollback()
         raise DatabaseError(f"Failed to delete reference '{bib_key}': {e}") from e
 
 
-def search_reference_by_query(query: str) -> list:
-    """Search for PUBLIC references matching the given query string.
+def search_reference_by_query(query: str, user_id: int | None = None) -> list:
+    """Search for references matching the given query string.
 
     Searches across bib_key, author, title, and other field values.
-    Only returns public references.
+    If user_id is provided, searches only that user's references.
+    Otherwise, searches only public references.
 
     Args:
         query: The search query string.
+        user_id: Optional user ID. If provided, searches only that user's references.
 
     Returns:
-        list: List of dictionaries containing matching public references with their fields and tags.
+        list: List of dictionaries containing matching references with their fields and tags.
 
     Raises:
         DatabaseError: If the search query fails.
     """
     try:
+        user_join = ""
+        where_clause = "WHERE sr.is_public = TRUE"
+        params = {"query": f"%{query}%"}
+
+        if user_id is not None:
+            user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+            where_clause = "WHERE ur.user_id = :user_id"
+            params["user_id"] = user_id
+
         sql = text(
-            """
+            f"""
             SELECT
                 sr.id,
                 sr.bib_key,
+                sr.is_public,
                 rt.name AS reference_type,
                 sr.created_at,
                 f.key_name,
@@ -369,12 +420,13 @@ def search_reference_by_query(query: str) -> list:
                 t.id AS tag_id,
                 t.name AS tag_name
             FROM single_reference sr
+            {user_join}
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
             LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
             LEFT JOIN tags t ON reftag.tag_id = t.id
-            WHERE sr.is_public = TRUE
+            {where_clause}
               AND sr.id IN (
                 SELECT DISTINCT sr2.id
                 FROM single_reference sr2
@@ -385,7 +437,7 @@ def search_reference_by_query(query: str) -> list:
             ORDER BY sr.created_at DESC, sr.id, f.key_name;
             """
         )
-        results = db.session.execute(sql, {"query": f"%{query}%"})
+        results = db.session.execute(sql, params)
 
         references = {}
         for row in results.mappings():
@@ -393,6 +445,7 @@ def search_reference_by_query(query: str) -> list:
             if ref_id not in references:
                 references[ref_id] = {
                     "bib_key": row["bib_key"],
+                    "is_public": row["is_public"],
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
                     "fields": {},
@@ -496,10 +549,22 @@ def sort_references_by_bib_key(references: list, sort_order: str = "asc") -> lis
 
 
 def get_references_filtered_sorted(
-    ref_type_filter: str = "", tag_filter: str = "", sort_by: str = "newest"
+    ref_type_filter: str = "",
+    tag_filter: str = "",
+    sort_by: str = "newest",
+    user_id: int | None = None,
 ) -> list:
     try:
-        base_sql = """
+        user_join = ""
+        params = {}
+
+        if user_id is not None:
+            user_join = (
+                "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
+            )
+            params["user_id"] = user_id
+
+        base_sql = f"""
             SELECT DISTINCT
                 sr.id,
                 sr.bib_key,
@@ -510,6 +575,7 @@ def get_references_filtered_sorted(
                 t.id AS tag_id,
                 t.name AS tag_name
             FROM single_reference sr
+            {user_join}
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
@@ -518,7 +584,6 @@ def get_references_filtered_sorted(
             WHERE sr.is_public = TRUE
         """
 
-        params = {}
         conditions = []
 
         if ref_type_filter.strip():

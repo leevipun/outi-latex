@@ -50,3 +50,18 @@ CREATE TABLE reference_tags (
     tag_id INT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY(reference_id, tag_id)
 );
+
+-- Users
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Viitteiden ja kA¤yttA¤jien vA¤linen moni-moneen suhde (omistajuus/linkkaus)
+CREATE TABLE user_ref (
+    user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
+    PRIMARY KEY(user_id, reference_id)
+);
