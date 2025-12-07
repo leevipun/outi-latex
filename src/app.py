@@ -33,6 +33,7 @@ from src.utils.references import (
     get_references_filtered_sorted,
     search_reference_by_query,
     get_reference_visibility,
+    get_all_added_references,
 )
 from src.utils.tags import (
     TagError,
@@ -50,6 +51,7 @@ from src.utils.users import (
     UserExistsError,
     create_user,
     get_user_by_username,
+    get_user_by_id,
     link_reference_to_user,
     verify_user_credentials,
 )
@@ -697,20 +699,29 @@ def view_group():
     return render_template("group.html", data=data, session=session)
 
 
-@app.route("/user/<username>", methods=["GET"])
-def user(username):
-    """User page."""
+@app.route("/user")
+@login_required
+def user_page():
+    """Show user settings and all references for the logged-in user."""
+    user_id = session.get("user_id")
 
-    user = None
+    if not user_id:
+        flash("Kirjaudu sisään", "error")
+        return redirect("/login")
+
     try:
-        user = get_user_by_username(username)
-        if not user:
-            abort(404)
+        user = get_user_by_id(user_id)
+        # Hae kaikki käyttäjän viitteet (julkiset + yksityiset)
+        references = get_all_added_references(user_id=user_id)
 
-    except Exception as e:
-        flash(f"Error: {str(e)}", "error")
-
-    return render_template("user.html", user=user)
+        return render_template(
+            "user.html",
+            user=user,
+            references=references
+        )
+    except DatabaseError as e:
+        flash(f"Virhe haettaessa tietoja: {str(e)}", "error")
+        return redirect("/")
 
 
 # testausta varten oleva reitti
