@@ -53,14 +53,22 @@ def get_all_added_references(user_id: int | None = None) -> list:
     Raises:
         DatabaseError: If database query fails.
     """
-    user_join = ""
-    where_clause = "WHERE sr.is_public = TRUE"
-    params = {}
-
     if user_id is not None:
-        user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+        # Käyttäjän KAIKKI viitteet (julkiset + yksityiset)
+        user_join = """
+            JOIN user_ref ur ON ur.reference_id = sr.id
+            LEFT JOIN users u ON u.id = ur.user_id
+        """
         where_clause = "WHERE ur.user_id = :user_id"
-        params["user_id"] = user_id
+        params = {"user_id": user_id}
+    else:
+        # VAIN julkiset viitteet (kaikki käyttäjät)
+        user_join = """
+            JOIN user_ref ur ON ur.reference_id = sr.id
+            LEFT JOIN users u ON u.id = ur.user_id
+        """
+        where_clause = "WHERE sr.is_public = TRUE"
+        params = {}
 
     sql = text(
         f""" SELECT
@@ -72,7 +80,8 @@ def get_all_added_references(user_id: int | None = None) -> list:
                 f.key_name,
                 rv.value,
                 t.id AS tag_id,
-                t.name AS tag_name
+                t.name AS tag_name,
+                u.username AS username
             FROM single_reference sr
             {user_join}
             JOIN reference_types rt ON sr.reference_type_id = rt.id
@@ -96,6 +105,7 @@ def get_all_added_references(user_id: int | None = None) -> list:
                     "is_public": row["is_public"],
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
+                    "username": row["username"],
                     "fields": {},
                     "tag": None,
                 }
@@ -398,14 +408,16 @@ def search_reference_by_query(query: str, user_id: int | None = None) -> list:
         DatabaseError: If the search query fails.
     """
     try:
-        user_join = ""
-        where_clause = "WHERE sr.is_public = TRUE"
-        params = {"query": f"%{query}%"}
-
         if user_id is not None:
+            # Käyttäjän KAIKKI viitteet
             user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
             where_clause = "WHERE ur.user_id = :user_id"
-            params["user_id"] = user_id
+            params = {"query": f"%{query}%", "user_id": user_id}
+        else:
+            # VAIN julkiset viitteet (kaikki käyttäjät)
+            user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+            where_clause = "WHERE sr.is_public = TRUE"
+            params = {"query": f"%{query}%"}
 
         sql = text(
             f"""
@@ -555,14 +567,15 @@ def get_references_filtered_sorted(
     user_id: int | None = None,
 ) -> list:
     try:
-        user_join = ""
-        params = {}
-
         if user_id is not None:
             user_join = (
                 "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
             )
-            params["user_id"] = user_id
+            params = {"user_id": user_id}
+        else:
+            # VAIN julkiset viitteet (kaikki käyttäjät)
+            user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+            params = {}
 
         base_sql = f"""
             SELECT DISTINCT
