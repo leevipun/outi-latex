@@ -11,7 +11,7 @@ ${BASE_URL}       http://localhost:5001
 *** Keywords ***
 Initialize Test Environment
     [Documentation]    Initialize the test environment
-    Open Browser    ${BASE_URL}    chrome
+    Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
     Create Session    api    ${BASE_URL}
 
 Delete Reference Via API
