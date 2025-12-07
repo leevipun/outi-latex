@@ -228,7 +228,7 @@ def add():
 def all_references():
     """See all added references listed on one page."""
     try:
-        data = references.get_all_added_references(session.get("user_id"))
+        data = references.get_all_added_references(user_id=None)
     except DatabaseError as e:
         flash(f"Database error: {str(e)}", "error")
         data = []
