@@ -40,12 +40,11 @@ def get_all_references() -> list:
 
 
 def get_all_added_references(user_id: int | None = None) -> list:
-    """Optimoitu versio - hae osissa."""
+    """Fetch all references added by a specific user or all public references."""
     try:
-        # 1. Hae vain viitteiden perustiedot
         if user_id is not None:
             sql_refs = text("""
-                SELECT DISTINCT
+                SELECT
                     sr.id,
                     sr.bib_key,
                     sr.is_public,
@@ -53,10 +52,9 @@ def get_all_added_references(user_id: int | None = None) -> list:
                     sr.created_at,
                     u.username
                 FROM single_reference sr
-                JOIN user_ref ur ON ur.reference_id = sr.id
+                JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id
                 LEFT JOIN users u ON u.id = ur.user_id
                 JOIN reference_types rt ON sr.reference_type_id = rt.id
-                WHERE ur.user_id = :user_id
                 ORDER BY sr.created_at DESC
             """)
             params = {"user_id": user_id}
