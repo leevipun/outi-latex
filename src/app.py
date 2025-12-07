@@ -487,12 +487,10 @@ def export_bibtex():
         if type_param == "group" and len(session["group"]["references"]) > 0:
             data = []
             for bib_key in session["group"]["references"]:
-                # ⬅️ MUUTETTU: Hae julkiset viitteet (user_id=None)
                 ref = get_reference_by_bib_key(bib_key, user_id=None)
                 if ref:
                     data.append(ref)
         else:
-            # ⬅️ MUUTETTU: Hae vain julkiset viitteet (user_id=None)
             data = get_all_added_references(user_id=None)
 
         if not data:
