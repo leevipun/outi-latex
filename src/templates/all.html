@@ -5,10 +5,10 @@
 
 {% block content %}
     <div style="display: flex; justify-content: space-between; align-items: center;" id="all-group">
-        <h1 id="all-references-title">Kaikki viitteet</h1>
+        <h1 id="all-references-title">Kaikki julkiset viitteet</h1>
         <form method="get" action="/group">
                 <button type="submit" id="view-group-button-{{ session["group"]["references"]|length }}">
-                    Näytä ryhmä 
+                    Näytä ryhmä
                     {% if session["group"]["references"]|length > 0 %}
                         {{ session["group"]["references"]|length }}
                     {% endif %}
@@ -22,6 +22,9 @@
                 <ul id="reference-meta-{{ reference['bib_key'] }}">
                     <li id="reference-type-{{ reference['bib_key'] }}">{{ reference["reference_type"] }}</li>
                     <li id="reference-date-{{ reference['bib_key'] }}">{{ reference["created_at"] }}</li>
+                    {% if reference.get("username") %}
+                        <li>Luonut: {{ reference["username"] }}</li>
+                    {% endif %}
                 </ul>
                 <ul class="fields-list" id="reference-fields-{{ reference['bib_key'] }}">
                     {% for key, value in reference["fields"].items() %}
@@ -41,6 +44,8 @@
                         <button id="add-group-{{ reference['bib_key'] }}" type="submit">Lisää ryhmään</button>
                     </form>
                     {% endif %}
+
+                    {% if session.get('user_id') and session.get('username') == reference.get('username') %}
                     <div>
                         <form method="get" action="/edit/{{ reference['bib_key'] }}" style="display:inline;">
                             <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
@@ -51,6 +56,7 @@
                             <button type="submit" id="delete-button-{{reference['bib_key']}}">Poista</button>
                         </form>
                     </div>
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
