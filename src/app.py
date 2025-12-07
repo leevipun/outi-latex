@@ -174,6 +174,10 @@ def index():
             reference_types = []
         return render_template("index.html", reference_types=reference_types)
 
+    if not session.get("user_id"):
+        flash("Kirjaudu sisään lisätäksesi viitteitä", "error")
+        return redirect("/login")
+
     reference = request.form.get("form")
     if reference:
         return redirect(f"/add?form={reference}")
@@ -194,6 +198,7 @@ def index():
 
 
 @app.route("/add")
+@login_required
 def add():
     """Näytä viitteen lisäyslomake
 
@@ -241,6 +246,7 @@ def all_references():
 
 
 @app.route("/edit/<bib_key>")
+@login_required
 def edit_reference(bib_key):
     """Display edit form for a specific reference.
 
@@ -254,7 +260,7 @@ def edit_reference(bib_key):
         return redirect("/all")
 
     if not reference:
-        flash(f"Reference with bib_key '{bib_key}' not found", "error")
+        flash(f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia muokata sitä", "error")
         return redirect("/all")
 
     try:
@@ -295,6 +301,7 @@ def edit_reference(bib_key):
 
 
 @app.route("/delete/<bib_key>", methods=["POST", "DELETE"])
+@login_required
 def delete_reference(bib_key):
     """Poista haluttu reference
     Args:
@@ -312,11 +319,11 @@ def delete_reference(bib_key):
         if request.method == "DELETE":
             return (
                 jsonify(
-                    {"success": False, "error": f"Reference '{bib_key}' not found"}
+                    {"success": False, "error": f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia poistaa sitä"}
                 ),
-                404,
+                403,
             )
-        flash(f"Reference with bib_key '{bib_key}' not found", "error")
+        flash(f"Viitettä '{bib_key}' ei löytynyt tai sinulla ei ole oikeuksia poistaa sitä", "error")
         return redirect("/all")
 
     try:
@@ -347,199 +354,25 @@ def delete_reference(bib_key):
 
 
 @app.route("/save_reference", methods=["POST"])
+@login_required
 def save_reference():
     """Tallenna uusi viite lomakkeelta tietokantaan."""
-
     return _save_or_edit_reference(editing=False)
 
 
 @app.route("/edit_reference", methods=["POST"])
+@login_required
 def edit_reference_db():
     """Tallenna muokattu viite lomakkeelta tietokantaan."""
     return _save_or_edit_reference(editing=True)
 
 
-def _save_or_edit_reference(editing: bool):
-    """Shared logic for saving and editing references.
-
-    Args:
-        editing: If True, update existing reference; if False, create new reference.
-    """
-    # reference_type tulee piilokentästä <input type="hidden" name="reference_type">
-    user_id = session.get("user_id")
-    reference_type = request.form.get("reference_type")
-
-    if not reference_type:
-        flash("Viitetyyppi puuttuu.", "error")
-        return redirect("/")
-
-    # Viiteavain / cite_key (pakollinen)
-    cite_key = request.form.get("cite_key", "").strip()
-    old_cite_key = request.form.get("old_bib_key", "").strip()
-    if not cite_key:
-        flash("Viiteavain (bib_key) on pakollinen.", "error")
-        return redirect(f"/add?form={reference_type}")
-
-    # Varmista, että muokattava viite kuuluu käyttäjälle
-    if editing:
-        owned_reference = get_reference_by_bib_key(
-            old_cite_key or cite_key, session.get("user_id")
-        )
-        if not owned_reference:
-            flash(
-                "Viitettä ei löytynyt tai sinulla ei ole oikeuksia muokata sitä.",
-                "error",
-            )
-            return redirect("/all")
-
-    # Oletus: tietokantataulussa sarake on nimeltä 'bib_key'
-    form_data = {"bib_key": cite_key, "old_bib_key": old_cite_key}
-
-    # Haetaan dynaamiset kentät, samoin kuin /add GET:ssä
-    try:
-        fields = get_fields_for_type(reference_type)
-    except FormFieldsError as e:
-        flash(f"Error loading form fields: {str(e)}", "error")
-        return redirect(f"/add?form={reference_type}")
-
-    new_tag_name = request.form.get("new_tag", "").strip()
-    selected_tag_id = request.form.get("tag", "").strip()
-
-    if new_tag_name:
-        try:
-            selected_tag_id = add_tag(new_tag_name)
-            flash(f"Uusi avainsana '{new_tag_name}' lisätty", "success")
-        except TagExistsError:
-            # Avainsana on jo olemassa, haetaan sen ID
-            try:
-                selected_tag_id = get_tag_id_by_name(new_tag_name)
-            except TagError as e:
-                flash(f"Error fetching existing tag: {str(e)}", "error")
-                return redirect(f"/add?form={reference_type}")
-        except TagError as e:
-            flash(f"Error adding tag: {str(e)}", "error")
-            return redirect(f"/add?form={reference_type}")
-
-    errors = []
-
-    for field in fields:
-        # add_reference.html käyttää field.key, joten tässäkin key
-        name = field["key"]  # esim. "author", "title", "year"
-        label = field.get("label", name)
-        required = field.get("required", False)
-
-        value = request.form.get(name, "").strip()
-
-        if required and not value:
-            errors.append(f"Field '{label}' is required")
-
-        form_data[name] = value or None
-
-    visibility = request.form.get("visibility")
-    form_data["is_public"] = visibility == "public"
-
-    if errors:
-        for msg in errors:
-            flash(msg, "error")
-        # back to the form, same type
-        return redirect(f"/add?form={reference_type}")
-
-    # Tallennus tietokantaan
-    try:
-        ref_id = references.add_reference(reference_type, form_data, editing=editing)
-        if user_id:
-            link_reference_to_user(user_id, ref_id)
-        if selected_tag_id:
-            try:
-                add_tag_to_reference(int(selected_tag_id), ref_id)
-            except (TagExistsError, TagError) as e:
-                flash(f"Error associating tag to reference: {str(e)}", "error")
-        else:
-            # Poista mahdollinen vanha avainsana
-            delete_tag_from_reference(ref_id)
-
-    except DatabaseError as e:
-        flash(f"Database error: {str(e)}", "error")
-        return redirect(f"/add?form={reference_type}")
-
-    old_bib_key = (
-        form_data.get("old_bib_key", "").strip()
-        if isinstance(form_data.get("old_bib_key"), str)
-        else None
-    )
-
-    # Päivitä ryhmässä oleva viite, jos se on lisätty ryhmään
-    if editing and old_bib_key:
-        # Jos muokataan, tarkista vanha avain ryhmässä
-        if old_bib_key in session["group"]["references"]:
-            # Poista vanha avain
-            session["group"]["references"].remove(old_bib_key)
-            # Lisää uusi avain jos se eroaa vanhasta
-            if form_data["bib_key"] != old_bib_key:
-                session["group"]["references"].append(form_data["bib_key"])
-            session.modified = True
-    elif not editing:
-        # Uutta viitettä lisätessä ei tarvitse päivittää, koska sitä ei ole vielä ryhmässä
-        pass
-
-    flash("Viite tallennettu!", "success")
-    return redirect("/all")
-
-
-@app.route("/export/bibtex")
-def export_bibtex():
-    """Export all references as BibTeX format"""
-    try:
-        type_param = request.args.get("type", "all").strip()
-        if type_param == "group" and len(session["group"]["references"]) > 0:
-            data = []
-            for bib_key in session["group"]["references"]:
-                ref = get_reference_by_bib_key(bib_key, session.get("user_id"))
-                if ref:
-                    data.append(ref)
-        else:
-            data = references.get_all_added_references(session.get("user_id"))
-
-        if not data:
-            return (
-                "% No references found\n",
-                200,
-                {"Content-Type": "text/plain; charset=utf-8"},
-            )
-        # Muodosta BibTeX-sisältö
-        bibtex_content = ""
-        for ref in data:
-            bibtex_entry = format_bibtex_entry(ref)
-            bibtex_content += bibtex_entry + "\n\n"
-
-        # Palauta BibTeX-tiedosto ladattavaksi
-        response = app.response_class(
-            bibtex_content,
-            mimetype="application/x-bibtex",
-            headers={
-                "Content-Disposition": "attachment; filename=references.bib",
-                "Content-Type": "application/x-bibtex; charset=utf-8",
-            },
-        )
-        return response
-
-    except DatabaseError as e:
-        flash(f"Database error during BibTeX export: {str(e)}", "error")
-        return redirect("/all")
-    except FormFieldsError as e:
-        flash(f"Form fields error during BibTeX export: {str(e)}", "error")
-        return redirect("/all")
-    except Exception as e:
-        flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
-        return redirect("/all")
-
-
 @app.route("/get-doi", methods=["POST"])
+@login_required
 def get_doi_data():
     """
     Haetaan doi:n tiedot api-rajapinnan kautta.
     """
-
     try:
         doi = request.form.get("doi-value")
         if not doi:
@@ -574,6 +407,25 @@ def get_doi_data():
     )
 
 
+@app.route("/add-group/<bib_key>", methods=["POST"])
+@login_required
+def add_group(bib_key):
+    """Add a reference to a group."""
+    owned_ref = get_reference_by_bib_key(bib_key, session.get("user_id"))
+    if not owned_ref:
+        flash("Viitettä ei löytynyt tai sinulla ei ole oikeuksia lisätä sitä ryhmään", "error")
+        return redirect("/all")
+
+    if bib_key in session["group"]["references"]:
+        flash("This reference is already in the group", "info")
+        return redirect("/all")
+
+    session["group"]["references"].append(bib_key)
+    session.modified = True
+    flash("Reference added to group", "message")
+    return redirect("/all")
+
+
 @app.route("/search", methods=["GET", "POST"])
 def search():
     try:
@@ -600,7 +452,7 @@ def search():
 
     try:
         if query:
-            results = search_reference_by_query(query, session.get("user_id"))
+            results = search_reference_by_query(query, user_id=None)
             results = filter_and_sort_search_results(
                 results,
                 ref_type_filter=filter_type,
@@ -612,7 +464,7 @@ def search():
                 ref_type_filter=filter_type,
                 tag_filter=tag_filter,
                 sort_by=sort_by,
-                user_id=session.get("user_id"),
+                user_id=None,
             )
 
         return render_template(
@@ -652,24 +504,6 @@ def toggle_theme():
     # 1 vuoden cookie:D
     resp.set_cookie("theme", new, max_age=60 * 60 * 24 * 365)
     return resp
-
-
-@app.route("/add-group/<bib_key>", methods=["POST"])
-def add_group(bib_key):
-    """Add a reference to a group."""
-    owned_ref = get_reference_by_bib_key(bib_key, session.get("user_id"))
-    if not owned_ref:
-        flash("Reference not found or not yours.", "error")
-        return redirect("/all")
-
-    if bib_key in session["group"]["references"]:
-        flash("This reference is already in the group", "info")
-        return redirect("/all")
-
-    session["group"]["references"].append(bib_key)
-    session.modified = True
-    flash("Reference added to group", "message")
-    return redirect("/all")
 
 
 @app.route("/remove-group/<bib_key>", methods=["POST"])
