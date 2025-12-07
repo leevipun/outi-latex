@@ -40,88 +40,98 @@ def get_all_references() -> list:
 
 
 def get_all_added_references(user_id: int | None = None) -> list:
-    """Fetch all added references for a user with their field values and tags.
-
-    Args:
-        user_id: Optional user ID. If provided, returns only that user's references.
-                If None, returns all public references.
-
-    Returns:
-        list: List of dictionaries containing bib-key, reference type,
-              timestamp, all field values, and associated tag, sorted by timestamp.
-
-    Raises:
-        DatabaseError: If database query fails.
-    """
-    if user_id is not None:
-        # Käyttäjän KAIKKI viitteet (julkiset + yksityiset)
-        user_join = """
-            JOIN user_ref ur ON ur.reference_id = sr.id
-            LEFT JOIN users u ON u.id = ur.user_id
-        """
-        where_clause = "WHERE ur.user_id = :user_id"
-        params = {"user_id": user_id}
-    else:
-        # VAIN julkiset viitteet (kaikki käyttäjät)
-        user_join = """
-            JOIN user_ref ur ON ur.reference_id = sr.id
-            LEFT JOIN users u ON u.id = ur.user_id
-        """
-        where_clause = "WHERE sr.is_public = TRUE"
-        params = {}
-
-    sql = text(
-        f""" SELECT
-                sr.id,
-                sr.bib_key,
-                sr.is_public,
-                rt.name AS reference_type,
-                sr.created_at,
-                f.key_name,
-                rv.value,
-                t.id AS tag_id,
-                t.name AS tag_name,
-                u.username AS username
-            FROM single_reference sr
-            {user_join}
-            JOIN reference_types rt ON sr.reference_type_id = rt.id
-            LEFT JOIN reference_values rv ON sr.id = rv.reference_id
-            LEFT JOIN fields f ON rv.field_id = f.id
-            LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
-            LEFT JOIN tags t ON reftag.tag_id = t.id
-            {where_clause}
-            ORDER BY sr.created_at DESC, sr.id, f.key_name;"""
-    )
+    """Optimoitu versio - hae osissa."""
     try:
-        results = db.session.execute(sql, params)
+        # 1. Hae vain viitteiden perustiedot
+        if user_id is not None:
+            sql_refs = text("""
+                SELECT DISTINCT
+                    sr.id,
+                    sr.bib_key,
+                    sr.is_public,
+                    rt.name AS reference_type,
+                    sr.created_at,
+                    u.username
+                FROM single_reference sr
+                JOIN user_ref ur ON ur.reference_id = sr.id
+                LEFT JOIN users u ON u.id = ur.user_id
+                JOIN reference_types rt ON sr.reference_type_id = rt.id
+                WHERE ur.user_id = :user_id
+                ORDER BY sr.created_at DESC
+            """)
+            params = {"user_id": user_id}
+        else:
+            sql_refs = text("""
+                SELECT DISTINCT
+                    sr.id,
+                    sr.bib_key,
+                    sr.is_public,
+                    rt.name AS reference_type,
+                    sr.created_at,
+                    u.username
+                FROM single_reference sr
+                JOIN user_ref ur ON ur.reference_id = sr.id
+                LEFT JOIN users u ON u.id = ur.user_id
+                JOIN reference_types rt ON sr.reference_type_id = rt.id
+                WHERE sr.is_public = TRUE
+                ORDER BY sr.created_at DESC
+            """)
+            params = {}
 
-        # Group results by reference
+        results = db.session.execute(sql_refs, params)
+
         references = {}
+        ref_ids = []
         for row in results.mappings():
             ref_id = row["id"]
-            if ref_id not in references:
-                references[ref_id] = {
-                    "bib_key": row["bib_key"],
-                    "is_public": row["is_public"],
-                    "reference_type": row["reference_type"],
-                    "created_at": row["created_at"],
-                    "username": row["username"],
-                    "fields": {},
-                    "tag": None,
-                }
+            ref_ids.append(ref_id)
+            references[ref_id] = {
+                "bib_key": row["bib_key"],
+                "is_public": row["is_public"],
+                "reference_type": row["reference_type"],
+                "created_at": row["created_at"],
+                "username": row["username"],
+                "fields": {},
+                "tag": None,
+            }
 
-                # Add tag if it exists
-                if row["tag_id"] is not None:
-                    references[ref_id]["tag"] = {
-                        "id": row["tag_id"],
-                        "name": row["tag_name"],
-                    }
+        if not ref_ids:
+            return []
 
-            # Add field value if it exists
-            if row["key_name"] is not None:
+        # 2. Hae kaikki field values yhdellä kyselyllä
+        sql_fields = text("""
+            SELECT rv.reference_id, f.key_name, rv.value
+            FROM reference_values rv
+            JOIN fields f ON rv.field_id = f.id
+            WHERE rv.reference_id IN :ref_ids
+            ORDER BY rv.reference_id, f.key_name
+        """)
+
+        field_results = db.session.execute(sql_fields, {"ref_ids": tuple(ref_ids)})
+        for row in field_results.mappings():
+            ref_id = row["reference_id"]
+            if ref_id in references:
                 references[ref_id]["fields"][row["key_name"]] = row["value"]
 
+        # 3. Hae tagit yhdellä kyselyllä
+        sql_tags = text("""
+            SELECT reftag.reference_id, t.id AS tag_id, t.name AS tag_name
+            FROM reference_tags reftag
+            JOIN tags t ON reftag.tag_id = t.id
+            WHERE reftag.reference_id IN :ref_ids
+        """)
+
+        tag_results = db.session.execute(sql_tags, {"ref_ids": tuple(ref_ids)})
+        for row in tag_results.mappings():
+            ref_id = row["reference_id"]
+            if ref_id in references:
+                references[ref_id]["tag"] = {
+                    "id": row["tag_id"],
+                    "name": row["tag_name"],
+                }
+
         return list(references.values())
+
     except Exception as e:
         raise DatabaseError(f"Failed to fetch added references: {e}")
 
