@@ -38,14 +38,21 @@ Login As Test User
 
 *** Test Cases ***
 Redirect To Login When Not Authenticated (Prod Mode)
-    [Tags]    auth    prod
-    Run Keyword If    ${IS_TEST_ENV}    Pass Execution    Skipping: auth enforced only when TEST_ENV=false
+    [Documentation]    /add should redirect to /login when not authenticated
+    Run Keyword If    ${IS_TEST_ENV}    Pass Execution    Skipping: TEST_ENV bypasses auth
+    Ensure Logged Out
+    Go To    ${BASE_URL}/add?form=article
+    Location Should Contain    /login
+
+All Page Is Accessible Without Login
+    [Documentation]    /all page shows public references without login
     Ensure Logged Out
     Go To    ${BASE_URL}/all
-    Location Should Contain    /login
+    Location Should Be    ${BASE_URL}/all
 
 Login Works And Home Is Accessible
     [Tags]    auth
+    Run Keyword If    ${IS_TEST_ENV}    Pass Execution    Skipping: TEST_ENV bypasses auth
     Ensure Logged Out
     Create User If Missing
     Login As Test User
@@ -53,11 +60,12 @@ Login Works And Home Is Accessible
 
 Logout Behavior Matches Mode
     [Tags]    auth
+    Run Keyword If    ${IS_TEST_ENV}    Pass Execution    Skipping: TEST_ENV bypasses auth
+    Ensure Logged Out
+    Create User If Missing
     Login As Test User
     Go To    ${BASE_URL}/logout
-    Run Keyword If    ${IS_TEST_ENV}    Go To    ${BASE_URL}/
-    Run Keyword If    ${IS_TEST_ENV}    Page Should Contain Element    id:form
-    Run Keyword If    not ${IS_TEST_ENV}    Location Should Contain    /login
+    Location Should Contain    /login
 
 Test Mode Bypasses Auth Wall
     [Tags]    testmode
