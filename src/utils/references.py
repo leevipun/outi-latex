@@ -401,30 +401,13 @@ def delete_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> Non
 
 
 def search_reference_by_query(query: str, user_id: int | None = None) -> list:
-    """Search for references matching the given query string.
-
-    Searches across bib_key, author, title, and other field values.
-    If user_id is provided, searches only that user's references.
-    Otherwise, searches only public references.
-
-    Args:
-        query: The search query string.
-        user_id: Optional user ID. If provided, searches only that user's references.
-
-    Returns:
-        list: List of dictionaries containing matching references with their fields and tags.
-
-    Raises:
-        DatabaseError: If the search query fails.
-    """
+    """Search for references matching the given query string."""
     try:
         if user_id is not None:
-            # Käyttäjän KAIKKI viitteet
             user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
             where_clause = "WHERE ur.user_id = :user_id"
             params = {"query": f"%{query}%", "user_id": user_id}
         else:
-            # VAIN julkiset viitteet (kaikki käyttäjät)
             user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
             where_clause = "WHERE sr.is_public = TRUE"
             params = {"query": f"%{query}%"}
@@ -440,9 +423,11 @@ def search_reference_by_query(query: str, user_id: int | None = None) -> list:
                 f.key_name,
                 rv.value,
                 t.id AS tag_id,
-                t.name AS tag_name
+                t.name AS tag_name,
+                u.username AS username
             FROM single_reference sr
             {user_join}
+            LEFT JOIN users u ON u.id = ur.user_id
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
@@ -470,6 +455,7 @@ def search_reference_by_query(query: str, user_id: int | None = None) -> list:
                     "is_public": row["is_public"],
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
+                    "username": row["username"],
                     "fields": {},
                     "tag": None,
                 }
