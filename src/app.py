@@ -520,21 +520,33 @@ def get_doi_data():
 
 
 @app.route("/add-group/<bib_key>", methods=["POST"])
-@login_required
 def add_group(bib_key):
     """Add a reference to a group."""
-    owned_ref = get_reference_by_bib_key(bib_key, session.get("user_id"))
-    if not owned_ref:
-        flash("Viitettä ei löytynyt tai sinulla ei ole oikeuksia lisätä sitä ryhmään", "error")
+    # Hae viite ilman user_id rajoitusta -> hakee julkiset viitteet
+    try:
+        ref = get_reference_by_bib_key(bib_key, user_id=None)
+    except DatabaseError as e:
+        flash(f"Virhe: {str(e)}", "error")
         return redirect("/all")
 
+    if not ref:
+        flash("Viitettä ei löytynyt", "error")
+        return redirect("/all")
+
+    # Tarkista että viite on julkinen TAI käyttäjän oma
+    if not ref.get("is_public"):
+        # Jos yksityinen, tarkista omistajuus
+        if session.get("username") != ref.get("username"):
+            flash("Et voi lisätä toisen käyttäjän yksityistä viitettä ryhmään", "error")
+            return redirect("/all")
+
     if bib_key in session["group"]["references"]:
-        flash("This reference is already in the group", "info")
+        flash("Viite on jo ryhmässä", "info")
         return redirect("/all")
 
     session["group"]["references"].append(bib_key)
     session.modified = True
-    flash("Reference added to group", "message")
+    flash("Viite lisätty ryhmään", "success")
     return redirect("/all")
 
 
