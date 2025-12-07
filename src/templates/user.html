@@ -5,104 +5,169 @@
 
 {% block content %}
 {% if user %}
-    <div id="user-settings-container">
-        <h1 id="user-settings-title">Käyttäjäasetukset</h1>
-        <hr/>
+    <div id="user-page-container">
+        <!-- Viitteet osio (ensimmäisenä) -->
+        <div class="user-references-section">
+            <h1>Omat viitteeni</h1>
+            <hr/>
 
-        <!-- Email Change Form -->
-        <div class="settings-section">
-            <h2 id="email-section-title">Vaihda sähköpostiosoite</h2>
-            <form action="/update_email" method="post" id="email-form">
-                <div class="form-group">
-                    <label for="current_email" id="current-email-label">
-                        Nykyinen sähköpostiosoite
-                    </label>
-                    {{ user.email }}
-                    <small class="helper-text">Tämä on nykyinen sähköpostiosoitteesi</small>
-                </div>
+            {% if references %}
+                <p class="references-count">Yhteensä {{ references|length }} viitettä</p>
 
-                <div class="form-group">
-                    <label for="new_email" id="new-email-label">
-                        Uusi sähköpostiosoite <span class="required">*</span>
-                    </label>
-                    <input type="email"
-                           id="new_email"
-                           name="new_email"
-                           placeholder="uusi@email.com"
-                           required>
-                    <small class="helper-text">Syötä uusi sähköpostiosoitteesi</small>
-                </div>
+                <div class="references-list">
+                    {% for reference in references %}
+                    <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
+                        <div class="reference-header">
+                            <h3>{{ reference['bib_key'] }}</h3>
 
-                <div class="form-group">
-                    <label for="confirm_email" id="confirm-email-label">
-                        Vahvista uusi sähköpostiosoite <span class="required">*</span>
-                    </label>
-                    <input type="email"
-                           id="confirm_email"
-                           name="confirm_email"
-                           placeholder="uusi@email.com"
-                           required>
-                    <small class="helper-text">Syötä uusi sähköpostiosoite uudelleen</small>
-                </div>
+                            <!-- Näkyvyystila -->
+                            {% if reference.get('is_public') == False %}
+                            <span class="visibility-badge private">🔒 Yksityinen</span>
+                            {% else %}
+                            <span class="visibility-badge public">📢 Julkinen</span>
+                            {% endif %}
+                        </div>
 
-                <div class="button-group">
-                    <button type="submit" class="button-primary" id="update-email-button">
-                        Päivitä sähköpostiosoite
-                    </button>
+                        <p><strong>Tyyppi:</strong> {{ reference['reference_type'] }}</p>
+                        <p><strong>Luotu:</strong> {{ reference['created_at'] }}</p>
+
+                        <!-- Kentät -->
+                        <div class="reference-fields">
+                            {% for key, value in reference['fields'].items() %}
+                            <p><strong>{{ key }}:</strong> {{ value }}</p>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Tagi -->
+                        {% if reference.get('tag') %}
+                        <p class="reference-tag">
+                            <span class="tag-badge">🏷️ {{ reference['tag']['name'] }}</span>
+                        </p>
+                        {% endif %}
+
+                        <!-- Toiminnot -->
+                        <div class="reference-actions">
+                            <a href="/edit/{{ reference['bib_key'] }}" class="btn btn-edit">Muokkaa</a>
+                            <form action="/delete/{{ reference['bib_key'] }}" method="POST" style="display:inline;">
+                                <button type="submit" class="btn btn-delete"
+                                        onclick="return confirm('Haluatko varmasti poistaa viitteen {{ reference['bib_key'] }}?')">
+                                    Poista
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-            </form>
+            {% else %}
+                <div class="no-references">
+                    <p>Et ole vielä lisännyt yhtään viitettä.</p>
+                    <a href="/" class="btn btn-primary">Lisää ensimmäinen viite</a>
+                </div>
+            {% endif %}
         </div>
 
-        <!-- Password Change Form -->
-        <div class="settings-section">
-            <h2 id="password-section-title">Vaihda salasana</h2>
-            <form action="/update_password" method="post" id="password-form">
-                <div class="form-group">
-                    <label for="current_password" id="current-password-label">
-                        Nykyinen salasana <span class="required">*</span>
-                    </label>
-                    <input type="password"
-                           id="current_password"
-                           name="current_password"
-                           required>
-                    <small class="helper-text">Syötä nykyinen salasanasi vahvistusta varten</small>
-                </div>
+        <hr style="margin: 40px 0;"/>
 
-                <div class="form-group">
-                    <label for="new_password" id="new-password-label">
-                        Uusi salasana <span class="required">*</span>
-                    </label>
-                    <input type="password"
-                           id="new_password"
-                           name="new_password"
-                           required
-                           minlength="8">
-                    <small class="helper-text">Salasanan tulee olla vähintään 8 merkkiä pitkä</small>
-                </div>
+        <!-- Asetukset osio -->
+        <div id="user-settings-container">
+            <h1 id="user-settings-title">Käyttäjäasetukset</h1>
+            <hr/>
 
-                <div class="form-group">
-                    <label for="confirm_password" id="confirm-password-label">
-                        Vahvista uusi salasana <span class="required">*</span>
-                    </label>
-                    <input type="password"
-                           id="confirm_password"
-                           name="confirm_password"
-                           required
-                           minlength="8">
-                    <small class="helper-text">Syötä uusi salasana uudelleen</small>
-                </div>
+            <!-- Email Change Form -->
+            <div class="settings-section">
+                <h2 id="email-section-title">Vaihda sähköpostiosoite</h2>
+                <form action="/update_email" method="post" id="email-form">
+                    <div class="form-group">
+                        <label for="current_email" id="current-email-label">
+                            Nykyinen sähköpostiosoite
+                        </label>
+                        {{ user.email }}
+                        <small class="helper-text">Tämä on nykyinen sähköpostiosoitteesi</small>
+                    </div>
 
-                <div class="button-group">
-                    <button type="submit" class="button-primary" id="update-password-button">
-                        Päivitä salasana
-                    </button>
-                </div>
-            </form>
-        </div>
+                    <div class="form-group">
+                        <label for="new_email" id="new-email-label">
+                            Uusi sähköpostiosoite <span class="required">*</span>
+                        </label>
+                        <input type="email"
+                               id="new_email"
+                               name="new_email"
+                               placeholder="uusi@email.com"
+                               required>
+                        <small class="helper-text">Syötä uusi sähköpostiosoitteesi</small>
+                    </div>
 
-        <!-- Back to Home Link -->
-        <div class="navigation-links">
-            <a href="/" id="back-to-home" class="btn">← Takaisin etusivulle</a>
+                    <div class="form-group">
+                        <label for="confirm_email" id="confirm-email-label">
+                            Vahvista uusi sähköpostiosoite <span class="required">*</span>
+                        </label>
+                        <input type="email"
+                               id="confirm_email"
+                               name="confirm_email"
+                               placeholder="uusi@email.com"
+                               required>
+                        <small class="helper-text">Syötä uusi sähköpostiosoite uudelleen</small>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="button-primary" id="update-email-button">
+                            Päivitä sähköpostiosoite
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Password Change Form -->
+            <div class="settings-section">
+                <h2 id="password-section-title">Vaihda salasana</h2>
+                <form action="/update_password" method="post" id="password-form">
+                    <div class="form-group">
+                        <label for="current_password" id="current-password-label">
+                            Nykyinen salasana <span class="required">*</span>
+                        </label>
+                        <input type="password"
+                               id="current_password"
+                               name="current_password"
+                               required>
+                        <small class="helper-text">Syötä nykyinen salasanasi vahvistusta varten</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="new_password" id="new-password-label">
+                            Uusi salasana <span class="required">*</span>
+                        </label>
+                        <input type="password"
+                               id="new_password"
+                               name="new_password"
+                               required
+                               minlength="8">
+                        <small class="helper-text">Salasanan tulee olla vähintään 8 merkkiä pitkä</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirm_password" id="confirm-password-label">
+                            Vahvista uusi salasana <span class="required">*</span>
+                        </label>
+                        <input type="password"
+                               id="confirm_password"
+                               name="confirm_password"
+                               required
+                               minlength="8">
+                        <small class="helper-text">Syötä uusi salasana uudelleen</small>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="button-primary" id="update-password-button">
+                            Päivitä salasana
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Back to Home Link -->
+            <div class="navigation-links">
+                <a href="/" id="back-to-home" class="btn">← Takaisin etusivulle</a>
+            </div>
         </div>
     </div>
 {% endif %}
