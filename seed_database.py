@@ -17,42 +17,25 @@ if not DATABASE_URL:
 
 try:
     engine = create_engine(DATABASE_URL)
-    print("✓ Connected to database")
+    print("Connected to database")
 
 
     # Create tables if they don't exist
     with engine.connect() as conn:
-        print("Clearing exsisting")
-        """Clear all data from the database, dropping all tables except reference_types metadata."""
-        print("Dropping reference_values table")
-        sql = text("DROP TABLE IF EXISTS reference_values CASCADE")
-        conn.execute(sql)
+        print("Clearing existing tables")
+        for cmd in [
+            "DROP TABLE IF EXISTS user_ref CASCADE",
+            "DROP TABLE IF EXISTS reference_tags CASCADE",
+            "DROP TABLE IF EXISTS reference_values CASCADE",
+            "DROP TABLE IF EXISTS single_reference CASCADE",
+            "DROP TABLE IF EXISTS reference_type_fields CASCADE",
+            "DROP TABLE IF EXISTS fields CASCADE",
+            "DROP TABLE IF EXISTS tags CASCADE",
+            "DROP TABLE IF EXISTS users CASCADE",
+            "TRUNCATE TABLE reference_types RESTART IDENTITY CASCADE"
+        ]:
+            conn.execute(text(cmd))
 
-        print("Dropping single_reference table")
-        sql = text("DROP TABLE IF EXISTS single_reference CASCADE")
-        conn.execute(sql)
-
-        print("Dropping tags table")
-        sql = text("DROP TABLE IF EXISTS tags CASCADE")
-        conn.execute(sql)
-
-        print("Dropping reference_type_fields table")
-        sql = text("DROP TABLE IF EXISTS reference_type_fields CASCADE")
-        conn.execute(sql)
-
-        print("Dropping fields table")
-        sql = text("DROP TABLE IF EXISTS fields CASCADE")
-        conn.execute(sql)
-
-        print("Ensuring reference_types table exists before clearing contents")
-        conn.execute(text("""
-            CREATE TABLE IF NOT EXISTS reference_types (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(50) UNIQUE NOT NULL
-            )
-        """))
-        sql = text("TRUNCATE TABLE reference_types RESTART IDENTITY CASCADE")
-        conn.execute(sql)
         conn.execute(text("""
             CREATE TABLE IF NOT EXISTS reference_types (
                 id SERIAL PRIMARY KEY,
@@ -105,20 +88,35 @@ try:
                 value TEXT
             )
         """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """))
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS user_ref (
+                user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                reference_id INT NOT NULL REFERENCES single_reference(id) ON DELETE CASCADE,
+                PRIMARY KEY(user_id, reference_id)
+            )
+        """))
         conn.commit()
-    print("✓ Ensured database tables exist")
+    print("Ensured database tables exist")
 
     with open('form-fields.json', 'r') as f:
         form_fields = json.load(f)
-    print(f"✓ Loaded form-fields.json with {len(form_fields)} reference types")
+    print(f"Loaded form-fields.json with {len(form_fields)} reference types")
 
     with Session(engine) as session:
-        # Delete in child → parent order to avoid FK issues
+        # Delete in child then parent order to avoid FK issues
         session.execute(text("DELETE FROM reference_type_fields"))
         session.execute(text("DELETE FROM fields"))
         session.execute(text("DELETE FROM reference_types"))
         session.commit()
-        print("✓ Cleared existing data")
+        print("Cleared existing data")
 
         # Insert reference types
         reference_types = list(form_fields.keys())
@@ -132,9 +130,9 @@ try:
                 {"name": ref_type}
             )
         session.commit()
-        print(f"✓ Inserted {len(reference_types)} reference types")
+        print(f"Inserted {len(reference_types)} reference types")
 
-        # Map reference type names → IDs
+        # Map reference type names to IDs
         result = session.execute(text("SELECT id, name FROM reference_types"))
         type_map = {name: id for id, name in result.fetchall()}
 
@@ -163,7 +161,7 @@ try:
                 field_map[key] = result.scalar()
 
         session.commit()
-        print(f"✓ Inserted {len(field_map)} unique fields")
+        print(f"Inserted {len(field_map)} unique fields")
 
         # Insert reference_type_fields mappings
         total_mappings = 0
@@ -181,10 +179,10 @@ try:
                 total_mappings += 1
 
         session.commit()
-        print(f"✓ Inserted {total_mappings} reference_type_field mappings")
+        print(f"Inserted {total_mappings} reference_type_field mappings")
 
-    print("\n✅ Database seeded successfully!")
+    print("\nDatabase seeded successfully!")
 
 except Exception as e:
-    print(f"\n❌ Error: {e}")
+    print(f"\nError: {e}")
     raise

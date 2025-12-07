@@ -172,6 +172,8 @@ poetry run python src/index.py
 poetry run python seed_database.py
 ```
 
+> Auth note: the schema now includes `users` and `user_ref` tables for login and ownership. If you already have a database, rerun the schema setup/reset before using the new auth routes. After starting the app, create your first account via `/signup`.
+
 #### Stopping Docker Postgres
 
 ```bash
@@ -316,6 +318,7 @@ Robot Framework tests validate user workflows end-to-end using Selenium for brow
 
 Before running Robot tests, ensure:
 
+1. `TEST_ENV=true` so the login wall is bypassed for E2E flows. Locally set it before starting Flask (`$env:TEST_ENV="true"` in PowerShell or `export TEST_ENV=true` in bash). Docker Compose already sets this for the `app` service.
 1. Application is running: `poetry run python -m flask --app src.app run --debug`
 2. Chrome/Chromium browser is installed
 3. ChromeDriver is in PATH or available
