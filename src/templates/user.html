@@ -14,6 +14,14 @@
             {% if references %}
                 <p class="references-count" style="margin-top: 10px;">Yhteensä <strong>{{ references|length }}</strong> viitettä</p>
 
+                <a href="{{ url_for('export_user_bibtex') }}"
+                   id="export-bibtex-button"
+                   class="button button-primary"
+                   download="my_references.bib"
+                   style="margin-left: 10px; background: #28a745; padding: 15px; border-radius: 10px; text-decoration: none;">
+                    📄 Lataa BibTeX (.bib)
+                </a>
+
                 <div class="references-list">
                     {% for reference in references %}
                         <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
@@ -52,7 +60,7 @@
                                     <button id="add-group-{{ reference['bib_key'] }}" type="submit">Lisää ryhmään</button>
                                 </form>
                                 {% endif %}
-                        
+
                                 {% if session["user_id"] == reference["owner_id"] %}
                                 <div style="display: flex; gap: 10px;">
                                     <form method="get" action="/edit/{{ reference['bib_key'] }}">
