@@ -562,6 +562,7 @@ def export_bibtex():
         flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
         return redirect(request.referrer or "/all")
 
+
 @app.route("/export/user_bibtex")
 @login_required
 def export_user_bibtex():
@@ -605,6 +606,7 @@ def export_user_bibtex():
     except Exception as e:
         flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
         return redirect(url_for("user_page"))
+
 
 @app.route("/get-doi", methods=["POST"])
 @login_required
