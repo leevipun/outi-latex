@@ -80,17 +80,32 @@
                 <p><small>Ei vielä avainsanoja. Lisää uusi avainsana alla.</small></p>
                 {% endif %}
             </div>
-    
+
             <div class="form-group">
                 <label for="new_tag">Lisää uusi avainsana</label>
                 <input type="text" id="new_tag" name="new_tag" placeholder="Uuden avainsanan nimi" />
+            </div>
+
+            <div class="form-group">
+                <label>📢 Julkinen</label>
+                <!-- Hidden input joka lähetetään lomakkeessa -->
+                <input type="hidden" name="visibility" id="visibility-value"
+                       value="{% if not pre_filled_values or pre_filled_values.get('is_public', True) %}public{% else %}private{% endif %}">
+
+                <!-- Checkbox vain UI:ta varten, EI lähetä lomakkeessa -->
+                <label class="toggle-switch">
+                    <input type="checkbox" id="visibility-toggle"
+                           {% if not pre_filled_values or pre_filled_values.get('is_public', True) %}checked{% endif %}
+                           onchange="document.getElementById('visibility-value').value = this.checked ? 'public' : 'private';">
+                    <span class="toggle-slider"></span>
+                </label>
+                <small class="helper-text">Yksityiset viitteet eivät näy muille käyttäjille.</small>
             </div>
 
             <div class="button-group">
                 <button type="submit" class="button-primary" id="save-reference-button">
                     {% if pre_filled_values %}Hyväksy muutokset{% else %}Tallenna viite{% endif %}
                 </button>
-            </div>
             </div>
         </form>
 

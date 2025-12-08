@@ -7,11 +7,31 @@ Suite Teardown    Close Browser
 
 *** Variables ***
 ${BASE_URL}       http://localhost:5001
+${USER}           robotuser
+${PASS}           robotpass
 
 *** Keywords ***
 Initialize Test Environment
     [Documentation]    Initialize the test environment
     Open Browser    ${BASE_URL}    chrome    options=add_argument("--headless");add_argument("--no-sandbox");add_argument("--disable-dev-shm-usage");add_argument("--disable-gpu")
+    Create User If Missing
+    Login As Test User
+
+Create User If Missing
+    [Documentation]    Best-effort signup; ignore duplicate user errors
+    Go To    ${BASE_URL}/signup
+    Input Text    id:username    ${USER}
+    Input Text    id:password    ${PASS}
+    Click Button    css:button[type="submit"]
+    Sleep    0.5s
+
+Login As Test User
+    [Documentation]    Login with test credentials
+    Go To    ${BASE_URL}/login
+    Input Text    id:username    ${USER}
+    Input Text    id:password    ${PASS}
+    Click Button    css:button[type="submit"]
+    Wait Until Page Contains Element    id:form    timeout=5s
 
 Delete Test Reference
     [Documentation]    Delete a test reference by its cite key

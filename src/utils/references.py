@@ -40,70 +40,104 @@ def get_all_references() -> list:
 
 
 def get_all_added_references(user_id: int | None = None) -> list:
-    """Fetch all added references for a user with their field values and tags.
-
-    Returns:
-        list: List of dictionaries containing bib-key, reference type,
-              timestamp, all field values, and associated tag, sorted by timestamp.
-
-    Raises:
-        DatabaseError: If database query fails.
-    """
-    user_join = ""
-    params = {}
-    if user_id is not None:
-        user_join = (
-            "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
-        )
-        params["user_id"] = user_id
-
-    sql = text(
-        f""" SELECT
-                sr.id,
-                sr.bib_key,
-                rt.name AS reference_type,
-                sr.created_at,
-                f.key_name,
-                rv.value,
-                t.id AS tag_id,
-                t.name AS tag_name
-            FROM single_reference sr
-            {user_join}
-            JOIN reference_types rt ON sr.reference_type_id = rt.id
-            LEFT JOIN reference_values rv ON sr.id = rv.reference_id
-            LEFT JOIN fields f ON rv.field_id = f.id
-            LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
-            LEFT JOIN tags t ON reftag.tag_id = t.id
-            ORDER BY sr.created_at DESC, sr.id, f.key_name;"""
-    )
+    """Fetch all references added by a specific user or all public references."""
     try:
-        results = db.session.execute(sql, params)
+        if user_id is not None:
+            sql_refs = text(
+                """
+                SELECT
+                    sr.id,
+                    sr.bib_key,
+                    sr.is_public,
+                    rt.name AS reference_type,
+                    sr.created_at,
+                    u.username
+                FROM single_reference sr
+                JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id
+                LEFT JOIN users u ON u.id = ur.user_id
+                JOIN reference_types rt ON sr.reference_type_id = rt.id
+                ORDER BY sr.created_at DESC
+            """
+            )
+            params = {"user_id": user_id}
+        else:
+            sql_refs = text(
+                """
+                SELECT DISTINCT
+                    sr.id,
+                    sr.bib_key,
+                    sr.is_public,
+                    rt.name AS reference_type,
+                    sr.created_at,
+                    u.username
+                FROM single_reference sr
+                JOIN user_ref ur ON ur.reference_id = sr.id
+                LEFT JOIN users u ON u.id = ur.user_id
+                JOIN reference_types rt ON sr.reference_type_id = rt.id
+                WHERE sr.is_public = TRUE
+                ORDER BY sr.created_at DESC
+            """
+            )
+            params = {}
 
-        # Group results by reference
+        results = db.session.execute(sql_refs, params)
+
         references = {}
+        ref_ids = []
         for row in results.mappings():
             ref_id = row["id"]
-            if ref_id not in references:
-                references[ref_id] = {
-                    "bib_key": row["bib_key"],
-                    "reference_type": row["reference_type"],
-                    "created_at": row["created_at"],
-                    "fields": {},
-                    "tag": None,
-                }
+            ref_ids.append(ref_id)
+            references[ref_id] = {
+                "bib_key": row["bib_key"],
+                "is_public": row["is_public"],
+                "reference_type": row["reference_type"],
+                "created_at": row["created_at"],
+                "username": row["username"],
+                "fields": {},
+                "tag": None,
+            }
 
-                # Add tag if it exists
-                if row["tag_id"] is not None:
-                    references[ref_id]["tag"] = {
-                        "id": row["tag_id"],
-                        "name": row["tag_name"],
-                    }
+        if not ref_ids:
+            return []
 
-            # Add field value if it exists
-            if row["key_name"] is not None:
+        # 2. Hae kaikki field values yhdellä kyselyllä
+        sql_fields = text(
+            """
+            SELECT rv.reference_id, f.key_name, rv.value
+            FROM reference_values rv
+            JOIN fields f ON rv.field_id = f.id
+            WHERE rv.reference_id IN :ref_ids
+            ORDER BY rv.reference_id, f.key_name
+        """
+        )
+
+        field_results = db.session.execute(sql_fields, {"ref_ids": tuple(ref_ids)})
+        for row in field_results.mappings():
+            ref_id = row["reference_id"]
+            if ref_id in references:
                 references[ref_id]["fields"][row["key_name"]] = row["value"]
 
+        # 3. Hae tagit yhdellä kyselyllä
+        sql_tags = text(
+            """
+            SELECT reftag.reference_id, t.id AS tag_id, t.name AS tag_name
+            FROM reference_tags reftag
+            JOIN tags t ON reftag.tag_id = t.id
+            WHERE reftag.reference_id IN :ref_ids
+        """
+        )
+
+        tag_results = db.session.execute(sql_tags, {"ref_ids": tuple(ref_ids)})
+        for row in tag_results.mappings():
+            ref_id = row["reference_id"]
+            if ref_id in references:
+                references[ref_id]["tag"] = {
+                    "id": row["tag_id"],
+                    "name": row["tag_name"],
+                }
+
         return list(references.values())
+
     except Exception as e:
         raise DatabaseError(f"Failed to fetch added references: {e}")
 
@@ -113,38 +147,45 @@ def get_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> dict:
 
     Args:
         bib_key: The unique bib_key identifier for the reference.
+        user_id: Optional user ID to filter by ownership (None = public only)
 
     Returns:
         dict: Dictionary containing bib_key, reference_type, created_at,
-              and fields dictionary with all field values.
+              username, is_public, and fields dictionary with all field values.
               Returns None if reference is not found.
 
     Raises:
         DatabaseError: If database query fails.
     """
-    user_join = ""
-    params = {"bib_key": bib_key}
     if user_id is not None:
-        user_join = (
-            "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
-        )
-        params["user_id"] = user_id
+        # Hae käyttäjän oma viite
+        user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+        where_clause = "WHERE sr.bib_key = :bib_key AND ur.user_id = :user_id"
+        params = {"bib_key": bib_key, "user_id": user_id}
+    else:
+        # Hae julkinen viite
+        user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+        where_clause = "WHERE sr.bib_key = :bib_key AND sr.is_public = TRUE"
+        params = {"bib_key": bib_key}
 
     sql = text(
-        f""" SELECT
+        f"""SELECT
                 sr.id,
                 sr.bib_key,
+                sr.is_public,
                 rt.name AS reference_type,
-                sr.reference_type_id,
+                rt.id AS reference_type_id,
                 sr.created_at,
+                u.username,
                 f.key_name,
                 rv.value
             FROM single_reference sr
             {user_join}
+            LEFT JOIN users u ON u.id = ur.user_id
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
-            WHERE sr.bib_key = :bib_key
+            {where_clause}
             ORDER BY f.key_name;"""
     )
     try:
@@ -156,6 +197,8 @@ def get_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> dict:
                 reference = {
                     "id": row["id"],
                     "bib_key": row["bib_key"],
+                    "is_public": row["is_public"],
+                    "username": row["username"],
                     "reference_type": row["reference_type"],
                     "reference_type_id": row["reference_type_id"],
                     "created_at": row["created_at"],
@@ -172,32 +215,9 @@ def get_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> dict:
 
 
 def add_reference(reference_type_name: str, data: dict, editing: bool = False) -> int:
-    """Lisää uusi viite tietokantaan tai päivitä olemassa oleva.
-
-    Jos editing=True ja bib_key on jo olemassa, päivitetään sen kentät.
-    Jos editing=False ja bib_key on jo olemassa, heitetään virhe.
-    Oletus: Viitetyyppi ei muutu, mutta kentät voivat muuttua.
-
-    Args:
-        reference_type_name: viitetyypin nimi, esim. "article" (tulee lomakkeelta / URL:sta)
-        data: lomakedata dictinä, esim:
-              {
-                  "bib_key": "Martin2009",
-                  "author": "Martin, O.",
-                  "title": "Nice paper",
-                  "year": "2009",
-                  ...
-              }
-        editing: True jos muokataan olemassa olevaa viitettä, False jos lisätään uusi
-
-    Returns:
-        int: Lisätyn tai päivitetyn viitteen id.
-
-    Raises:
-        DatabaseError: jos tietokantaoperaatio epäonnistuu.
-    """
+    """Lisää uusi viite tietokantaan tai päivitä olemassa oleva."""
     try:
-        # 1) Hae viitetyypin id reference_types-taulusta
+        # 1) Hae viitetyypin id
         result = (
             db.session.execute(
                 text("SELECT id FROM reference_types WHERE name = :name"),
@@ -218,7 +238,6 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
             if isinstance(data.get("old_bib_key"), str)
             else None
         )
-        # Kun muokataan, käytetään vanhaa avainta löytämiseen
         bib_key_to_check = old_bib_key if editing and old_bib_key else data["bib_key"]
 
         existing_ref = (
@@ -230,9 +249,21 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
             .first()
         )
 
+        if "is_public" in data:
+            is_public = data.pop("is_public")
+        elif editing and existing_ref:
+            # Muokataan olemassa olevaa viitettä, säilytetään nykyinen arvo
+            current_visibility = db.session.execute(
+                text("SELECT is_public FROM single_reference WHERE id = :ref_id"),
+                {"ref_id": existing_ref["id"]},
+            ).scalar()
+            is_public = current_visibility if current_visibility is not None else True
+        else:
+            # Uusi viite, oletus on True (julkinen)
+            is_public = True
+
         if existing_ref:
             if not editing:
-                # Yritettiin lisätä uusi viite, mutta se on jo olemassa
                 raise DatabaseError(
                     f"Reference with bib_key '{bib_key_to_check}' already exists. "
                     "Use edit mode to update it."
@@ -248,45 +279,60 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
             )
             db.session.flush()
 
-            # Päivitä bib_key jos se muuttui
+            # Päivitä bib_key JA is_public jos ne muuttuivat
             if old_bib_key and data["bib_key"] != old_bib_key:
                 db.session.execute(
                     text(
-                        "UPDATE single_reference SET bib_key = :new_bib_key WHERE id = :id"
+                        """UPDATE single_reference
+                           SET bib_key = :new_bib_key, is_public = :is_public
+                           WHERE id = :id"""
                     ),
-                    {"new_bib_key": data["bib_key"], "id": ref_id},
+                    {
+                        "new_bib_key": data["bib_key"],
+                        "is_public": is_public,
+                        "id": ref_id,
+                    },
+                )
+            else:
+                # Päivitä vain is_public (bib_key pysyy samana)
+                db.session.execute(
+                    text(
+                        """UPDATE single_reference
+                           SET is_public = :is_public
+                           WHERE id = :id"""
+                    ),
+                    {"is_public": is_public, "id": ref_id},
                 )
         else:
             # Luodaan uusi viite
             insert_ref = db.session.execute(
                 text(
                     """
-                    INSERT INTO single_reference (bib_key, reference_type_id)
-                    VALUES (:bib_key, :reference_type_id)
+                    INSERT INTO single_reference (bib_key, reference_type_id, is_public)
+                    VALUES (:bib_key, :reference_type_id, :is_public)
                     RETURNING id;
                     """
                 ),
                 {
                     "bib_key": data["bib_key"],
                     "reference_type_id": reference_type_id,
+                    "is_public": is_public,
                 },
             )
             db.session.flush()
 
-            # .scalar() toimii useimmissa, mutta jos ei, käytetään mappings().first()
             ref_id = insert_ref.scalar()
             if ref_id is None:
                 row = insert_ref.mappings().first()
                 ref_id = row["id"]
 
-        # 3) Jokaiselle kentälle (paitsi bib_key ja old_bib_key) lisätään rivi reference_values-tauluun
+        # 3) Lisää kentät reference_values-tauluun
         for key, value in data.items():
             if key in ("bib_key", "old_bib_key"):
                 continue
             if value in (None, ""):
-                continue  # ei tallenneta tyhjiä
+                continue
 
-            # Hae field_id fields-taulusta (key_name + reference_type_id)
             field_row = (
                 db.session.execute(
                     text(
@@ -307,13 +353,11 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
                 .first()
             )
 
-            # Jos kenttää ei löydy skeemasta, skippaa (voi myös nostaa virheen jos haluat)
             if field_row is None:
                 continue
 
             field_id = field_row["id"]
 
-            # Lisää arvo reference_values-tauluun
             db.session.execute(
                 text(
                     """
@@ -331,7 +375,7 @@ def add_reference(reference_type_name: str, data: dict, editing: bool = False) -
         db.session.commit()
         return ref_id
 
-    except Exception as exc:  # voit tiukentaa myöhemmin
+    except Exception as exc:
         db.session.rollback()
         raise DatabaseError(f"Failed to insert/update reference: {exc}") from exc
 
@@ -372,47 +416,40 @@ def delete_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> Non
 
 
 def search_reference_by_query(query: str, user_id: int | None = None) -> list:
-    """Search for references matching the given query string.
-
-    Searches across bib_key, author, title, and other field values.
-
-    Args:
-        query: The search query string.
-
-    Returns:
-        list: List of dictionaries containing matching references with their fields and tags.
-
-    Raises:
-        DatabaseError: If the search query fails.
-    """
+    """Search for references matching the given query string."""
     try:
-        user_join = ""
-        params = {"query": f"%{query}%"}
         if user_id is not None:
-            user_join = (
-                "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
-            )
-            params["user_id"] = user_id
+            user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+            where_clause = "WHERE ur.user_id = :user_id"
+            params = {"query": f"%{query}%", "user_id": user_id}
+        else:
+            user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+            where_clause = "WHERE sr.is_public = TRUE"
+            params = {"query": f"%{query}%"}
 
         sql = text(
             f"""
             SELECT
                 sr.id,
                 sr.bib_key,
+                sr.is_public,
                 rt.name AS reference_type,
                 sr.created_at,
                 f.key_name,
                 rv.value,
                 t.id AS tag_id,
-                t.name AS tag_name
+                t.name AS tag_name,
+                u.username AS username
             FROM single_reference sr
             {user_join}
+            LEFT JOIN users u ON u.id = ur.user_id
             JOIN reference_types rt ON sr.reference_type_id = rt.id
             LEFT JOIN reference_values rv ON sr.id = rv.reference_id
             LEFT JOIN fields f ON rv.field_id = f.id
             LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
             LEFT JOIN tags t ON reftag.tag_id = t.id
-            WHERE sr.id IN (
+            {where_clause}
+              AND sr.id IN (
                 SELECT DISTINCT sr2.id
                 FROM single_reference sr2
                 LEFT JOIN reference_values rv2 ON sr2.id = rv2.reference_id
@@ -430,8 +467,10 @@ def search_reference_by_query(query: str, user_id: int | None = None) -> list:
             if ref_id not in references:
                 references[ref_id] = {
                     "bib_key": row["bib_key"],
+                    "is_public": row["is_public"],
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
+                    "username": row["username"],
                     "fields": {},
                     "tag": None,
                 }
@@ -539,14 +578,15 @@ def get_references_filtered_sorted(
     user_id: int | None = None,
 ) -> list:
     try:
-        user_join = ""
-        params = {}
-
         if user_id is not None:
             user_join = (
                 "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
             )
-            params["user_id"] = user_id
+            params = {"user_id": user_id}
+        else:
+            # VAIN julkiset viitteet (kaikki käyttäjät)
+            user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
+            params = {}
 
         base_sql = f"""
             SELECT DISTINCT
@@ -565,7 +605,7 @@ def get_references_filtered_sorted(
             LEFT JOIN fields f ON rv.field_id = f.id
             LEFT JOIN reference_tags reftag ON sr.id = reftag.reference_id
             LEFT JOIN tags t ON reftag.tag_id = t.id
-            WHERE 1=1
+            WHERE sr.is_public = TRUE
         """
 
         conditions = []
@@ -676,3 +716,18 @@ def filter_and_sort_search_results(
     except Exception as e:
         print(f"Warning: Sorting failed, returning filtered results: {e}")
         return filtered
+
+
+def get_reference_visibility(bib_key: str) -> bool:
+    """Get the is_public status of a reference."""
+    try:
+        sql = text("SELECT is_public FROM single_reference WHERE bib_key = :bib_key")
+        result = db.session.execute(sql, {"bib_key": bib_key}).mappings().first()
+
+        if result:
+            return result["is_public"]
+
+        return True
+
+    except Exception as e:
+        raise DatabaseError(f"Failed to fetch visibility for '{bib_key}': {e}") from e
