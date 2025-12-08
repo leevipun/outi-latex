@@ -98,7 +98,7 @@ def verify_user_credentials(username: str, password: str) -> dict:
     if not user:
         raise AuthenticationError("Käyttäjätunnusta ei ole olemassa")
     if not check_password_hash(user["password_hash"], password or ""):
-        raise AuthenticationError("Käyttäjätunnus tai salasanaa ei ole oikein")
+        raise AuthenticationError("Käyttäjätunnus tai salasana ei ole oikein")
     return user
 
 
