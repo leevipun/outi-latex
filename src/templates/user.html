@@ -8,11 +8,11 @@
     <div id="user-page-container">
         <!-- Viitteet osio (ensimmäisenä) -->
         <div class="user-references-section">
-            <h1>Omat viitteeni</h1>
+            <h1>📚 Omat viitteeni</h1>
             <hr/>
 
             {% if references %}
-                <p class="references-count">Yhteensä {{ references|length }} viitettä</p>
+                <p class="references-count">Yhteensä <strong>{{ references|length }}</strong> viitettä</p>
 
                 <div class="references-list">
                     {% for reference in references %}
@@ -28,15 +28,20 @@
                             {% endif %}
                         </div>
 
-                        <p><strong>Tyyppi:</strong> {{ reference['reference_type'] }}</p>
-                        <p><strong>Luotu:</strong> {{ reference['created_at'] }}</p>
+                        <div class="reference-metadata">
+                            <p><strong>Tyyppi:</strong> <span class="type-badge">{{ reference['reference_type'] }}</span></p>
+                            <p><strong>Luotu:</strong> {{ reference['created_at'] }}</p>
+                        </div>
 
                         <!-- Kentät -->
+                        {% if reference['fields'] %}
                         <div class="reference-fields">
+                            <p style="margin-bottom: 12px; font-weight: 600; color: var(--primary-color); font-size: 13px; text-transform: uppercase;">Tiedot</p>
                             {% for key, value in reference['fields'].items() %}
                             <p><strong>{{ key }}:</strong> {{ value }}</p>
                             {% endfor %}
                         </div>
+                        {% endif %}
 
                         <!-- Tagi -->
                         {% if reference.get('tag') %}
@@ -47,11 +52,11 @@
 
                         <!-- Toiminnot -->
                         <div class="reference-actions">
-                            <a href="/edit/{{ reference['bib_key'] }}" class="btn btn-edit">Muokkaa</a>
-                            <form action="/delete/{{ reference['bib_key'] }}" method="POST" style="display:inline;">
-                                <button type="submit" class="btn btn-delete"
-                                        onclick="return confirm('Haluatko varmasti poistaa viitteen {{ reference['bib_key'] }}?')">
-                                    Poista
+                            <a href="/edit/{{ reference['bib_key'] }}" class="btn btn-edit">✏️ Muokkaa</a>
+                            <form action="/delete/{{ reference['bib_key'] }}" method="POST" style="display:inline; flex: 1;">
+                                <button type="submit" class="btn btn-delete" style="width: 100%;"
+                                        onclick="return confirm('Haluatko varmasti poistaa viitteen?')">
+                                    🗑️ Poista
                                 </button>
                             </form>
                         </div>
@@ -60,58 +65,73 @@
                 </div>
             {% else %}
                 <div class="no-references">
-                    <p>Et ole vielä lisännyt yhtään viitettä.</p>
-                    <a href="/" class="btn btn-primary">Lisää ensimmäinen viite</a>
+                    <p>📭 Et ole vielä lisännyt yhtään viitettä.</p>
+                    <a href="/" class="btn btn-primary">➕ Lisää ensimmäinen viite</a>
                 </div>
             {% endif %}
         </div>
 
-        <hr style="margin: 40px 0;"/>
+        <hr style="margin: 40px 0; border: none; height: 2px; background: linear-gradient(90deg, transparent, var(--border-light), transparent);"/>
 
         <!-- Asetukset osio -->
         <div id="user-settings-container">
-            <h1 id="user-settings-title">Käyttäjäasetukset</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1 id="user-settings-title">⚙️ Käyttäjäasetukset</h1>
+                {% if theme == 'dark' %}
+                <a href="{{ url_for('toggle_theme') }}" class="theme-toggle" id="theme-toggle" data-testid="theme-toggle"
+                    aria-label="Vaihda vaaleaan tilaan">
+                    <span>☀️ Vaalea tila</span>
+                </a>
+                {% else %}
+                <a href="{{ url_for('toggle_theme') }}" class="theme-toggle" id="theme-toggle" data-testid="theme-toggle"
+                    aria-label="Vaihda tummaan tilaan">
+                    <span>🌙 Tumma tila</span>
+                </a>
+                {% endif %}
+            </div>
             <hr/>
 
             <!-- Email Change Form -->
             <div class="settings-section">
-                <h2 id="email-section-title">Vaihda sähköpostiosoite</h2>
-                <form action="/update_email" method="post" id="email-form">
+                <h2 id="email-section-title">📧 Vaihda käyttäjänimi</h2>
+                <form action="/update_username" method="post" id="username-form">
                     <div class="form-group">
-                        <label for="current_email" id="current-email-label">
-                            Nykyinen sähköpostiosoite
+                        <label for="current_username" id="current-username-label">
+                            Nykyinen käyttäjänimi
                         </label>
-                        {{ user.email }}
-                        <small class="helper-text">Tämä on nykyinen sähköpostiosoitteesi</small>
+                        <div style="padding: 12px 16px; background: var(--bg-light); border-radius: 10px; border: 2px solid var(--border-light); color: var(--text-dark); font-weight: 500;">
+                            {{ user.username }}
+                        </div>
+                        <small class="helper-text">Tämä on nykyinen käyttäjänimesi</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="new_email" id="new-email-label">
-                            Uusi sähköpostiosoite <span class="required">*</span>
+                        <label for="new_username" id="new-username-label">
+                            Uusi käyttäjänimi <span class="required">*</span>
                         </label>
-                        <input type="email"
-                               id="new_email"
-                               name="new_email"
-                               placeholder="uusi@email.com"
+                        <input type="text"
+                               id="new_username"
+                               name="new_username"
+                               placeholder="uusi_kayttajanimi"
                                required>
-                        <small class="helper-text">Syötä uusi sähköpostiosoitteesi</small>
+                        <small class="helper-text">Syötä uusi käyttäjänimesi</small>
                     </div>
 
                     <div class="form-group">
-                        <label for="confirm_email" id="confirm-email-label">
-                            Vahvista uusi sähköpostiosoite <span class="required">*</span>
+                        <label for="confirm_username" id="confirm-username-label">
+                            Vahvista uusi käyttäjänimi <span class="required">*</span>
                         </label>
-                        <input type="email"
-                               id="confirm_email"
-                               name="confirm_email"
-                               placeholder="uusi@email.com"
+                        <input type="text"
+                               id="confirm_username"
+                               name="confirm_username"
+                               placeholder="uusi_kayttajanimi"
                                required>
-                        <small class="helper-text">Syötä uusi sähköpostiosoite uudelleen</small>
+                        <small class="helper-text">Syötä uusi käyttäjänimesi uudelleen</small>
                     </div>
 
                     <div class="button-group">
-                        <button type="submit" class="button-primary" id="update-email-button">
-                            Päivitä sähköpostiosoite
+                        <button type="submit" class="button-primary" id="update-username-button">
+                            ✓ Päivitä käyttäjänimi
                         </button>
                     </div>
                 </form>
@@ -119,7 +139,7 @@
 
             <!-- Password Change Form -->
             <div class="settings-section">
-                <h2 id="password-section-title">Vaihda salasana</h2>
+                <h2 id="password-section-title">🔐 Vaihda salasana</h2>
                 <form action="/update_password" method="post" id="password-form">
                     <div class="form-group">
                         <label for="current_password" id="current-password-label">
@@ -158,7 +178,7 @@
 
                     <div class="button-group">
                         <button type="submit" class="button-primary" id="update-password-button">
-                            Päivitä salasana
+                            ✓ Päivitä salasana
                         </button>
                     </div>
                 </form>

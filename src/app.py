@@ -317,7 +317,7 @@ def delete_reference(bib_key):
         if request.method == "DELETE":
             return jsonify({"success": False, "error": str(e)}), 500
         flash(f"Database error: {str(e)}", "error")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
 
     if not reference:
         if request.method == "DELETE":
@@ -354,13 +354,13 @@ def delete_reference(bib_key):
 
         # POST-metodi (UI), redirect
         flash(f"Viite '{bib_key}' poistettu", "success")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
 
     except DatabaseError as e:
         if request.method == "DELETE":
             return jsonify({"success": False, "error": str(e)}), 500
         flash(f"Database error while deleting: {str(e)}", "error")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
 
 
 def _save_or_edit_reference(editing: bool):
@@ -370,6 +370,20 @@ def _save_or_edit_reference(editing: bool):
         editing: If True, update existing reference; if False, create new reference.
     """
     user_id = session.get("user_id")
+
+    # Validate that the user still exists in the database
+    if user_id:
+        try:
+            user = get_user_by_id(user_id)
+            if not user:
+                # User no longer exists, clear the session
+                logout_user()
+                flash("Your session is no longer valid. Please log in again.", "error")
+                return redirect(url_for("login"))
+        except UserError as e:
+            flash(f"Error validating user: {str(e)}", "error")
+            return redirect(url_for("login"))
+
     reference_type = request.form.get("reference_type")
 
     if not reference_type:
@@ -448,7 +462,13 @@ def _save_or_edit_reference(editing: bool):
     try:
         ref_id = references.add_reference(reference_type, form_data, editing=editing)
         if user_id and not editing:
-            link_reference_to_user(user_id, ref_id)
+            # Double-check user exists before linking
+            try:
+                user = get_user_by_id(user_id)
+                if user:
+                    link_reference_to_user(user_id, ref_id)
+            except (UserError, DatabaseError) as e:
+                flash(f"Warning: Could not link reference to user: {str(e)}", "warning")
 
         if selected_tag_id:
             try:

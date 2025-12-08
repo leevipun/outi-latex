@@ -14,7 +14,6 @@
     </div>
 
     <div class="nav-links">
-        <a href="{{ url_for('index') }}" id="nav-home-link">Etusivu</a>
         <a href="{{ url_for('search') }}" id="nav-search-link">Haku</a>
         <a href="{{ url_for('all_references') }}" id="nav-all-link">Kaikki viitteet</a>
 
@@ -23,24 +22,6 @@
             <a href="{{ url_for('logout') }}" id="nav-logout-link">Kirjaudu ulos</a>
         {% else %}
             <a href="{{ url_for('login') }}" id="nav-auth-link">Kirjaudu / Luo tunnus</a>
-        {% endif %}
-
-        {% if theme == 'dark' %}
-            <a href="{{ url_for('toggle_theme') }}"
-               class="theme-toggle"
-               id="theme-toggle"
-               data-testid="theme-toggle"
-               aria-label="Vaihda vaaleaan tilaan">
-               <span>☀️ Vaalea tila</span>
-            </a>
-        {% else %}
-            <a href="{{ url_for('toggle_theme') }}"
-               class="theme-toggle"
-               id="theme-toggle"
-               data-testid="theme-toggle"
-               aria-label="Vaihda tummaan tilaan">
-               <span>🌙 Tumma tila</span>
-            </a>
         {% endif %}
     </div>
 </nav>

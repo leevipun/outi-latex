@@ -103,7 +103,20 @@ def verify_user_credentials(username: str, password: str) -> dict:
 
 
 def link_reference_to_user(user_id: int, reference_id: int) -> None:
-    """Link an existing reference to a user."""
+    """Link an existing reference to a user.
+    
+    Args:
+        user_id: The user ID to link to
+        reference_id: The reference ID to link
+        
+    Raises:
+        UserError: If the user doesn't exist in the database
+    """
+    # Validate that user exists first
+    user = get_user_by_id(user_id)
+    if not user:
+        raise UserError(f"User with ID {user_id} does not exist")
+    
     sql = text(
         """
         INSERT INTO user_ref (user_id, reference_id)

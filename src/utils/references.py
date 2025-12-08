@@ -51,7 +51,8 @@ def get_all_added_references(user_id: int | None = None) -> list:
                     sr.is_public,
                     rt.name AS reference_type,
                     sr.created_at,
-                    u.username
+                    u.username,
+                    ur.user_id as owner_id
                 FROM single_reference sr
                 JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id
                 LEFT JOIN users u ON u.id = ur.user_id
@@ -69,7 +70,8 @@ def get_all_added_references(user_id: int | None = None) -> list:
                     sr.is_public,
                     rt.name AS reference_type,
                     sr.created_at,
-                    u.username
+                    u.username,
+                    ur.user_id as owner_id
                 FROM single_reference sr
                 JOIN user_ref ur ON ur.reference_id = sr.id
                 LEFT JOIN users u ON u.id = ur.user_id
@@ -93,6 +95,7 @@ def get_all_added_references(user_id: int | None = None) -> list:
                 "reference_type": row["reference_type"],
                 "created_at": row["created_at"],
                 "username": row["username"],
+                "owner_id": row["owner_id"],
                 "fields": {},
                 "tag": None,
             }
@@ -420,7 +423,7 @@ def search_reference_by_query(query: str, user_id: int | None = None) -> list:
     try:
         if user_id is not None:
             user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
-            where_clause = "WHERE ur.user_id = :user_id"
+            where_clause = "WHERE sr.is_public = TRUE"
             params = {"query": f"%{query}%", "user_id": user_id}
         else:
             user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
@@ -439,7 +442,8 @@ def search_reference_by_query(query: str, user_id: int | None = None) -> list:
                 rv.value,
                 t.id AS tag_id,
                 t.name AS tag_name,
-                u.username AS username
+                u.username AS username,
+                ur.user_id as owner_id
             FROM single_reference sr
             {user_join}
             LEFT JOIN users u ON u.id = ur.user_id
@@ -471,6 +475,7 @@ def search_reference_by_query(query: str, user_id: int | None = None) -> list:
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
                     "username": row["username"],
+                    "owner_id": row["owner_id"],
                     "fields": {},
                     "tag": None,
                 }
@@ -580,7 +585,7 @@ def get_references_filtered_sorted(
     try:
         if user_id is not None:
             user_join = (
-                "JOIN user_ref ur ON ur.reference_id = sr.id AND ur.user_id = :user_id"
+                "JOIN user_ref ur ON ur.reference_id = sr.id"
             )
             params = {"user_id": user_id}
         else:
@@ -597,7 +602,8 @@ def get_references_filtered_sorted(
                 f.key_name,
                 rv.value,
                 t.id AS tag_id,
-                t.name AS tag_name
+                t.name AS tag_name,
+                ur.user_id as owner_id
             FROM single_reference sr
             {user_join}
             JOIN reference_types rt ON sr.reference_type_id = rt.id
@@ -641,6 +647,7 @@ def get_references_filtered_sorted(
                     "bib_key": row["bib_key"],
                     "reference_type": row["reference_type"],
                     "created_at": row["created_at"],
+                    "owner_id": row["owner_id"],
                     "fields": {},
                     "tag": None,
                 }

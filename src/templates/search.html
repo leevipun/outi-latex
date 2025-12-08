@@ -73,10 +73,30 @@
                     <li id="reference-tag-{{ reference['bib_key'] }}"><strong>Tag:</strong> <span id="value-{{ reference['bib_key'] }}-tag">{{ reference["tag"]["name"] }}</span></li>
                     {% endif %}
                 </ul>
-
-                <form method="POST" action="/add-group/{{ reference['bib_key'] }}" style="display:inline;">
-                    <button type="submit">Lisää ryhmään</button>
-                </form>
+                <div style="display: flex; justify-content: space-between;">
+                    {% if reference['bib_key'] in session["group"]["references"] %}
+                    <form method="POST" action="/remove-group/{{ reference['bib_key'] }}" style="display:inline;">
+                        <button id="remove-group-{{ reference['bib_key'] }}" type="submit">Poista ryhmästä</button>
+                    </form>
+                    {% else %}
+                    <form method="POST" action="/add-group/{{ reference['bib_key'] }}" style="display:inline;">
+                        <button id="add-group-{{ reference['bib_key'] }}" type="submit">Lisää ryhmään</button>
+                    </form>
+                    {% endif %}
+                
+                    {% if session.get('user_id') == reference.get('owner_id') %}
+                    <div>
+                        <form method="get" action="/edit/{{ reference['bib_key'] }}" style="display:inline;">
+                            <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
+                        </form>
+                        <form method="post" action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}"
+                            style="display:inline;" onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');">
+                            <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
+                            <button type="submit" id="delete-button-{{reference['bib_key']}}">Poista</button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
             {% endfor %}
         {% else %}
