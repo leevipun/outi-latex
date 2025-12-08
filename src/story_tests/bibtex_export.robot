@@ -180,3 +180,28 @@ BibTeX Content Is Valid LaTeX Format
     # Tarkista että ei ole tyhjiä kenttiä
     Should Not Contain    ${bibtex_content}    = {}
     Should Not Contain    ${bibtex_content}    = {$EMPTY}
+
+User Can Export Own References From User Page
+    [Documentation]    Verify that user can export their own references from user page
+
+    # Lisää testausviite
+    Add Sample Article Reference
+
+    # Mene user-sivulle
+    Go To    ${BASE_URL}/user
+    Sleep    1s
+
+    # Tarkista että export-nappi on olemassa
+    Page Should Contain Element    id:export-bibtex-button
+
+    # Klikkaa nappia
+    Click Link    id:export-bibtex-button
+    Sleep    2s
+
+    # Tarkista että ei tullut virhettä (sivu ei redirect error-sivulle)
+    ${current_url}=    Get Location
+    Should Not Contain    ${current_url}    error
+    Should Not Contain    ${current_url}    login
+
+    # Cleanup
+    [Teardown]    Delete Test Reference    TestArticle_${TEST_TIMESTAMP}
