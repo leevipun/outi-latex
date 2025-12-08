@@ -104,11 +104,11 @@ def verify_user_credentials(username: str, password: str) -> dict:
 
 def link_reference_to_user(user_id: int, reference_id: int) -> None:
     """Link an existing reference to a user.
-    
+
     Args:
         user_id: The user ID to link to
         reference_id: The reference ID to link
-        
+
     Raises:
         UserError: If the user doesn't exist in the database
     """
@@ -116,7 +116,7 @@ def link_reference_to_user(user_id: int, reference_id: int) -> None:
     user = get_user_by_id(user_id)
     if not user:
         raise UserError(f"User with ID {user_id} does not exist")
-    
+
     sql = text(
         """
         INSERT INTO user_ref (user_id, reference_id)
@@ -166,3 +166,99 @@ def ensure_user_tables() -> None:
     db.session.execute(create_users_sql)
     db.session.execute(create_user_ref_sql)
     db.session.commit()
+
+
+def update_username(user_id: int, new_username: str) -> dict:
+    """Update user's username.
+
+    Args:
+        user_id: The user ID to update
+        new_username: The new username
+
+    Returns:
+        Updated user dictionary
+
+    Raises:
+        UserError: If validation fails or user doesn't exist
+        UserExistsError: If new username is already taken
+    """
+    new_username = (new_username or "").strip()
+    if not new_username:
+        raise UserError("Username is required")
+
+    # Check if user exists
+    user = get_user_by_id(user_id)
+    if not user:
+        raise UserError(f"User with ID {user_id} does not exist")
+
+    # Check if new username is already taken
+    existing = get_user_by_username(new_username)
+    if existing and existing["id"] != user_id:
+        raise UserExistsError("Username already exists")
+
+    sql = text(
+        """
+        UPDATE users
+        SET username = :username
+        WHERE id = :user_id
+        RETURNING id, username, password_hash, created_at
+        """
+    )
+    result = (
+        db.session.execute(sql, {"username": new_username, "user_id": user_id})
+        .mappings()
+        .first()
+    )
+    db.session.commit()
+    return _row_to_user(result)
+
+
+def update_password(user_id: int, current_password: str, new_password: str) -> dict:
+    """Update user's password.
+
+    Args:
+        user_id: The user ID to update
+        current_password: The current password (for verification)
+        new_password: The new password
+
+    Returns:
+        Updated user dictionary
+
+    Raises:
+        UserError: If validation fails or user doesn't exist
+        AuthenticationError: If current password is incorrect
+    """
+    if not new_password:
+        raise UserError("New password is required")
+    if len(new_password) < 8:
+        raise UserError("Password must be at least 8 characters long")
+
+    # Check if user exists
+    user = get_user_by_id(user_id)
+    if not user:
+        raise UserError(f"User with ID {user_id} does not exist")
+
+    # Verify current password
+    if not check_password_hash(user["password_hash"], current_password or ""):
+        raise AuthenticationError("Current password is incorrect")
+
+    # Hash new password
+    new_password_hash = generate_password_hash(new_password)
+
+    sql = text(
+        """
+        UPDATE users
+        SET password_hash = :password_hash
+        WHERE id = :user_id
+        RETURNING id, username, password_hash, created_at
+        """
+    )
+    result = (
+        db.session.execute(
+            sql, {"password_hash": new_password_hash, "user_id": user_id}
+        )
+        .mappings()
+        .first()
+    )
+    db.session.commit()
+    return _row_to_user(result)

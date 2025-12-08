@@ -55,6 +55,8 @@ from src.utils.users import (
     get_user_by_id,
     link_reference_to_user,
     verify_user_credentials,
+    update_username,
+    update_password,
 )
 
 
@@ -758,6 +760,70 @@ def user_page():
     except DatabaseError as e:
         flash(f"Virhe haettaessa tietoja: {str(e)}", "error")
         return redirect("/")
+
+
+@app.route("/update_username", methods=["POST"])
+@login_required
+def update_username_route():
+    """Update user's username."""
+    user_id = session.get("user_id")
+    new_username = request.form.get("new_username", "").strip()
+    confirm_username = request.form.get("confirm_username", "").strip()
+
+    if not new_username or not confirm_username:
+        flash("Käyttäjänimi on pakollinen", "error")
+        return redirect("/user")
+
+    if new_username != confirm_username:
+        flash("Käyttäjänimet eivät täsmää", "error")
+        return redirect("/user")
+
+    try:
+        update_username(user_id, new_username)
+        session["username"] = new_username
+        flash("Käyttäjänimi päivitetty onnistuneesti", "success")
+    except UserExistsError:
+        flash("Käyttäjänimi on jo käytössä", "error")
+    except UserError as e:
+        flash(f"Virhe: {str(e)}", "error")
+    except Exception as e:
+        flash(f"Odottamaton virhe: {str(e)}", "error")
+
+    return redirect("/user")
+
+
+@app.route("/update_password", methods=["POST"])
+@login_required
+def update_password_route():
+    """Update user's password."""
+    user_id = session.get("user_id")
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not current_password or not new_password or not confirm_password:
+        flash("Kaikki kentät ovat pakollisia", "error")
+        return redirect("/user")
+
+    if new_password != confirm_password:
+        flash("Uudet salasanat eivät täsmää", "error")
+        return redirect("/user")
+
+    if len(new_password) < 8:
+        flash("Salasanan tulee olla vähintään 8 merkkiä pitkä", "error")
+        return redirect("/user")
+
+    try:
+        update_password(user_id, current_password, new_password)
+        flash("Salasana päivitetty onnistuneesti", "success")
+    except AuthenticationError:
+        flash("Nykyinen salasana on väärä", "error")
+    except UserError as e:
+        flash(f"Virhe: {str(e)}", "error")
+    except Exception as e:
+        flash(f"Odottamaton virhe: {str(e)}", "error")
+
+    return redirect("/user")
 
 
 # testausta varten oleva reitti

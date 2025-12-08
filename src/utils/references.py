@@ -584,9 +584,7 @@ def get_references_filtered_sorted(
 ) -> list:
     try:
         if user_id is not None:
-            user_join = (
-                "JOIN user_ref ur ON ur.reference_id = sr.id"
-            )
+            user_join = "JOIN user_ref ur ON ur.reference_id = sr.id"
             params = {"user_id": user_id}
         else:
             # VAIN julkiset viitteet (kaikki käyttäjät)
