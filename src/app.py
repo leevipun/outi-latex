@@ -562,6 +562,49 @@ def export_bibtex():
         flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
         return redirect(request.referrer or "/all")
 
+@app.route("/export/user_bibtex")
+@login_required
+def export_user_bibtex():
+    """Export current user's references as BibTeX format"""
+    try:
+        user_id = session.get("user_id")
+        if not user_id:
+            flash("Please log in to export your references", "error")
+            return redirect(url_for("login"))
+
+        # Hae käyttäjän KAIKKI viitteet (julkiset + yksityiset)
+        data = get_all_added_references(user_id=user_id)
+
+        if not data:
+            flash("You have no references to export", "info")
+            return redirect(url_for("user_page"))
+
+        # Muodosta BibTeX-sisältö
+        bibtex_content = ""
+        for ref in data:
+            bibtex_entry = format_bibtex_entry(ref)
+            bibtex_content += bibtex_entry + "\n\n"
+
+        # Palauta BibTeX-tiedosto ladattavaksi
+        response = app.response_class(
+            bibtex_content,
+            mimetype="application/x-bibtex",
+            headers={
+                "Content-Disposition": "attachment; filename=my_references.bib",
+                "Content-Type": "application/x-bibtex; charset=utf-8",
+            },
+        )
+        return response
+
+    except DatabaseError as e:
+        flash(f"Database error during BibTeX export: {str(e)}", "error")
+        return redirect(url_for("user_page"))
+    except FormFieldsError as e:
+        flash(f"Form fields error during BibTeX export: {str(e)}", "error")
+        return redirect(url_for("user_page"))
+    except Exception as e:
+        flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
+        return redirect(url_for("user_page"))
 
 @app.route("/get-doi", methods=["POST"])
 @login_required
