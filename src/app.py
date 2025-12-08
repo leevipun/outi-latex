@@ -121,7 +121,7 @@ def signup():
     try:
         user = create_user(username, password)
         login_user(user)
-        flash("Account created. You are now logged in.", "success")
+        flash("Käyttäjä luotu. Sinut kirjattiin automaattisesti sisään.", "success")
         return redirect(url_for("index"))
     except UserExistsError:
         flash("Username already exists.", "error")
@@ -143,7 +143,7 @@ def login():
     try:
         user = verify_user_credentials(username, password)
         login_user(user)
-        flash("Logged in successfully.", "success")
+        flash("Kirjautuminen onnistui", "success")
         next_url = request.args.get("next") or url_for("index")
         return redirect(next_url)
     except AuthenticationError as e:
@@ -158,7 +158,7 @@ def logout():
     """Log the user out and clear session."""
     logout_user()
     session["group"] = {"userId": None, "references": []}
-    flash("Logged out.", "success")
+    flash("Uloskirjautuminen onnistui", "success")
     return redirect(url_for("login"))
 
 
@@ -753,6 +753,7 @@ def user_page():
 
     try:
         user = get_user_by_id(user_id)
+
         # Hae kaikki käyttäjän viitteet (julkiset + yksityiset)
         references = get_all_added_references(user_id=user_id)
 
