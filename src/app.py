@@ -554,13 +554,13 @@ def export_bibtex():
 
     except DatabaseError as e:
         flash(f"Database error during BibTeX export: {str(e)}", "error")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
     except FormFieldsError as e:
         flash(f"Form fields error during BibTeX export: {str(e)}", "error")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
     except Exception as e:
         flash(f"Unexpected error during BibTeX export: {str(e)}", "error")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
 
 
 @app.route("/get-doi", methods=["POST"])
@@ -611,27 +611,27 @@ def add_group(bib_key):
         ref = get_reference_by_bib_key(bib_key, user_id=None)
     except DatabaseError as e:
         flash(f"Virhe: {str(e)}", "error")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
 
     if not ref:
         flash("Viitettä ei löytynyt", "error")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
 
     # Tarkista että viite on julkinen TAI käyttäjän oma
     if not ref.get("is_public"):
         # Jos yksityinen, tarkista omistajuus
         if session.get("username") != ref.get("username"):
             flash("Et voi lisätä toisen käyttäjän yksityistä viitettä ryhmään", "error")
-            return redirect("/all")
+            return redirect(request.referrer or "/all")
 
     if bib_key in session["group"]["references"]:
         flash("Viite on jo ryhmässä", "info")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
 
     session["group"]["references"].append(bib_key)
     session.modified = True
     flash("Viite lisätty ryhmään", "success")
-    return redirect("/all")
+    return redirect(request.referrer or "/all")
 
 
 @app.route("/search", methods=["GET", "POST"])
@@ -719,7 +719,7 @@ def remove_group(bib_key):
     """Remove a reference from the group."""
     if bib_key not in session["group"]["references"]:
         flash("Tätä viitettä ei ole ryhmässä", "info")
-        return redirect("/all")
+        return redirect(request.referrer or "/all")
     session["group"]["references"].remove(bib_key)
     session.modified = True
     flash("Viite poistettu onnistuneesti ryhmästä", "message")
@@ -732,7 +732,7 @@ def view_group():
     try:
         data = []
         for bib_key in session["group"]["references"]:
-            ref = get_reference_by_bib_key(bib_key, session.get("user_id"))
+            ref = get_reference_by_bib_key(bib_key, user_id=None)
             if ref:
                 data.append(ref)
     except DatabaseError as e:

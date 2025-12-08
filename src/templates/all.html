@@ -6,6 +6,7 @@
 {% block content %}
     <div style="display: flex; justify-content: space-between; align-items: center;" id="all-group">
         <h1 id="all-references-title">Kaikki julkiset viitteet</h1>
+        {% if session.get("user_id") %}
         <form method="get" action="/group">
                 <button type="submit" id="view-group-button-{{ session["group"]["references"]|length }}">
                     Näytä ryhmä
@@ -14,18 +15,25 @@
                     {% endif %}
                 </button>
         </form>
+        {% endif %}
     </div>
     {% if data %}
         {% for reference in data %}
             <div class="reference-item" id="reference-item-{{ reference['bib_key'] }}">
                 <h3 id="reference-key-{{ reference['bib_key'] }}">{{ reference["bib_key"] }}</h3>
-                <ul id="reference-meta-{{ reference['bib_key'] }}">
-                    <li id="reference-type-{{ reference['bib_key'] }}">{{ reference["reference_type"] }}</li>
-                    <li id="reference-date-{{ reference['bib_key'] }}">{{ reference["created_at"] }}</li>
+                <div class="reference-meta" id="reference-meta-{{ reference['bib_key'] }}">
+                    <span class="meta-item" id="reference-type-{{ reference['bib_key'] }}">
+                        <strong>Tyyppi:</strong> {{ reference["reference_type"]|capitalize }}
+                    </span>
+                    <span class="meta-item" id="reference-date-{{ reference['bib_key'] }}">
+                        <strong>Luotu:</strong> {{ reference["created_at"] }}
+                    </span>
                     {% if reference.get("username") %}
-                        <li>Luonut: {{ reference["username"] }}</li>
+                        <span class="meta-item" id="reference-author-{{ reference['bib_key'] }}">
+                            <strong>Luonut:</strong> {{ reference["username"] }}
+                        </span>
                     {% endif %}
-                </ul>
+                </div>
                 <ul class="fields-list" id="reference-fields-{{ reference['bib_key'] }}">
                     {% for key, value in reference["fields"].items() %}
                         <li id="field-{{ reference['bib_key'] }}-{{ key }}"><strong>{{ key }}:</strong> <span id="value-{{ reference['bib_key'] }}-{{ key }}">{{ value }}</span></li>
@@ -34,6 +42,7 @@
                         <li id="reference-tag-{{ reference['bib_key'] }}"><strong>Tag:</strong> <span id="value-{{ reference['bib_key'] }}-tag">{{ reference["tag"]["name"] }}</span></li>
                     {% endif %}
                 </ul>
+                {% if session.get("user_id") %}
                 <div style="display: flex; justify-content: space-between;">
                     {% if reference['bib_key'] in session["group"]["references"] %}
                     <form method="POST" action="/remove-group/{{ reference['bib_key'] }}" style="display:inline;">
@@ -44,19 +53,21 @@
                         <button id="add-group-{{ reference['bib_key'] }}" type="submit">Lisää ryhmään</button>
                     </form>
                     {% endif %}
-
-                    {% if session.get('user_id') and session.get('username') == reference.get('username') %}
-                    <div>
+                
+                    {% if session["user_id"] == reference["owner_id"] %}
+                    <div style="display: flex; gap: 10px;">
                         <form method="get" action="/edit/{{ reference['bib_key'] }}">
                             <button id="edit-button-{{ reference['bib_key'] }}" type="submit">Muokkaa</button>
                         </form>
-                        <form method="post" action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}" onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');">
+                        <form method="post" action="{{ url_for('delete_reference', bib_key=reference['bib_key']) }}"
+                            onsubmit="return confirm('Haluatko varmasti poistaa tämän viitteen?');">
                             <input type="hidden" name="bib_key" value="{{ reference['bib_key'] }}">
                             <button type="submit" id="delete-button-{{reference['bib_key']}}">Poista</button>
                         </form>
                     </div>
                     {% endif %}
                 </div>
+                {% endif %}
             </div>
         {% endfor %}
     {% else %}
@@ -68,7 +79,7 @@
     <br/>
     <a href="/" id="back-to-home-button" class="btn">Etusivu</a>
     <a href="/search" class="btn" id="view-all-references-button">Hae viitteitä</a>
-    {% if data %}
+    {% if data and session.get("user_id") %}
         <a href="/export/bibtex?type=all"
         id="export-bibtex-button"
         class="button button-primary"

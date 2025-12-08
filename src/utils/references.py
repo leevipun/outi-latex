@@ -179,6 +179,7 @@ def get_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> dict:
                 rt.name AS reference_type,
                 rt.id AS reference_type_id,
                 sr.created_at,
+                u.id AS owner_id,
                 u.username,
                 f.key_name,
                 rv.value
@@ -201,10 +202,11 @@ def get_reference_by_bib_key(bib_key: str, user_id: int | None = None) -> dict:
                     "id": row["id"],
                     "bib_key": row["bib_key"],
                     "is_public": row["is_public"],
-                    "username": row["username"],
                     "reference_type": row["reference_type"],
                     "reference_type_id": row["reference_type_id"],
+                    "username": row["username"],
                     "created_at": row["created_at"],
+                    "owner_id": row["owner_id"],
                     "fields": {},
                 }
 
