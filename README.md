@@ -22,6 +22,8 @@ CI: https://github.com/leevipun/outi-latex/actions
 - [Database](#database)
 - [API Endpoints](#api-endpoints)
 - [Contributing](#contributing)
+- [License](#license)
+- [Authors](#authors)
 
 ## ✨ Features
 
@@ -440,7 +442,7 @@ Form field definitions are stored in `form-fields.json`. This file defines the s
 
 MIT License
 
-Copyright (c) 2025 Leevi Ilmari Puntanen
+Copyright (c) 2025 Leevi Ilmari Puntanen, Otso Heinämäki, Vesa Vainio, Axel Häyrinen
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -460,9 +462,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-## 👥 Author
+## 👥 Authors
 
-Leevi Puntanen, Otso ?, Vesa Vainio, Axel ?
+Leevi Puntanen, Otso Heinämäki, Vesa Vainio, Axel Häyrinen
 
 ---
 
