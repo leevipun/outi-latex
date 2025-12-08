@@ -174,3 +174,184 @@ class TestUserIsolation:
             delete_reference_by_bib_key("User1Ref2024", user_id=user1["id"])
             deleted_ref = get_reference_by_bib_key("User1Ref2024", user_id=user1["id"])
             assert deleted_ref is None
+
+
+class TestUserBibTexExport:
+    """Tests for BibTeX export endpoints."""
+
+    def test_export_user_bibtex_requires_login(self, app, client):
+        """Test that /export/user_bibtex requires authentication."""
+        with app.app_context():
+            response = client.get("/export/user_bibtex", follow_redirects=False)
+            # Should redirect to login
+            assert response.status_code == 302
+            assert "/login" in response.location
+
+    def test_export_user_bibtex_with_no_references(self, app, client, db_session):
+        """Test that export redirects with message when user has no references."""
+        with app.app_context():
+            # Luo käyttäjä ja kirjaudu
+            user = create_user("testuser", "testpass")
+
+            with client.session_transaction() as sess:
+                sess["user_id"] = user["id"]
+                sess["username"] = user["username"]
+
+            # Yritä exporttaa tyhjä lista
+            response = client.get("/export/user_bibtex", follow_redirects=True)
+
+            assert response.status_code == 200
+            assert b"no references" in response.data.lower()
+
+    def test_export_user_bibtex_exports_own_references(self, app, client, db_session):
+        """Test that user export contains user's own references."""
+        with app.app_context():
+            # Luo käyttäjä
+            user = create_user("testuser", "testpass")
+
+            # Lisää viite
+            data = {
+                "bib_key": "TestRef2024",
+                "author": "Test Author",
+                "title": "Test Title",
+                "journal": "Test Journal",
+                "year": "2024",
+                "is_public": True,
+            }
+            ref_id = add_reference("article", data)
+            link_reference_to_user(user["id"], ref_id)
+
+            # Kirjaudu
+            with client.session_transaction() as sess:
+                sess["user_id"] = user["id"]
+                sess["username"] = user["username"]
+
+            # Exporttaa
+            response = client.get("/export/user_bibtex")
+
+            assert response.status_code == 200
+            assert b"application/x-bibtex" in response.content_type.encode()
+            assert b"@article{TestRef2024," in response.data
+            assert b"author = {Test Author}" in response.data
+            assert b"title = {Test Title}" in response.data
+
+    def test_export_user_bibtex_includes_private_references(
+        self, app, client, db_session
+    ):
+        """Test that user export includes both public and private references."""
+        with app.app_context():
+            user = create_user("testuser", "testpass")
+
+            # Lisää julkinen viite
+            public_data = {
+                "bib_key": "PublicRef2024",
+                "author": "Public Author",
+                "title": "Public Title",
+                "journal": "Journal",
+                "year": "2024",
+                "is_public": True,
+            }
+            public_id = add_reference("article", public_data)
+            link_reference_to_user(user["id"], public_id)
+
+            # Lisää yksityinen viite
+            private_data = {
+                "bib_key": "PrivateRef2024",
+                "author": "Private Author",
+                "title": "Private Title",
+                "journal": "Journal",
+                "year": "2024",
+                "is_public": False,
+            }
+            private_id = add_reference("article", private_data)
+            link_reference_to_user(user["id"], private_id)
+
+            # Kirjaudu
+            with client.session_transaction() as sess:
+                sess["user_id"] = user["id"]
+                sess["username"] = user["username"]
+
+            # Exporttaa
+            response = client.get("/export/user_bibtex")
+
+            assert response.status_code == 200
+            # Molemmat viitteet mukana
+            assert b"PublicRef2024" in response.data
+            assert b"PrivateRef2024" in response.data
+            assert b"Public Author" in response.data
+            assert b"Private Author" in response.data
+
+    def test_export_user_bibtex_does_not_include_other_users_refs(
+        self, app, client, db_session
+    ):
+        """Test that user export does not include other users' references."""
+        with app.app_context():
+            # Luo kaksi käyttäjää
+            user1 = create_user("user1", "pass1")
+            user2 = create_user("user2", "pass2")
+
+            # User1 lisää viitteen
+            data1 = {
+                "bib_key": "User1Ref2024",
+                "author": "User 1",
+                "title": "User 1 Paper",
+                "journal": "Journal",
+                "year": "2024",
+                "is_public": True,
+            }
+            ref1_id = add_reference("article", data1)
+            link_reference_to_user(user1["id"], ref1_id)
+
+            # User2 lisää viitteen
+            data2 = {
+                "bib_key": "User2Ref2024",
+                "author": "User 2",
+                "title": "User 2 Paper",
+                "journal": "Journal",
+                "year": "2024",
+                "is_public": True,
+            }
+            ref2_id = add_reference("article", data2)
+            link_reference_to_user(user2["id"], ref2_id)
+
+            # Kirjaudu User1:nä
+            with client.session_transaction() as sess:
+                sess["user_id"] = user1["id"]
+                sess["username"] = user1["username"]
+
+            # User1 exporttaa
+            response = client.get("/export/user_bibtex")
+
+            assert response.status_code == 200
+            # User1:n viite mukana
+            assert b"User1Ref2024" in response.data
+            # User2:n viite EI mukana
+            assert b"User2Ref2024" not in response.data
+
+    def test_export_user_bibtex_filename(self, app, client, db_session):
+        """Test that export has correct filename."""
+        with app.app_context():
+            user = create_user("testuser", "testpass")
+
+            # Lisää viite
+            data = {
+                "bib_key": "TestRef2024",
+                "author": "Author",
+                "title": "Title",
+                "journal": "Journal",
+                "year": "2024",
+                "is_public": True,
+            }
+            ref_id = add_reference("article", data)
+            link_reference_to_user(user["id"], ref_id)
+
+            # Kirjaudu
+            with client.session_transaction() as sess:
+                sess["user_id"] = user["id"]
+                sess["username"] = user["username"]
+
+            response = client.get("/export/user_bibtex")
+
+            assert response.status_code == 200
+            content_disposition = response.headers.get("Content-Disposition")
+            assert "my_references.bib" in content_disposition
