@@ -96,9 +96,9 @@ def verify_user_credentials(username: str, password: str) -> dict:
     """Validate username/password combo and return the user dict on success."""
     user = get_user_by_username(username)
     if not user:
-        raise AuthenticationError("Invalid username or password")
+        raise AuthenticationError("Käyttäjätunnusta ei ole olemassa")
     if not check_password_hash(user["password_hash"], password or ""):
-        raise AuthenticationError("Invalid username or password")
+        raise AuthenticationError("Käyttäjätunnus tai salasana ei ole oikein")
     return user
 
 
