@@ -8,6 +8,8 @@ Backlog + Sprint Backlog: [https://docs.google.com/spreadsheets/d/1c9JaIyMWyLqpM
 
 CI: https://github.com/leevipun/outi-latex/actions
 
+App running @ https://outi-latex.onrender.com
+
 ## 📋 Table of Contents
 
 - [Features](#features)
@@ -322,8 +324,8 @@ Before running Robot tests, ensure:
 
 1. `TEST_ENV=true` so the login wall is bypassed for E2E flows. Locally set it before starting Flask (`$env:TEST_ENV="true"` in PowerShell or `export TEST_ENV=true` in bash). Docker Compose already sets this for the `app` service.
 1. Application is running: `poetry run python -m flask --app src.app run --debug`
-2. Chrome/Chromium browser is installed
-3. ChromeDriver is in PATH or available
+1. Chrome/Chromium browser is installed
+1. ChromeDriver is in PATH or available
 
 Run all Robot tests:
 
