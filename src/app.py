@@ -87,7 +87,7 @@ def require_login():
     if test_env:
         return None
 
-    public_endpoints = {"login", "signup", "static", "toggle_theme"}
+    public_endpoints = {"login", "signup", "static", "toggle_theme", "all", "search"}
     if test_env:
         public_endpoints.add("reset_database")
 
